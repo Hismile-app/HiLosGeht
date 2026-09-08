@@ -41,7 +41,7 @@ export default function FleetManagementPage() {
       const res = await fetch(`${apiUrl}/equipment`);
       if (res.ok) {
         const data = await res.json();
-        setFleet(data.data || []);
+        setFleet(data?.data || []);
       }
     } catch (e) {
       // fallback
@@ -106,10 +106,10 @@ export default function FleetManagementPage() {
     }
   };
 
-  const filtered = fleet.filter(f => 
-    f.name.toLowerCase().includes(search.toLowerCase()) || 
-    f.model.toLowerCase().includes(search.toLowerCase()) ||
-    f.category.toLowerCase().includes(search.toLowerCase())
+  const filtered = (fleet ?? []).filter(f => 
+    (f.name || '').toLowerCase().includes(search.toLowerCase()) || 
+    (f.model || '').toLowerCase().includes(search.toLowerCase()) ||
+    (f.category || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -118,12 +118,15 @@ export default function FleetManagementPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-primary font-mono text-xs uppercase mb-1">
+          <div className="text-primary font-mono text-xs uppercase mb-1 font-semibold">
             Module 2: Fleet Management (CRUD)
           </div>
-          <h1 className="font-heading font-black text-2xl sm:text-3xl text-white uppercase">
+          <h1 className="font-heading font-black text-2xl sm:text-3xl text-foreground uppercase">
             Machinery Fleet Profiles & Telemetry
           </h1>
+          <p className="text-xs text-muted mt-0.5">
+            Manage heavy construction equipment catalogue, daily hire rates, and OEM telemetry IDs.
+          </p>
         </div>
 
         <NeonButton
@@ -148,21 +151,21 @@ export default function FleetManagementPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="glass-panel p-4 rounded-xl border border-border flex items-center gap-3">
+      <div className="bg-white p-3.5 rounded-xl border border-border flex items-center gap-3 shadow-subtle">
         <Search className="w-4 h-4 text-muted shrink-0" />
         <input
           type="text"
           placeholder="Filter fleet by name, make, model or category..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-transparent text-sm text-white focus:outline-none"
+          className="w-full bg-transparent text-sm text-foreground focus:outline-none placeholder-zinc-400"
         />
       </div>
 
       {/* Fleet Table */}
-      <GlassCard className="p-0 overflow-x-auto border border-border">
+      <GlassCard className="p-0 overflow-x-auto border border-border shadow-subtle">
         <table className="w-full text-left text-xs">
-          <thead className="bg-surface-card border-b border-border text-gray-400 font-mono uppercase text-[11px]">
+          <thead className="bg-surface border-b border-border text-zinc-600 font-mono uppercase text-[11px]">
             <tr>
               <th className="p-4">Machinery Asset</th>
               <th className="p-4">Category & Model</th>
@@ -172,17 +175,17 @@ export default function FleetManagementPage() {
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/60 text-gray-300">
+          <tbody className="divide-y divide-border text-foreground">
             {filtered.map((item) => (
-              <tr key={item.id} className="hover:bg-neutral-900/60 transition-colors">
+              <tr key={item.id} className="hover:bg-surface transition-colors">
                 
-                <td className="p-4 font-medium text-white flex items-center gap-3">
-                  <div className="w-9 h-9 rounded bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+                <td className="p-4 font-medium flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0">
                     <Truck className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <div className="font-bold">{item.name}</div>
-                    <div className="text-[10px] text-muted font-mono flex items-center gap-1">
+                    <div className="font-bold text-foreground text-sm">{item.name}</div>
+                    <div className="text-[11px] text-muted font-mono flex items-center gap-1">
                       <Cpu className="w-3 h-3 text-primary" />
                       <span>{item.telemetry_api_id || 'OEM API Standby'}</span>
                     </div>
@@ -194,12 +197,12 @@ export default function FleetManagementPage() {
                   <span className="block text-muted text-[11px]">{item.model}</span>
                 </td>
 
-                <td className="p-4 font-mono font-bold text-white">
+                <td className="p-4 font-mono font-bold text-foreground text-sm">
                   {formatCurrency(item.daily_rate)}/day
                 </td>
 
-                <td className="p-4 font-mono text-gray-200">
-                  {item.current_hour_meter || 0} hrs
+                <td className="p-4 font-mono font-semibold text-zinc-700">
+                  {item.current_hour_meter ?? 0} hrs
                 </td>
 
                 <td className="p-4">
@@ -208,7 +211,7 @@ export default function FleetManagementPage() {
                     <select
                       value={item.status}
                       onChange={(e) => handleStatusToggle(item, e.target.value)}
-                      className="bg-neutral-900 border border-border rounded px-2 py-1 text-[11px] text-gray-300 focus:outline-none focus:border-primary"
+                      className="bg-white border border-border rounded px-2 py-1 text-[11px] text-foreground focus:outline-none focus:border-primary cursor-pointer shadow-subtle"
                     >
                       <option value="AVAILABLE">Available</option>
                       <option value="BOOKED">Booked</option>
@@ -232,14 +235,14 @@ export default function FleetManagementPage() {
                       });
                       setShowAddModal(true);
                     }}
-                    className="p-1.5 rounded hover:bg-neutral-800 text-gray-400 hover:text-white"
+                    className="p-1.5 rounded hover:bg-surface-hover text-zinc-500 hover:text-primary transition-colors"
                     title="Edit"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(item.id)}
-                    className="p-1.5 rounded hover:bg-red-950/60 text-gray-400 hover:text-red-400"
+                    className="p-1.5 rounded hover:bg-rose-50 text-zinc-500 hover:text-rose-600 transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -254,32 +257,32 @@ export default function FleetManagementPage() {
 
       {/* Add / Edit Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-lg bg-surface border border-primary/40 rounded-xl p-6 space-y-4 text-white">
-            <h2 className="font-heading text-lg font-bold">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white border border-border rounded-2xl p-6 sm:p-7 space-y-4 shadow-2xl">
+            <h2 className="font-heading text-lg font-bold text-foreground">
               {editingItem ? 'Edit Machinery Asset' : 'Register New Heavy Machinery'}
             </h2>
             
-            <form onSubmit={handleSaveEquipment} className="space-y-3 text-xs">
+            <form onSubmit={handleSaveEquipment} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-gray-300 font-mono mb-1">Equipment Name *</label>
+                <label className="block text-zinc-700 font-mono mb-1 font-semibold">Equipment Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Komatsu PC-200 Heavy Excavator"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-gray-300 font-mono mb-1">Category *</label>
+                  <label className="block text-zinc-700 font-mono mb-1 font-semibold">Category *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none cursor-pointer"
                   >
                     <option value="Excavator">Excavator</option>
                     <option value="Dozer">Dozer</option>
@@ -293,39 +296,39 @@ export default function FleetManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-300 font-mono mb-1">Model Name *</label>
+                  <label className="block text-zinc-700 font-mono mb-1 font-semibold">Model Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Komatsu PC-200"
                     value={formData.model}
                     onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                    className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-gray-300 font-mono mb-1">Daily Rate (KES) *</label>
+                  <label className="block text-zinc-700 font-mono mb-1 font-semibold">Daily Rate (KES) *</label>
                   <input
                     type="number"
                     required
                     placeholder="45000"
                     value={formData.dailyRate}
                     onChange={(e) => setFormData({ ...formData, dailyRate: e.target.value })}
-                    className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-gray-300 font-mono mb-1">Telemetry Serial / API ID</label>
+                  <label className="block text-zinc-700 font-mono mb-1 font-semibold">Telemetry Serial / API ID</label>
                   <input
                     type="text"
                     placeholder="KOM-PC200-KE-001"
                     value={formData.telemetryApiId}
                     onChange={(e) => setFormData({ ...formData, telemetryApiId: e.target.value })}
-                    className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
@@ -334,7 +337,7 @@ export default function FleetManagementPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded text-gray-400 hover:text-white"
+                  className="px-4 py-2 rounded-lg text-zinc-600 hover:bg-surface text-xs font-semibold transition-colors"
                 >
                   Cancel
                 </button>

@@ -38,12 +38,12 @@ export default function CommandOverviewPage() {
 
         if (ovRes && ovRes.ok) {
           const ovData = await ovRes.json();
-          setOverviewData(ovData.data);
+          setOverviewData(ovData?.data || null);
         }
 
         if (aiRes && aiRes.ok) {
           const aData = await aiRes.json();
-          setAiInsights(aData.data);
+          setAiInsights(aData?.data || null);
         }
       } catch (err) {
         console.error('Error loading overview:', err);
@@ -54,14 +54,15 @@ export default function CommandOverviewPage() {
     fetchDashboard();
   }, []);
 
-  const totalFleet = overviewData?.fleet?.total_fleet || 8;
-  const availableCount = overviewData?.fleet?.available_count || 6;
-  const bookedCount = overviewData?.fleet?.booked_count || 2;
-  const maintenanceCount = overviewData?.fleet?.maintenance_count || 0;
-  const pendingInquiries = overviewData?.inquiries?.pending_count || 1;
-  const activeStaff = overviewData?.todayOperations?.active_staff_today || 2;
-  const projectedRevenue = overviewData?.financials?.projectedRevenueKES || 185000;
-  const utilization = overviewData?.financials?.utilizationPercentage || 25.0;
+  const totalFleet = overviewData?.fleet?.total_fleet ?? 8;
+  const availableCount = overviewData?.fleet?.available_count ?? 6;
+  const bookedCount = overviewData?.fleet?.booked_count ?? 2;
+  const maintenanceCount = overviewData?.fleet?.maintenance_count ?? 0;
+  const pendingInquiries = overviewData?.inquiries?.pending_count ?? 1;
+  const activeStaff = overviewData?.todayOperations?.active_staff_today ?? 2;
+  const projectedRevenue = overviewData?.financials?.projectedRevenueKES ?? 185000;
+  const utilization = overviewData?.financials?.utilizationPercentage ?? 25.0;
+  const anomalies = aiInsights?.anomaliesDetected ?? aiInsights?.anomalies ?? [];
 
   return (
     <div className="space-y-8">
@@ -69,18 +70,21 @@ export default function CommandOverviewPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-primary/10 border border-primary/30 text-primary font-mono text-[11px] uppercase mb-1">
-            <ShieldCheck className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-orange-50 border border-orange-200 text-primary font-mono text-[11px] uppercase mb-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-primary" />
             <span>HLG Command Center • Module 1</span>
           </div>
-          <h1 className="font-heading font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
+          <h1 className="font-heading font-black text-2xl sm:text-3xl text-foreground uppercase tracking-tight">
             Fleet Operations Overview
           </h1>
+          <p className="text-xs text-muted mt-0.5">
+            Centralized telematics, active dispatch status, and real-time quarry metrics in Meru.
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Link href="/admin/inbox">
-            <NeonButton size="sm" variant="secondary" icon={<Inbox className="w-4 h-4" />}>
+            <NeonButton size="sm" variant="secondary" icon={<Inbox className="w-4 h-4 text-primary" />}>
               Inquiries ({pendingInquiries})
             </NeonButton>
           </Link>
@@ -98,23 +102,27 @@ export default function CommandOverviewPage() {
         {/* Active Fleet */}
         <GlassCard className="p-5 space-y-3">
           <div className="flex items-center justify-between text-muted">
-            <span className="font-mono text-xs uppercase tracking-wider">Total Machinery</span>
-            <Truck className="w-5 h-5 text-primary" />
+            <span className="font-mono text-xs uppercase tracking-wider font-semibold">Total Machinery</span>
+            <div className="w-8 h-8 rounded-lg bg-orange-50 text-primary flex items-center justify-center">
+              <Truck className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-3xl font-black font-heading text-white">
+          <div className="text-3xl font-black font-heading text-foreground">
             {totalFleet} <span className="text-xs font-mono font-normal text-muted">Units</span>
           </div>
           <div className="flex items-center gap-3 text-xs font-mono pt-1">
-            <span className="text-emerald-400">● {availableCount} Avail</span>
-            <span className="text-primary">● {bookedCount} Working</span>
+            <span className="text-emerald-700 font-semibold">● {availableCount} Avail</span>
+            <span className="text-primary font-semibold">● {bookedCount} Working</span>
           </div>
         </GlassCard>
 
         {/* Pending Inquiries */}
         <GlassCard className="p-5 space-y-3">
           <div className="flex items-center justify-between text-muted">
-            <span className="font-mono text-xs uppercase tracking-wider">Pending Bookings</span>
-            <Inbox className="w-5 h-5 text-primary" />
+            <span className="font-mono text-xs uppercase tracking-wider font-semibold">Pending Bookings</span>
+            <div className="w-8 h-8 rounded-lg bg-orange-50 text-primary flex items-center justify-center">
+              <Inbox className="w-4 h-4" />
+            </div>
           </div>
           <div className="text-3xl font-black font-heading text-primary">
             {pendingInquiries} <span className="text-xs font-mono font-normal text-muted">Leads</span>
@@ -127,10 +135,12 @@ export default function CommandOverviewPage() {
         {/* Active Staff Today */}
         <GlassCard className="p-5 space-y-3">
           <div className="flex items-center justify-between text-muted">
-            <span className="font-mono text-xs uppercase tracking-wider">Active Operators</span>
-            <Users className="w-5 h-5 text-primary" />
+            <span className="font-mono text-xs uppercase tracking-wider font-semibold">Active Operators</span>
+            <div className="w-8 h-8 rounded-lg bg-orange-50 text-primary flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-3xl font-black font-heading text-white">
+          <div className="text-3xl font-black font-heading text-foreground">
             {activeStaff} <span className="text-xs font-mono font-normal text-muted">On Site</span>
           </div>
           <div className="text-xs text-muted font-mono">
@@ -141,8 +151,10 @@ export default function CommandOverviewPage() {
         {/* Projected Revenue */}
         <GlassCard className="p-5 space-y-3">
           <div className="flex items-center justify-between text-muted">
-            <span className="font-mono text-xs uppercase tracking-wider">Confirmed Revenue</span>
-            <TrendingUp className="w-5 h-5 text-primary" />
+            <span className="font-mono text-xs uppercase tracking-wider font-semibold">Confirmed Revenue</span>
+            <div className="w-8 h-8 rounded-lg bg-orange-50 text-primary flex items-center justify-center">
+              <TrendingUp className="w-4 h-4" />
+            </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black font-heading text-primary truncate">
             {formatCurrency(projectedRevenue)}
@@ -155,23 +167,23 @@ export default function CommandOverviewPage() {
       </div>
 
       {/* AI Anomaly Alert Banner (if any) */}
-      {aiInsights?.anomalies && aiInsights.anomalies.length > 0 && (
-        <div className="p-4 rounded-xl bg-neutral-900 border border-primary/40 shadow-neon flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {anomalies.length > 0 && (
+        <div className="p-4 rounded-xl bg-orange-50/70 border border-primary/30 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 animate-spin" />
+            <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-heading font-bold text-sm text-white">
+                <span className="font-heading font-bold text-sm text-foreground">
                   AI Fuel Anomaly Alert
                 </span>
-                <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-400 font-mono text-[10px] border border-rose-800">
-                  {aiInsights.anomalies.length} Flagged
+                <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-mono text-[10px] font-bold border border-rose-200">
+                  {anomalies.length} Flagged
                 </span>
               </div>
-              <p className="text-xs text-gray-300 mt-1 line-clamp-1">
-                {aiInsights.anomalies[0].machine}: {aiInsights.anomalies[0].issue}
+              <p className="text-xs text-muted mt-1 line-clamp-1">
+                {anomalies[0]?.equipment || anomalies[0]?.machine}: {anomalies[0]?.detail || anomalies[0]?.issue}
               </p>
             </div>
           </div>
@@ -190,25 +202,25 @@ export default function CommandOverviewPage() {
         <GlassCard className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-heading text-sm font-bold text-white uppercase">
+              <h2 className="font-heading text-sm font-bold text-foreground uppercase">
                 Fleet Yield & Fuel Timeline
               </h2>
               <p className="text-[11px] text-muted font-mono">
                 Engine hours worked vs. Fuel consumed across Meru jobsites
               </p>
             </div>
-            <Link href="/admin/financials" className="text-xs font-mono text-primary hover:text-white flex items-center gap-1">
+            <Link href="/admin/financials" className="text-xs font-mono text-primary hover:text-primary-hover flex items-center gap-1 font-semibold">
               <span>Detailed Report</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          <FuelAndHoursAreaChart data={[]} />
+          <FuelAndHoursAreaChart data={overviewData?.dailyTimeline ?? []} />
         </GlassCard>
 
         {/* Utilization Donut */}
         <GlassCard className="space-y-4">
           <div>
-            <h2 className="font-heading text-sm font-bold text-white uppercase">
+            <h2 className="font-heading text-sm font-bold text-foreground uppercase">
               Fleet Status Distribution
             </h2>
             <p className="text-[11px] text-muted font-mono">

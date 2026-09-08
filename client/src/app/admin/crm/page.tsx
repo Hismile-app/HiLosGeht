@@ -35,10 +35,11 @@ export default function ClientCRMPage() {
   const fetchCRM = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/analytics/crm');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await fetch(`${apiUrl}/analytics/crm`);
       const json = await res.json();
-      if (json.success) {
-        setClients(json.data || []);
+      if (json?.success) {
+        setClients(json?.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch CRM data:', err);
@@ -51,7 +52,7 @@ export default function ClientCRMPage() {
     fetchCRM();
   }, []);
 
-  const filteredClients = clients.filter(c => {
+  const filteredClients = (clients ?? []).filter(c => {
     const term = search.toLowerCase();
     return (
       (c.client_name && c.client_name.toLowerCase().includes(term)) ||
@@ -60,8 +61,8 @@ export default function ClientCRMPage() {
     );
   });
 
-  const totalSpend = clients.reduce((acc, c) => acc + parseFloat(c.estimated_spend_kes as string || '0'), 0);
-  const totalBookings = clients.reduce((acc, c) => acc + parseInt(c.total_bookings as string || '0', 10), 0);
+  const totalSpend = (clients ?? []).reduce((acc, c) => acc + parseFloat(c.estimated_spend_kes as string || '0'), 0);
+  const totalBookings = (clients ?? []).reduce((acc, c) => acc + parseInt(c.total_bookings as string || '0', 10), 0);
 
   return (
     <div className="space-y-6">
@@ -71,13 +72,13 @@ export default function ClientCRMPage() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-primary font-mono tracking-wider uppercase">Module 10</span>
             <span className="text-muted">/</span>
-            <span className="text-xs text-gray-400">Relations</span>
+            <span className="text-xs text-muted font-medium">Relations</span>
           </div>
-          <h1 className="text-2xl font-heading font-black text-white flex items-center gap-2.5 mt-1">
+          <h1 className="text-2xl font-heading font-black text-foreground flex items-center gap-2.5 mt-1">
             <Contact className="w-6 h-6 text-primary" />
             Client CRM & Contractor Directory
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-muted mt-0.5">
             Directory of infrastructure developers, contractors, and project managers renting heavy machinery across Kenya.
           </p>
         </div>
@@ -85,7 +86,7 @@ export default function ClientCRMPage() {
         <button 
           onClick={fetchCRM}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg border border-border text-sm font-medium transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-surface text-foreground rounded-lg border border-border text-sm font-semibold transition-all shadow-subtle cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 text-primary ${loading ? 'animate-spin' : ''}`} />
           Refresh Directory
@@ -94,48 +95,48 @@ export default function ClientCRMPage() {
 
       {/* Summary KPI Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
+        <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3 shadow-subtle">
+          <div className="p-3 bg-orange-50 rounded-lg text-primary">
             <Building2 className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-muted font-mono">ACTIVE CONTRACTORS</div>
-            <div className="text-xl font-heading font-bold text-white">{clients.length} Accounts</div>
+            <div className="text-xs text-muted font-mono font-semibold">ACTIVE CONTRACTORS</div>
+            <div className="text-xl font-heading font-bold text-foreground">{clients.length} Accounts</div>
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
-          <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
+        <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3 shadow-subtle">
+          <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
             <DollarSign className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-muted font-mono">CUMULATIVE BOOKING VALUE</div>
-            <div className="text-xl font-heading font-bold text-emerald-400">
+            <div className="text-xs text-muted font-mono font-semibold">CUMULATIVE BOOKING VALUE</div>
+            <div className="text-xl font-heading font-bold text-emerald-700">
               KES {totalSpend.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
             </div>
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
-          <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400">
+        <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3 shadow-subtle">
+          <div className="p-3 bg-amber-50 rounded-lg text-amber-600">
             <Award className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-muted font-mono">TOTAL MACHINERY HIRES</div>
-            <div className="text-xl font-heading font-bold text-amber-400">{totalBookings} Dispatches</div>
+            <div className="text-xs text-muted font-mono font-semibold">TOTAL MACHINERY HIRES</div>
+            <div className="text-xl font-heading font-bold text-amber-700">{totalBookings} Dispatches</div>
           </div>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div className="relative bg-surface border border-border rounded-xl p-2">
-        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="relative bg-white border border-border rounded-xl p-2 shadow-subtle">
+        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search contractor by company, representative name, email, or phone number..."
-          className="w-full pl-9 pr-4 py-2 bg-neutral-900 border border-border rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary"
+          className="w-full pl-9 pr-4 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder-zinc-400 focus:outline-none focus:border-primary focus:bg-white"
         />
       </div>
 
@@ -150,13 +151,13 @@ export default function ClientCRMPage() {
           return (
             <div 
               key={idx} 
-              className={`bg-surface border rounded-xl p-5 space-y-4 transition-all hover:border-primary/50 ${
-                isHighValue ? 'border-primary/40 bg-gradient-to-br from-surface to-neutral-900' : 'border-border'
+              className={`bg-white border rounded-xl p-5 space-y-4 transition-all shadow-subtle hover:border-primary/50 ${
+                isHighValue ? 'border-orange-300 bg-orange-50/20' : 'border-border'
               }`}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="font-heading font-bold text-white text-base flex items-center gap-1.5">
+                  <div className="font-heading font-bold text-foreground text-base flex items-center gap-1.5">
                     <Building2 className="w-4 h-4 text-primary" />
                     {client.client_name || 'Anonymous Contractor'}
                   </div>
@@ -166,24 +167,24 @@ export default function ClientCRMPage() {
                 </div>
 
                 {isHighValue && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/20 text-primary border border-primary/30">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-100 text-primary border border-orange-200">
                     VIP CLIENT
                   </span>
                 )}
               </div>
 
               {/* Spend and Orders */}
-              <div className="p-3 bg-neutral-900 rounded-lg space-y-1 text-xs font-mono">
+              <div className="p-3 bg-surface border border-border rounded-lg space-y-1 text-xs font-mono">
                 <div className="flex justify-between">
                   <span className="text-muted">Total Hires:</span>
-                  <span className="text-white font-bold">{client.total_bookings} orders ({client.confirmed_bookings} confirmed)</span>
+                  <span className="text-foreground font-bold">{client.total_bookings} orders ({client.confirmed_bookings} confirmed)</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted">Estimated Spend:</span>
-                  <span className="text-emerald-400 font-bold">KES {spend.toLocaleString()}</span>
+                  <span className="text-emerald-700 font-bold">KES {spend.toLocaleString()}</span>
                 </div>
                 {client.last_booking_date && (
-                  <div className="flex justify-between text-[11px] pt-1 border-t border-border/40 text-muted">
+                  <div className="flex justify-between text-[11px] pt-1 border-t border-border text-muted">
                     <span>Recent Activity:</span>
                     <span>{new Date(client.last_booking_date).toLocaleDateString()}</span>
                   </div>
@@ -196,7 +197,7 @@ export default function ClientCRMPage() {
                   href={`https://wa.me/${whatsappPhone}?text=Hello%20${encodeURIComponent(client.client_name || '')},%20following%20up%20from%20Hi%20Los%20Geht%20Machinery%20Dispatch.`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-all"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all shadow-subtle"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   WhatsApp
@@ -205,7 +206,7 @@ export default function ClientCRMPage() {
                 {client.client_phone && (
                   <a
                     href={`tel:${client.client_phone}`}
-                    className="p-2 bg-neutral-800 hover:bg-neutral-700 text-gray-300 hover:text-white rounded-lg transition-all"
+                    className="p-2 bg-surface hover:bg-surface-hover text-zinc-700 hover:text-foreground border border-border rounded-lg transition-all"
                     title="Call Contractor"
                   >
                     <Phone className="w-4 h-4" />
@@ -215,7 +216,7 @@ export default function ClientCRMPage() {
                 {client.client_email && (
                   <a
                     href={`mailto:${client.client_email}`}
-                    className="p-2 bg-neutral-800 hover:bg-neutral-700 text-gray-300 hover:text-white rounded-lg transition-all"
+                    className="p-2 bg-surface hover:bg-surface-hover text-zinc-700 hover:text-foreground border border-border rounded-lg transition-all"
                     title="Send Email"
                   >
                     <Mail className="w-4 h-4" />

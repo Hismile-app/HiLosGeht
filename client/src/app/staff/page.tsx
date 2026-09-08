@@ -39,10 +39,11 @@ export default function OperatorDailyLogPage() {
         const res = await fetch(`${apiUrl}/equipment`);
         if (res.ok) {
           const data = await res.json();
-          setFleet(data.data || []);
-          if (data.data && data.data.length > 0) {
-            setSelectedEquipmentId(data.data[0].id);
-            setStartMeter(String(data.data[0].current_hour_meter || 0));
+          const list = data?.data || [];
+          setFleet(list);
+          if (list.length > 0) {
+            setSelectedEquipmentId(list[0].id);
+            setStartMeter(String(list[0].current_hour_meter || 0));
           }
         }
       } catch (e) {
@@ -111,9 +112,9 @@ export default function OperatorDailyLogPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Failed to submit daily log.');
+        setError(data?.error || 'Failed to submit daily log.');
       } else {
-        setSubmittedLog(data.data);
+        setSubmittedLog(data?.data);
       }
     } catch (err: any) {
       setError('Connection error submitting operational log.');
@@ -131,11 +132,11 @@ export default function OperatorDailyLogPage() {
       
       {/* Top Header */}
       <div className="text-center mb-8 space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-primary/10 border border-primary/40 text-primary font-mono text-xs uppercase shadow-neon">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-orange-50 border border-orange-200 text-primary font-mono text-xs uppercase shadow-subtle">
           <ClipboardList className="w-3.5 h-3.5" />
           <span>Operator Field Portal • Meru Jobsite</span>
         </div>
-        <h1 className="font-heading font-black text-2xl sm:text-3xl text-white uppercase">
+        <h1 className="font-heading font-black text-2xl sm:text-3xl text-foreground uppercase">
           Daily Operational Log
         </h1>
         <p className="text-xs text-muted">
@@ -143,39 +144,39 @@ export default function OperatorDailyLogPage() {
         </p>
       </div>
 
-      <GlassCard className="p-6 sm:p-8 space-y-6 border border-border">
+      <GlassCard className="p-6 sm:p-8 space-y-6 border border-border shadow-subtle bg-white">
         
         {error && (
-          <div className="p-3.5 rounded-lg bg-rose-950/60 border border-rose-700 text-rose-300 text-xs flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-start gap-2.5 font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
             <span>{error}</span>
           </div>
         )}
 
         {submittedLog ? (
           <div className="text-center py-8 space-y-5">
-            <div className="w-16 h-16 rounded-full bg-emerald-950/80 border border-emerald-500 text-emerald-400 mx-auto flex items-center justify-center shadow-neon">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-700 mx-auto flex items-center justify-center shadow-subtle">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h2 className="font-heading text-xl font-bold text-white uppercase">
+            <h2 className="font-heading text-xl font-bold text-foreground uppercase">
               Log Successfully Recorded!
             </h2>
-            <p className="text-xs text-gray-300 max-w-md mx-auto">
+            <p className="text-xs text-muted max-w-md mx-auto">
               Your daily submission has been logged into the central ledger. Fleet hour meter and AI fuel diagnostic engines updated.
             </p>
 
-            <div className="p-4 bg-surface-card rounded-lg border border-border text-xs text-left space-y-2 max-w-md mx-auto font-mono">
+            <div className="p-4 bg-surface rounded-xl border border-border text-xs text-left space-y-2 max-w-md mx-auto font-mono">
               <div className="flex justify-between">
                 <span className="text-muted">Hours Worked:</span>
                 <span className="text-primary font-bold">{hoursWorked} hrs</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted">Meter Reading:</span>
-                <span className="text-white">{startMeter} → {endMeter}</span>
+                <span className="text-foreground font-semibold">{startMeter} → {endMeter}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted">Fuel Purchased:</span>
-                <span className="text-white">{fuelAmount || '0'} Litres</span>
+                <span className="text-foreground font-semibold">{fuelAmount || '0'} Litres</span>
               </div>
             </div>
 
@@ -199,7 +200,7 @@ export default function OperatorDailyLogPage() {
             
             {/* Machinery Selector */}
             <div>
-              <label className="block text-gray-300 font-mono mb-1.5 flex items-center gap-1.5">
+              <label className="block text-zinc-700 font-mono mb-1.5 flex items-center gap-1.5 font-semibold">
                 <Truck className="w-3.5 h-3.5 text-primary" />
                 Active Heavy Machinery *
               </label>
@@ -207,7 +208,7 @@ export default function OperatorDailyLogPage() {
                 required
                 value={selectedEquipmentId}
                 onChange={handleEquipmentChange}
-                className="w-full bg-neutral-900 border border-border rounded px-3 py-2.5 text-sm text-white focus:border-primary focus:outline-none"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none cursor-pointer"
               >
                 {fleet.map((eq) => (
                   <option key={eq.id} value={eq.id}>
@@ -220,7 +221,7 @@ export default function OperatorDailyLogPage() {
             {/* Hour Meter Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-300 font-mono mb-1.5 flex items-center gap-1.5">
+                <label className="block text-zinc-700 font-mono mb-1.5 flex items-center gap-1.5 font-semibold">
                   <Clock className="w-3.5 h-3.5 text-primary" />
                   Start Hour Meter (hrs) *
                 </label>
@@ -231,12 +232,12 @@ export default function OperatorDailyLogPage() {
                   placeholder="e.g. 41.0"
                   value={startMeter}
                   onChange={(e) => setStartMeter(e.target.value)}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-300 font-mono mb-1.5 flex items-center gap-1.5">
+                <label className="block text-zinc-700 font-mono mb-1.5 flex items-center gap-1.5 font-semibold">
                   <Clock className="w-3.5 h-3.5 text-primary" />
                   End Hour Meter (hrs) *
                 </label>
@@ -247,14 +248,14 @@ export default function OperatorDailyLogPage() {
                   placeholder="e.g. 48.0"
                   value={endMeter}
                   onChange={(e) => setEndMeter(e.target.value)}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Calculated Hours Banner */}
-            <div className="p-3 bg-neutral-900 rounded-lg border border-border/80 flex items-center justify-between font-mono">
-              <span className="text-muted">Calculated Today's Yield:</span>
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center justify-between font-mono">
+              <span className="text-zinc-700 font-semibold">Calculated Today's Yield:</span>
               <span className="text-primary font-bold text-sm">
                 {hoursWorked} Operational Hours
               </span>
@@ -262,7 +263,7 @@ export default function OperatorDailyLogPage() {
 
             {/* Trips & Work Done */}
             <div>
-              <label className="block text-gray-300 font-mono mb-1.5 flex items-center gap-1.5">
+              <label className="block text-zinc-700 font-mono mb-1.5 flex items-center gap-1.5 font-semibold">
                 <FileText className="w-3.5 h-3.5 text-primary" />
                 Trips / Work Done Summary *
               </label>
@@ -272,15 +273,15 @@ export default function OperatorDailyLogPage() {
                 placeholder="e.g. Moved 5 trips of soil from site A to Meru bypass road section 3."
                 value={workDescription}
                 onChange={(e) => setWorkDescription(e.target.value)}
-                className="w-full bg-neutral-900 border border-border rounded p-3 text-sm text-white focus:border-primary focus:outline-none"
+                className="w-full bg-surface border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
               />
             </div>
 
             {/* Purchases / Fuel */}
-            <div className="p-4 bg-surface-card rounded-lg border border-border/70 space-y-3">
-              <div className="flex items-center gap-2 font-mono text-gray-200">
+            <div className="p-4 bg-surface rounded-xl border border-border space-y-3">
+              <div className="flex items-center gap-2 font-mono text-foreground font-semibold">
                 <Fuel className="w-4 h-4 text-primary" />
-                <span className="font-semibold">Fuel Purchase & Receipt</span>
+                <span>Fuel Purchase & Receipt</span>
               </div>
               
               <div>
@@ -293,7 +294,7 @@ export default function OperatorDailyLogPage() {
                   placeholder="e.g. 92.12"
                   value={fuelAmount}
                   onChange={(e) => setFuelAmount(e.target.value)}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
@@ -305,16 +306,16 @@ export default function OperatorDailyLogPage() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileUpload(e, 'fuel')}
-                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-neutral-800 file:text-primary hover:file:bg-neutral-700"
+                  className="w-full text-xs text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
                 />
               </div>
             </div>
 
             {/* Materials Received */}
-            <div className="p-4 bg-surface-card rounded-lg border border-border/70 space-y-3">
-              <div className="flex items-center gap-2 font-mono text-gray-200">
+            <div className="p-4 bg-surface rounded-xl border border-border space-y-3">
+              <div className="flex items-center gap-2 font-mono text-foreground font-semibold">
                 <PackageCheck className="w-4 h-4 text-primary" />
-                <span className="font-semibold">Materials Received / Site Haulage</span>
+                <span>Materials Received / Site Haulage</span>
               </div>
 
               <div>
@@ -326,7 +327,7 @@ export default function OperatorDailyLogPage() {
                   placeholder="e.g. 1 truck of ballast / 20 tons quarry rock"
                   value={materialsReceived}
                   onChange={(e) => setMaterialsReceived(e.target.value)}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
@@ -338,7 +339,7 @@ export default function OperatorDailyLogPage() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileUpload(e, 'mat')}
-                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-neutral-800 file:text-primary hover:file:bg-neutral-700"
+                  className="w-full text-xs text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
                 />
               </div>
             </div>

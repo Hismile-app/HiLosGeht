@@ -30,7 +30,7 @@ export default function InboxKanbanPage() {
       const res = await fetch(`${apiUrl}/inquiries`);
       if (res.ok) {
         const data = await res.json();
-        setInquiries(data.data || []);
+        setInquiries(data?.data || []);
       }
     } catch (e) {
       // fallback
@@ -57,22 +57,22 @@ export default function InboxKanbanPage() {
     }
   };
 
-  const pendingLeads = inquiries.filter(i => i.status === 'PENDING');
-  const confirmedBookings = inquiries.filter(i => i.status === 'CONFIRMED');
-  const cancelledInquiries = inquiries.filter(i => i.status === 'CANCELLED');
+  const pendingLeads = (inquiries ?? []).filter(i => i.status === 'PENDING');
+  const confirmedBookings = (inquiries ?? []).filter(i => i.status === 'CONFIRMED');
+  const cancelledInquiries = (inquiries ?? []).filter(i => i.status === 'CANCELLED');
 
   return (
     <div className="space-y-6">
       
       {/* Header */}
       <div>
-        <div className="text-primary font-mono text-xs uppercase mb-1">
+        <div className="text-primary font-mono text-xs uppercase mb-1 font-semibold">
           Module 3: Order & Request Inbox
         </div>
-        <h1 className="font-heading font-black text-2xl sm:text-3xl text-white uppercase">
+        <h1 className="font-heading font-black text-2xl sm:text-3xl text-foreground uppercase">
           Client Booking Inquiries & Negotiations
         </h1>
-        <p className="text-xs text-muted">
+        <p className="text-xs text-muted mt-0.5">
           High-touch B2B negotiation board. Tentative calendar holds are automatically logged upon lead capture.
         </p>
       </div>
@@ -82,33 +82,33 @@ export default function InboxKanbanPage() {
         
         {/* Column 1: New Leads / Pending */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-surface-card border border-amber-800/40">
-            <span className="font-heading font-bold text-xs text-amber-400 uppercase tracking-wider flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+          <div className="flex items-center justify-between p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+            <span className="font-heading font-bold text-xs text-amber-800 uppercase tracking-wider flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-600" />
               New Leads (Pending)
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-amber-950 text-amber-400 text-[10px] font-mono font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 text-[10px] font-mono font-bold">
               {pendingLeads.length}
             </span>
           </div>
 
           <div className="space-y-3">
             {pendingLeads.map((item) => (
-              <GlassCard key={item.id} className="p-4 space-y-3 border-amber-900/30">
+              <GlassCard key={item.id} className="p-4 space-y-3 border-amber-200 hover:border-amber-400">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-bold text-white text-sm">{item.client_name}</h3>
+                    <h3 className="font-bold text-foreground text-sm">{item.client_name}</h3>
                     <div className="text-[11px] text-muted font-mono">{item.client_email}</div>
                   </div>
                   <StatusBadge status={item.status} />
                 </div>
 
-                <div className="p-2.5 rounded bg-neutral-900 text-xs space-y-1 font-mono">
-                  <div className="text-primary font-semibold flex items-center gap-1.5">
+                <div className="p-2.5 rounded-lg bg-surface text-xs space-y-1 font-mono border border-border">
+                  <div className="text-primary font-bold flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5" />
                     {item.equipment_name || item.equipment_model}
                   </div>
-                  <div className="text-gray-300 text-[11px] flex items-center gap-1.5">
+                  <div className="text-zinc-700 text-[11px] flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-muted" />
                     {formatDate(item.start_date)} → {formatDate(item.end_date)}
                   </div>
@@ -119,7 +119,7 @@ export default function InboxKanbanPage() {
                     href={`https://wa.me/${(item.client_phone || '').replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(item.client_name)}%2C%20HLG%20Dispatch%20team%20confirming%20your%20inquiry%20for%20${encodeURIComponent(item.equipment_name || 'equipment')}.`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-400 hover:text-emerald-300 font-mono text-[11px] flex items-center gap-1"
+                    className="text-emerald-700 hover:text-emerald-800 font-mono text-[11px] font-bold flex items-center gap-1"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     Chat on WhatsApp
@@ -128,13 +128,13 @@ export default function InboxKanbanPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => handleStatusChange(item.id, 'CONFIRMED')}
-                      className="px-2.5 py-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-700 hover:bg-emerald-900 text-[10px] font-bold uppercase font-mono"
+                      className="px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 text-[10px] font-bold uppercase font-mono cursor-pointer transition-colors"
                     >
                       Confirm
                     </button>
                     <button
                       onClick={() => handleStatusChange(item.id, 'CANCELLED')}
-                      className="px-2 py-1 rounded bg-neutral-900 text-gray-400 hover:text-red-400 text-[10px] font-mono"
+                      className="px-2 py-1 rounded bg-surface hover:bg-rose-50 text-zinc-600 hover:text-rose-600 text-[10px] font-mono cursor-pointer transition-colors"
                     >
                       Cancel
                     </button>
@@ -144,7 +144,7 @@ export default function InboxKanbanPage() {
             ))}
 
             {pendingLeads.length === 0 && (
-              <div className="p-6 text-center text-xs text-muted font-mono rounded-lg border border-dashed border-border">
+              <div className="p-6 text-center text-xs text-muted font-mono rounded-xl border border-dashed border-border bg-surface">
                 No pending inquiries.
               </div>
             )}
@@ -153,33 +153,33 @@ export default function InboxKanbanPage() {
 
         {/* Column 2: Confirmed Booked */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-surface-card border border-emerald-800/40">
-            <span className="font-heading font-bold text-xs text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
+          <div className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+            <span className="font-heading font-bold text-xs text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               Confirmed Bookings
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 text-[10px] font-mono font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 text-[10px] font-mono font-bold">
               {confirmedBookings.length}
             </span>
           </div>
 
           <div className="space-y-3">
             {confirmedBookings.map((item) => (
-              <GlassCard key={item.id} className="p-4 space-y-3 border-emerald-900/30">
+              <GlassCard key={item.id} className="p-4 space-y-3 border-emerald-200 hover:border-emerald-400">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-bold text-white text-sm">{item.client_name}</h3>
+                    <h3 className="font-bold text-foreground text-sm">{item.client_name}</h3>
                     <div className="text-[11px] text-muted font-mono">{item.client_phone}</div>
                   </div>
                   <StatusBadge status={item.status} />
                 </div>
 
-                <div className="p-2.5 rounded bg-neutral-900 text-xs space-y-1 font-mono">
-                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                <div className="p-2.5 rounded-lg bg-surface text-xs space-y-1 font-mono border border-border">
+                  <div className="text-emerald-700 font-bold flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5" />
                     {item.equipment_name || item.equipment_model}
                   </div>
-                  <div className="text-gray-300 text-[11px]">
+                  <div className="text-zinc-700 text-[11px]">
                     Dates: {formatDate(item.start_date)} → {formatDate(item.end_date)}
                   </div>
                   <div className="text-primary font-bold text-[11px]">
@@ -188,10 +188,10 @@ export default function InboxKanbanPage() {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
-                  <span className="text-muted text-[10px] font-mono">GiST Hold Active</span>
+                  <span className="text-muted text-[10px] font-mono font-semibold">GiST Hold Active</span>
                   <button
                     onClick={() => handleStatusChange(item.id, 'CANCELLED')}
-                    className="text-gray-400 hover:text-red-400 text-[10px] font-mono"
+                    className="text-zinc-500 hover:text-rose-600 text-[10px] font-mono cursor-pointer transition-colors"
                   >
                     Release Hold
                   </button>
@@ -200,7 +200,7 @@ export default function InboxKanbanPage() {
             ))}
 
             {confirmedBookings.length === 0 && (
-              <div className="p-6 text-center text-xs text-muted font-mono rounded-lg border border-dashed border-border">
+              <div className="p-6 text-center text-xs text-muted font-mono rounded-xl border border-dashed border-border bg-surface">
                 No active confirmed bookings.
               </div>
             )}
@@ -209,21 +209,21 @@ export default function InboxKanbanPage() {
 
         {/* Column 3: Cancelled / Archived */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-surface-card border border-neutral-800">
-            <span className="font-heading font-bold text-xs text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <XCircle className="w-4 h-4" />
+          <div className="flex items-center justify-between p-3.5 rounded-xl bg-zinc-100 border border-zinc-200">
+            <span className="font-heading font-bold text-xs text-zinc-700 uppercase tracking-wider flex items-center gap-2">
+              <XCircle className="w-4 h-4 text-zinc-500" />
               Cancelled / Archived
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-neutral-900 text-gray-400 text-[10px] font-mono font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-zinc-200 text-zinc-700 text-[10px] font-mono font-bold">
               {cancelledInquiries.length}
             </span>
           </div>
 
           <div className="space-y-3">
             {cancelledInquiries.map((item) => (
-              <GlassCard key={item.id} className="p-4 space-y-2 opacity-60 hover:opacity-100 transition-opacity">
+              <GlassCard key={item.id} className="p-4 space-y-2 opacity-70 hover:opacity-100 transition-opacity">
                 <div className="flex items-start justify-between">
-                  <h3 className="font-bold text-white text-xs">{item.client_name}</h3>
+                  <h3 className="font-bold text-foreground text-xs">{item.client_name}</h3>
                   <StatusBadge status={item.status} />
                 </div>
                 <div className="text-[11px] font-mono text-muted">
@@ -231,7 +231,7 @@ export default function InboxKanbanPage() {
                 </div>
                 <button
                   onClick={() => handleStatusChange(item.id, 'PENDING')}
-                  className="text-xs text-primary font-mono hover:underline block pt-1"
+                  className="text-xs text-primary font-mono hover:underline block pt-1 font-semibold cursor-pointer"
                 >
                   Reopen Inquiry
                 </button>
@@ -239,7 +239,7 @@ export default function InboxKanbanPage() {
             ))}
 
             {cancelledInquiries.length === 0 && (
-              <div className="p-6 text-center text-xs text-muted font-mono rounded-lg border border-dashed border-border">
+              <div className="p-6 text-center text-xs text-muted font-mono rounded-xl border border-dashed border-border bg-surface">
                 No archived inquiries.
               </div>
             )}

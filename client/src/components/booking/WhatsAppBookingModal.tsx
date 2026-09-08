@@ -13,23 +13,28 @@ import {
   AlertTriangle, 
   CheckCircle2, 
   Truck, 
-  ArrowRight 
+  ArrowRight,
+  ShieldCheck 
 } from 'lucide-react';
-import NeonButton from '../common/NeonButton';
 
 interface WhatsAppBookingModalProps {
   equipment: Equipment | null;
   isOpen: boolean;
   onClose: () => void;
+  prefillDates?: {
+    startDate?: string;
+    endDate?: string;
+  };
 }
 
 export default function WhatsAppBookingModal({
   equipment,
   isOpen,
   onClose,
+  prefillDates
 }: WhatsAppBookingModalProps) {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(prefillDates?.startDate || '');
+  const [endDate, setEndDate] = useState(prefillDates?.endDate || '');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -53,7 +58,8 @@ export default function WhatsAppBookingModal({
   };
 
   const days = getDaysCount();
-  const estimatedTotal = days * equipment.daily_rate;
+  const dailyRate = typeof equipment.daily_rate === 'number' ? equipment.daily_rate : parseFloat(equipment.daily_rate as string || '0');
+  const estimatedTotal = days * dailyRate;
 
   const targetWhatsApp = whatsappLine === 'PRIMARY' ? '254717186396' : '254748866823';
   const displayPhone = whatsappLine === 'PRIMARY' ? '0717 186396 (Primary)' : '0748866823 (Backup)';
@@ -84,16 +90,16 @@ export default function WhatsAppBookingModal({
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.error?.includes('already booked') || res.status === 409) {
+        if (data?.error?.includes('already booked') || res.status === 409) {
           setConflictError('⚠️ Exclusion Conflict: This machine has an active reservation during your selected dates. Please adjust your date range.');
         } else {
-          setConflictError(data.error || 'Failed to submit inquiry.');
+          setConflictError(data?.error || 'Failed to submit inquiry.');
         }
         setLoading(false);
         return;
       }
 
-      setSuccessData(data.data);
+      setSuccessData(data.data || { client_name: clientName });
 
       // 2. If preferred contact is WhatsApp, open click-to-chat link
       if (preferredContact === 'WHATSAPP') {
@@ -126,25 +132,25 @@ export default function WhatsAppBookingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl bg-surface border border-primary/40 rounded-xl shadow-2xl overflow-hidden text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl bg-white border border-border rounded-2xl shadow-2xl overflow-hidden text-ink">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-surface-card border-b border-border">
+        <div className="flex items-center justify-between px-6 py-4 bg-surface border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-primary/20 border border-primary/50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
               <Truck className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-heading text-lg font-bold text-white tracking-wide">
-                Direct Machinery Booking
+              <h2 className="font-heading text-lg font-bold text-ink tracking-wide">
+                Machinery Booking & Inquiry
               </h2>
               <p className="text-xs text-muted font-mono">{equipment.name} • {equipment.model}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg bg-surface hover:bg-neutral-800 text-gray-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-zinc-200 text-zinc-500 hover:text-ink transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -153,59 +159,73 @@ export default function WhatsAppBookingModal({
         {/* Modal Content */}
         {successData ? (
           <div className="p-8 text-center space-y-5">
-            <div className="w-16 h-16 rounded-full bg-emerald-950/80 border border-emerald-500 text-emerald-400 mx-auto flex items-center justify-center shadow-neon">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-600 mx-auto flex items-center justify-center shadow-subtle">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h3 className="font-heading text-2xl font-bold text-white">
-              Booking Hold Registered!
+            <h3 className="font-heading text-2xl font-bold text-ink">
+              Inquiry & Hold Registered!
             </h3>
-            <p className="text-sm text-gray-300 max-w-md mx-auto">
-              Your inquiry for <strong className="text-primary">{equipment.name}</strong> from <strong>{startDate}</strong> to <strong>{endDate}</strong> has been logged in the HLG Dispatch Command Center.
+            <p className="text-sm text-zinc-600 max-w-md mx-auto">
+              Your booking inquiry for <strong className="text-primary">{equipment.name}</strong> from <strong>{startDate}</strong> to <strong>{endDate}</strong> has been logged in the HLG Dispatch Command Center.
             </p>
             
-            <div className="p-4 bg-surface-card rounded-lg border border-border text-xs text-muted space-y-2 text-left max-w-md mx-auto">
-              <p><strong>Client:</strong> {clientName} ({clientEmail})</p>
-              <p><strong>Estimated Total:</strong> {formatCurrency(estimatedTotal)} ({days} days @ {formatCurrency(equipment.daily_rate)}/day)</p>
-              <p><strong>Routing:</strong> {preferredContact === 'WHATSAPP' ? `WhatsApp Chat (${displayPhone})` : 'Email Negotiation'}</p>
+            <div className="p-4 bg-surface rounded-xl border border-border text-xs text-zinc-700 space-y-2 text-left max-w-md mx-auto font-mono">
+              <p><strong>Contractor:</strong> {clientName} ({clientEmail || clientPhone})</p>
+              <p><strong>Quotation:</strong> {formatCurrency(estimatedTotal)} ({days} days @ {formatCurrency(dailyRate)}/day)</p>
+              <p><strong>Dispatch Channel:</strong> {preferredContact === 'WHATSAPP' ? `WhatsApp (${displayPhone})` : 'Email Negotiation'}</p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
               {preferredContact === 'WHATSAPP' && (
                 <a
                   href={buildWhatsAppBookingLink(targetWhatsApp, equipment.name, startDate, endDate, clientName, clientEmail)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="neon-btn text-xs py-3 px-6"
+                  className="btn-primary py-2.5 px-5 text-xs flex items-center gap-2"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  Re-Open WhatsApp Chat
+                  Start WhatsApp Chat
                 </a>
               )}
-              <NeonButton variant="outline" onClick={onClose} size="sm">
-                Close & Return to Catalog
-              </NeonButton>
+              {preferredContact === 'EMAIL' && (
+                <a
+                  href={`mailto:hilosgehtinfo@gmail.com?subject=Booking%20Inquiry:%20${encodeURIComponent(equipment.name)}&body=Hello%20HLG%20Dispatch,%0D%0A%0D%0AMy%20name%20is%20${encodeURIComponent(clientName)}.%20I%20would%20like%20to%20hire%20the%20${encodeURIComponent(equipment.name)}%20from%20${startDate}%20to%20${endDate}.`}
+                  className="btn-primary py-2.5 px-5 text-xs flex items-center gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  Open Email Thread
+                </a>
+              )}
+              <button 
+                onClick={onClose}
+                className="btn-secondary py-2.5 px-5 text-xs"
+              >
+                Close Window
+              </button>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
             
             {/* Machine Summary Pill */}
-            <div className="flex items-center justify-between p-3.5 rounded-lg bg-surface-card border border-border text-xs">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-surface border border-border text-xs">
               <div>
                 <span className="text-muted block">Category: {equipment.category}</span>
                 <span className="text-primary font-bold text-base font-heading">
-                  {formatCurrency(equipment.daily_rate)} <span className="text-xs text-muted font-normal">/ day</span>
+                  {formatCurrency(dailyRate)} <span className="text-xs text-muted font-normal">/ day</span>
                 </span>
               </div>
               <div className="text-right">
                 <span className="text-muted block">Status</span>
-                <span className="text-emerald-400 font-mono font-semibold">Available for Project Dates</span>
+                <span className="text-emerald-600 font-mono font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Available for Project
+                </span>
               </div>
             </div>
 
             {conflictError && (
-              <div className="p-3.5 rounded-lg bg-rose-950/60 border border-rose-700 text-rose-300 text-xs flex items-start gap-2.5">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-start gap-2.5 font-sans">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
                 <span>{conflictError}</span>
               </div>
             )}
@@ -213,7 +233,7 @@ export default function WhatsAppBookingModal({
             {/* Date Selection */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-mono text-gray-300 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-mono text-zinc-700 mb-1.5 flex items-center gap-1.5 font-bold">
                   <Calendar className="w-3.5 h-3.5 text-primary" />
                   Project Start Date *
                 </label>
@@ -223,12 +243,12 @@ export default function WhatsAppBookingModal({
                   min={new Date().toISOString().split('T')[0]}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-gray-300 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-mono text-zinc-700 mb-1.5 flex items-center gap-1.5 font-bold">
                   <Calendar className="w-3.5 h-3.5 text-primary" />
                   Project End Date *
                 </label>
@@ -238,7 +258,7 @@ export default function WhatsAppBookingModal({
                   min={startDate || new Date().toISOString().split('T')[0]}
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
@@ -246,7 +266,7 @@ export default function WhatsAppBookingModal({
             {/* Client Contact Info */}
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-mono text-gray-300 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-mono text-zinc-700 mb-1.5 flex items-center gap-1.5 font-bold">
                   <User className="w-3.5 h-3.5 text-primary" />
                   Full Name / Contractor Entity *
                 </label>
@@ -256,38 +276,38 @@ export default function WhatsAppBookingModal({
                   placeholder="e.g. John Mutwiri (Meru Highway Contractors)"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-mono text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-xs font-mono text-zinc-700 mb-1.5 flex items-center gap-1.5 font-bold">
                     <Mail className="w-3.5 h-3.5 text-primary" />
-                    Email Address *
+                    Email Address {preferredContact === 'EMAIL' ? '*' : '(Optional)'}
                   </label>
                   <input
                     type="email"
-                    required
+                    required={preferredContact === 'EMAIL'}
                     placeholder="site.manager@contractor.ke"
                     value={clientEmail}
                     onChange={(e) => setClientEmail(e.target.value)}
-                    className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-xs font-mono text-zinc-700 mb-1.5 flex items-center gap-1.5 font-bold">
                     <Phone className="w-3.5 h-3.5 text-primary" />
-                    Phone / WhatsApp Number *
+                    Phone / WhatsApp Number {preferredContact === 'WHATSAPP' ? '*' : '(Optional)'}
                   </label>
                   <input
                     type="tel"
-                    required
+                    required={preferredContact === 'WHATSAPP'}
                     placeholder="e.g. 0712 345678"
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
-                    className="w-full bg-neutral-900 border border-border rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
                   />
                 </div>
               </div>
@@ -295,30 +315,30 @@ export default function WhatsAppBookingModal({
 
             {/* Communication Routing Choice */}
             <div className="space-y-2 pt-1">
-              <label className="block text-xs font-mono text-gray-300">
+              <label className="block text-xs font-mono text-zinc-700 font-bold">
                 Preferred Negotiation Channel:
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setPreferredContact('WHATSAPP')}
-                  className={`p-3 rounded-lg border flex items-center justify-center gap-2 text-xs font-medium transition-all ${
+                  className={`p-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all ${
                     preferredContact === 'WHATSAPP'
-                      ? 'bg-emerald-950/70 border-emerald-500 text-emerald-300 shadow-neon'
-                      : 'bg-surface-card border-border text-gray-400 hover:text-white'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
+                      : 'bg-surface border-border text-zinc-600 hover:text-ink'
                   }`}
                 >
-                  <MessageSquare className="w-4 h-4 text-emerald-400" />
+                  <MessageSquare className="w-4 h-4 text-emerald-600" />
                   <span>WhatsApp Chat (Instant)</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPreferredContact('EMAIL')}
-                  className={`p-3 rounded-lg border flex items-center justify-center gap-2 text-xs font-medium transition-all ${
+                  className={`p-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all ${
                     preferredContact === 'EMAIL'
-                      ? 'bg-primary/20 border-primary text-primary shadow-neon'
-                      : 'bg-surface-card border-border text-gray-400 hover:text-white'
+                      ? 'bg-primary-light border-primary text-primary shadow-sm'
+                      : 'bg-surface border-border text-zinc-600 hover:text-ink'
                   }`}
                 >
                   <Mail className="w-4 h-4 text-primary" />
@@ -329,8 +349,8 @@ export default function WhatsAppBookingModal({
 
             {/* WhatsApp Line Selection if WhatsApp is active */}
             {preferredContact === 'WHATSAPP' && (
-              <div className="p-3 bg-surface-card rounded-lg border border-border/70 text-xs space-y-2">
-                <span className="text-muted block text-[11px] font-mono">Select Dispatch Line:</span>
+              <div className="p-3 bg-surface rounded-xl border border-border text-xs space-y-2">
+                <span className="text-muted block text-[11px] font-mono font-bold">Select Dispatch Line:</span>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -340,7 +360,7 @@ export default function WhatsAppBookingModal({
                       onChange={() => setWhatsappLine('PRIMARY')}
                       className="accent-primary"
                     />
-                    <span className="text-gray-200">0717 186396 <span className="text-primary font-bold">(Primary)</span></span>
+                    <span className="text-zinc-800 font-mono">0717 186396 <span className="text-primary font-bold">(Primary)</span></span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -350,7 +370,7 @@ export default function WhatsAppBookingModal({
                       onChange={() => setWhatsappLine('BACKUP')}
                       className="accent-primary"
                     />
-                    <span className="text-gray-200">0748866823 (Backup)</span>
+                    <span className="text-zinc-800 font-mono">0748866823 (Backup)</span>
                   </label>
                 </div>
               </div>
@@ -358,13 +378,13 @@ export default function WhatsAppBookingModal({
 
             {/* Price Estimation */}
             {startDate && endDate && (
-              <div className="p-3.5 bg-neutral-900 rounded-lg border border-primary/30 flex items-center justify-between text-xs">
+              <div className="p-3.5 bg-surface rounded-xl border border-primary/30 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-muted block">Duration: {days} Day(s)</span>
-                  <span className="text-gray-200">{startDate} → {endDate}</span>
+                  <span className="text-muted block font-mono">Duration: {days} Day(s)</span>
+                  <span className="text-zinc-800 font-mono font-semibold">{startDate} &rarr; {endDate}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-muted block">Estimated Quotation</span>
+                  <span className="text-muted block font-mono">Estimated Quotation</span>
                   <span className="text-primary font-bold text-lg font-heading">
                     {formatCurrency(estimatedTotal)}
                   </span>
@@ -377,18 +397,17 @@ export default function WhatsAppBookingModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded text-xs text-gray-400 hover:text-white"
+                className="px-4 py-2 rounded-lg text-xs text-zinc-600 hover:text-ink font-semibold"
               >
                 Cancel
               </button>
-              <NeonButton
+              <button
                 type="submit"
                 disabled={loading}
-                className="text-xs py-3 px-6"
-                icon={preferredContact === 'WHATSAPP' ? <MessageSquare className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                className="btn-primary text-xs py-2.5 px-5"
               >
-                {loading ? 'Processing...' : preferredContact === 'WHATSAPP' ? 'Open WhatsApp Negotiation' : 'Send Booking Request'}
-              </NeonButton>
+                {loading ? 'Processing...' : preferredContact === 'WHATSAPP' ? 'Confirm Inquiry & Open WhatsApp' : 'Submit Booking Inquiry'}
+              </button>
             </div>
 
           </form>

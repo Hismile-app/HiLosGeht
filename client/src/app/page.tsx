@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Truck, 
@@ -15,16 +15,18 @@ import {
   Gauge, 
   Clock, 
   Wrench,
-  ChevronRight
+  ChevronRight,
+  Layers,
+  MapPin,
+  FileText,
+  Activity,
+  Award
 } from 'lucide-react';
-import NeonButton from '@/components/common/NeonButton';
-import GlassCard from '@/components/common/GlassCard';
-import StatusBadge from '@/components/common/StatusBadge';
 import WhatsAppBookingModal from '@/components/booking/WhatsAppBookingModal';
 import { Equipment } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 
-// Static Fleet Preview Data
+// Core 8 Machinery Models matching brochure
 const FEATURED_FLEET: Equipment[] = [
   {
     id: '11111111-1111-1111-1111-111111111101',
@@ -103,6 +105,21 @@ const FEATURED_FLEET: Equipment[] = [
     }
   },
   {
+    id: '11111111-1111-1111-1111-111111111106',
+    name: 'XCMG XS163J Vibratory Road Roller',
+    category: 'Roller',
+    model: 'XCMG XS163J',
+    daily_rate: 32000,
+    status: 'AVAILABLE',
+    image_url: '/images/equipment/xcmg_xs163j.png',
+    current_hour_meter: 89.5,
+    specs: {
+      operating_weight: '16,000 kg (16 Ton)',
+      drum_width: '2,130 mm',
+      vibration_frequency: '28/33 Hz',
+    }
+  },
+  {
     id: '11111111-1111-1111-1111-111111111107',
     name: 'Isuzu FVZ 34 Heavy Tipper (15 Ton)',
     category: 'Tipper',
@@ -116,249 +133,295 @@ const FEATURED_FLEET: Equipment[] = [
       power_output: '280 HP',
       tipping_body: 'Heavy Duty Box',
     }
+  },
+  {
+    id: '11111111-1111-1111-1111-111111111108',
+    name: 'Heavy Lowbed Semi-Trailer',
+    category: 'Haulage',
+    model: 'Multi-Axle Heavy Hauler',
+    daily_rate: 55000,
+    status: 'AVAILABLE',
+    image_url: '/images/equipment/lowbed_trailer.png',
+    current_hour_meter: 620.0,
+    specs: {
+      payload_capacity: '60,000 kg (60 Ton)',
+      deck_length: '12.5 m',
+      axles: '3-Axle Heavy Duty',
+    }
   }
 ];
 
-export default function HomePage() {
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
-  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+// Core 8 Infrastructure Services
+const CORE_SERVICES = [
+  { title: 'Excavation & Trenching', desc: 'Deep quarry mining, foundation digging, and stormwater drainage channels.', icon: Truck },
+  { title: 'Sub-Base Paving & Grading', desc: 'Precision highway leveling, camber formation, and gravel spreading with Shantui SG18-3.', icon: Layers },
+  { title: 'Mass Earthmoving & Land Clearing', desc: 'Bulk site leveling, dam construction, and bush clearing via Komatsu D155AX-8.', icon: Flame },
+  { title: 'Heavy Aggregate Haulage', desc: '15-ton tipping and site transport for ballast, murram, and quarry sand across Meru.', icon: Gauge },
+  { title: 'Vibratory Soil Compaction', desc: '16-ton dynamic roadbed compaction ensuring maximum proctor density on subgrade.', icon: Activity },
+  { title: 'Heavy Plant Mobilization', desc: 'Multi-axle 60-ton lowbed semi-trailer haulage for site-to-site machinery moves.', icon: Wrench },
+  { title: 'Civil Trench & Utility Digging', desc: 'JCB 3DXPLUS dual backhoe trenching for piping, power cables, and culverts.', icon: Clock },
+  { title: 'ISO 15143-3 Telemetry Fleet', desc: 'AEMP 2.0 connected telematics monitoring hourly burn rates, wear, and preventive service.', icon: Cpu },
+];
 
-  const handleBookClick = (machine: Equipment) => {
-    setSelectedEquipment(machine);
-    setBookingModalOpen(true);
+export default function HomePage() {
+  const [fleet, setFleet] = useState<Equipment[]>(FEATURED_FLEET);
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadRealFleet() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const res = await fetch(`${apiUrl}/equipment`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
+            setFleet(json.data);
+          }
+        }
+      } catch (err) {
+        // Fallback to static verified brochure data
+      }
+    }
+    loadRealFleet();
+  }, []);
+
+  const handleBookNow = (item: Equipment) => {
+    setSelectedEquipment(item);
+    setModalOpen(true);
   };
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="bg-white text-ink">
       
-      {/* Background Cyber-Industrial Pattern */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 blur-[140px] rounded-full pointer-events-none" />
-
-      {/* --- HERO SECTION --- */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24 lg:pt-20 lg:pb-32">
-        <div className="text-center max-w-4xl mx-auto space-y-8">
-          
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/40 shadow-neon text-primary font-mono text-xs uppercase tracking-widest animate-pulse">
-            <Cpu className="w-3.5 h-3.5" />
-            <span>Meru Heavy Equipment & Logistics Platform</span>
-          </div>
-
-          {/* Headline */}
-          <h1 className="font-heading font-black text-4xl sm:text-6xl lg:text-7xl tracking-tight text-white uppercase leading-none">
-            POWERING <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-[#FF833B] to-yellow-500">INFRASTRUCTURE</span> ACROSS MERU
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-base sm:text-xl text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
-            Direct, verified B2B booking for excavators, dozers, graders, and tippers. Backed by real-time calendar holds, instant WhatsApp dispatch, and automated telematics.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/catalog" className="w-full sm:w-auto">
-              <NeonButton size="lg" className="w-full" icon={<Truck className="w-5 h-5" />}>
-                Explore Fleet Catalog
-              </NeonButton>
-            </Link>
-
-            <a
-              href="https://wa.me/254717186396?text=Hello%20HLG%20Dispatch%20Team%2C%20I%20would%20like%20to%20inquire%20about%20heavy%20machinery%20availability%20for%20my%20site."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto neon-btn-secondary text-sm py-3.5 px-6 flex items-center justify-center gap-2"
-            >
-              <MessageSquare className="w-4 h-4 text-primary" />
-              <span>WhatsApp Dispatch: 0717 186396</span>
-            </a>
-          </div>
-
-          {/* Dispatch phone reminder */}
-          <p className="text-xs text-muted font-mono">
-            Direct Lines: <strong className="text-white">0717 186396</strong> | Backup: <strong className="text-white">0748866823</strong>
-          </p>
-
-        </div>
-      </section>
-
-      {/* --- LIVE METRICS STRIP --- */}
-      <section className="border-y border-border-neon/30 bg-surface/80 backdrop-blur-md py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      {/* Hero Section */}
+      <section className="relative pt-12 pb-20 border-b border-border bg-grid-light overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
-            <div className="space-y-1">
-              <div className="text-3xl sm:text-4xl font-black font-heading text-primary">8+</div>
-              <div className="text-xs text-muted uppercase tracking-wider font-mono">Heavy Machinery Units</div>
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Location & Coordinates Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-mono text-zinc-700">
+                <MapPin className="w-4 h-4 text-primary shrink-0" />
+                <span>0.0463° N, 37.6559° E • Meru County HQ, Kenya</span>
+              </div>
+
+              <h1 className="font-heading font-black text-4xl sm:text-6xl text-ink leading-tight tracking-tight uppercase">
+                HEAVY MACHINERY <span className="text-primary">RENTAL & FLEET</span> LOGISTICS
+              </h1>
+
+              <p className="text-base sm:text-lg text-zinc-600 max-w-2xl leading-relaxed">
+                Direct B2B equipment dispatch in Meru, Kenya. Rent Komatsu excavators, Shantui graders, JCB backhoes, and Isuzu tipper trucks with real-time availability and verified operator logs.
+              </p>
+
+              {/* Call-to-action buttons */}
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <Link 
+                  href="/catalog" 
+                  className="btn-primary"
+                >
+                  <Truck className="w-4 h-4" />
+                  Explore Machinery Catalog
+                </Link>
+
+                <a 
+                  href="https://wa.me/254717186396?text=Hi%20HLG,%20I%20would%20like%20to%20inquire%20about%20booking%20heavy%20machinery."
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4 text-emerald-600" />
+                  <span>WhatsApp: 0717 186396</span>
+                </a>
+              </div>
+
+              {/* Live Dispatch Lines */}
+              <div className="pt-4 border-t border-border flex flex-wrap items-center gap-6 text-xs font-mono text-muted">
+                <div>Primary Dispatch: <a href="tel:+254717186396" className="text-primary font-bold hover:underline">0717 186396</a></div>
+                <div>•</div>
+                <div>Backup Hotline: <a href="tel:+254748866823" className="text-zinc-800 font-bold hover:underline">0748866823</a></div>
+                <div>•</div>
+                <div>Status: <span className="text-emerald-600 font-bold">● Live Dispatch Active</span></div>
+              </div>
+
             </div>
 
-            <div className="space-y-1">
-              <div className="text-3xl sm:text-4xl font-black font-heading text-white">100%</div>
-              <div className="text-xs text-muted uppercase tracking-wider font-mono">GiST Double-Booking Guard</div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="text-3xl sm:text-4xl font-black font-heading text-primary">&lt; 15 Min</div>
-              <div className="text-xs text-muted uppercase tracking-wider font-mono">WhatsApp Dispatch Speed</div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="text-3xl sm:text-4xl font-black font-heading text-white">24/7</div>
-              <div className="text-xs text-muted uppercase tracking-wider font-mono">Meru Quarry & Site Haulage</div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* --- FEATURED MACHINERY SHOWCASE --- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-primary block mb-2">
-              Heavy Equipment Fleet
-            </span>
-            <h2 className="font-heading font-black text-3xl sm:text-4xl text-white uppercase">
-              Brochure Certified Machinery
-            </h2>
-          </div>
-          <Link href="/catalog" className="text-xs font-mono text-primary hover:text-white flex items-center gap-1">
-            <span>View Full Fleet & Calendar</span>
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FEATURED_FLEET.map((machine) => (
-            <GlassCard key={machine.id} className="flex flex-col justify-between group">
-              <div>
-                
-                {/* Header & Status */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-mono text-muted uppercase tracking-wider">
-                    {machine.category}
+            {/* Hero Quick Quotation Card */}
+            <div className="lg:col-span-5">
+              <div className="industrial-panel p-6 shadow-card space-y-5">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="font-heading font-bold text-sm text-ink flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    Rapid Site Dispatch & Quotes
+                  </div>
+                  <span className="text-[11px] font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    24/7 ACTIVE
                   </span>
-                  <StatusBadge status={machine.status} />
                 </div>
 
-                {/* Machine Graphic Box */}
-                <div className="h-44 rounded-lg bg-neutral-900 border border-border flex items-center justify-center mb-5 relative overflow-hidden group-hover:border-primary/40 transition-colors">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
-                  <Truck className="w-20 h-20 text-primary/30 group-hover:scale-110 group-hover:text-primary/60 transition-all duration-500" />
-                  <div className="absolute bottom-3 left-3 z-20 font-mono text-[11px] text-gray-300">
-                    Model: <span className="text-white font-bold">{machine.model}</span>
+                <div className="space-y-3 text-xs">
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-ink block font-sans">Guaranteed GiST Availability</strong>
+                      <span className="text-muted">PostgreSQL temporal locks prevent double bookings.</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-ink block font-sans">Verified Shift Hour Meters</strong>
+                      <span className="text-muted">Daily operator fuel and runtime logs with receipt proofs.</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-ink block font-sans">Direct Mobilization Haulage</strong>
+                      <span className="text-muted">60-ton lowbed semi-trailers for on-site delivery in Meru.</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Title & Price */}
-                <h3 className="font-heading font-bold text-lg text-white mb-2 line-clamp-1">
-                  {machine.name}
-                </h3>
-
-                <div className="mb-4">
-                  <span className="text-2xl font-black font-heading text-primary">
-                    {formatCurrency(machine.daily_rate)}
-                  </span>
-                  <span className="text-xs text-muted font-mono ml-1">/ day</span>
-                </div>
-
-                {/* Specs Pill List */}
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-gray-400 mb-6 bg-surface-card p-3 rounded border border-border/60">
-                  {machine.specs.engine_power && (
-                    <div>⚡ {machine.specs.engine_power}</div>
-                  )}
-                  {machine.specs.bucket_capacity && (
-                    <div>🪣 {machine.specs.bucket_capacity}</div>
-                  )}
-                  {machine.specs.blade_capacity && (
-                    <div>🚜 {machine.specs.blade_capacity}</div>
-                  )}
-                  {machine.specs.payload_capacity && (
-                    <div>📦 {machine.specs.payload_capacity}</div>
-                  )}
-                  {machine.specs.operating_weight && (
-                    <div>⚖️ {machine.specs.operating_weight}</div>
-                  )}
-                  {machine.specs.max_dig_depth && (
-                    <div>⛏️ {machine.specs.max_dig_depth}</div>
-                  )}
-                </div>
-
+                <Link
+                  href="/catalog"
+                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-heading font-bold text-xs uppercase tracking-wider text-center block transition-all shadow-subtle"
+                >
+                  View Active Fleet Rates &rarr;
+                </Link>
               </div>
+            </div>
 
-              {/* Book Action */}
-              <NeonButton
-                size="sm"
-                onClick={() => handleBookClick(machine)}
-                className="w-full text-xs"
-                icon={<MessageSquare className="w-3.5 h-3.5" />}
-              >
-                Book via WhatsApp
-              </NeonButton>
-
-            </GlassCard>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* --- PLATFORM BLUEPRINT ARCHITECTURE HIGHLIGHTS --- */}
-      <section className="bg-surface/50 border-t border-border-neon/30 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Services Overview Section (Smooth Scroll target: #services) */}
+      <section id="services" className="py-16 bg-surface border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-mono uppercase tracking-widest text-primary block">
-              High-Touch B2B Logistics
-            </span>
-            <h2 className="font-heading font-black text-3xl sm:text-4xl text-white uppercase">
-              The HLG Operational Edge
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-primary/10 border border-primary/20 text-primary font-mono text-xs uppercase font-bold">
+              <span>Core Infrastructure Solutions</span>
+            </div>
+            <h2 className="font-heading font-black text-3xl sm:text-4xl text-ink uppercase">
+              HEAVY PLANT CAPACITIES & SERVICES
             </h2>
-            <p className="text-sm text-gray-400">
-              Built specifically for civil contractors, site managers, and quarry fleet operators in Meru.
+            <p className="text-sm text-zinc-600">
+              End-to-end heavy equipment logistics for road construction, quarry development, civil trenching, and mass site leveling across Kenya.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
-            <GlassCard className="space-y-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/40 flex items-center justify-center text-primary">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <h3 className="font-heading text-lg font-bold text-white">Direct B2B WhatsApp Flow</h3>
-              <p className="text-xs text-muted leading-relaxed">
-                Skip cumbersome checkout forms. Select dates, lock your hold tentatively, and negotiate project rates directly with our Meru dispatchers on WhatsApp (0717 186396 / 0748866823).
-              </p>
-            </GlassCard>
-
-            <GlassCard className="space-y-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/40 flex items-center justify-center text-primary">
-                <Gauge className="w-6 h-6" />
-              </div>
-              <h3 className="font-heading text-lg font-bold text-white">Mobile Operator Daily Logs</h3>
-              <p className="text-xs text-muted leading-relaxed">
-                Dedicated field portal for heavy machinery operators to log start/end hour meters, soil/gravel trips, and upload M-Pesa fuel receipts directly from active jobsites.
-              </p>
-            </GlassCard>
-
-            <GlassCard className="space-y-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/40 flex items-center justify-center text-primary">
-                <Flame className="w-6 h-6" />
-              </div>
-              <h3 className="font-heading text-lg font-bold text-white">AI Anomaly & Fuel Diagnostics</h3>
-              <p className="text-xs text-muted leading-relaxed">
-                Automated algorithms summarize weekly throughput and flag irregularities (e.g. unusually high fuel consumption vs. engine hours) and trigger preventive maintenance alerts.
-              </p>
-            </GlassCard>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {CORE_SERVICES.map((svc, i) => {
+              const Icon = svc.icon;
+              return (
+                <div key={i} className="industrial-card p-5 space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-heading font-bold text-sm text-ink">{svc.title}</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed">{svc.desc}</p>
+                </div>
+              );
+            })}
           </div>
+
         </div>
       </section>
 
-      {/* Booking Modal */}
-      <WhatsAppBookingModal
-        equipment={selectedEquipment}
-        isOpen={bookingModalOpen}
-        onClose={() => setBookingModalOpen(false)}
-      />
+      {/* Featured Heavy Machinery Grid */}
+      <section className="py-16 bg-white border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-primary font-mono text-xs uppercase font-bold">
+                <Truck className="w-4 h-4" />
+                <span>Verified Equipment Brochure</span>
+              </div>
+              <h2 className="font-heading font-black text-2xl sm:text-4xl text-ink uppercase mt-1">
+                FEATURED MACHINERY FLEET
+              </h2>
+            </div>
+
+            <Link 
+              href="/catalog" 
+              className="text-xs font-mono font-bold text-primary hover:underline flex items-center gap-1.5"
+            >
+              <span>Explore All 8 Models</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {fleet.slice(0, 8).map((machine) => (
+              <div key={machine.id} className="industrial-card flex flex-col justify-between overflow-hidden">
+                <div className="p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {machine.status || 'AVAILABLE'}
+                    </span>
+                    <span className="text-xs font-mono text-muted">{machine.category}</span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-ink line-clamp-1">
+                      {machine.name}
+                    </h3>
+                    <div className="text-xs text-muted font-mono">{machine.model}</div>
+                  </div>
+
+                  {machine.specs && (
+                    <div className="p-3 bg-surface rounded-lg space-y-1 text-[11px] font-mono text-zinc-700 border border-border">
+                      {Object.entries(machine.specs).slice(0, 2).map(([k, v], idx) => (
+                        <div key={idx} className="flex justify-between">
+                          <span className="text-muted capitalize">{k.replace(/_/g, ' ')}:</span>
+                          <span className="font-semibold text-ink">{String(v)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5 pt-0 space-y-3">
+                  <div className="pt-3 border-t border-border flex items-baseline justify-between">
+                    <span className="text-xs text-muted font-mono">Daily Rate:</span>
+                    <div className="font-heading font-black text-lg text-primary">
+                      {formatCurrency(machine.daily_rate)}
+                      <span className="text-[10px] font-normal text-muted font-sans"> / day</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleBookNow(machine)}
+                    className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-heading font-bold uppercase tracking-wider transition-all"
+                  >
+                    Quick Quote & Hire
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* Direct Booking Modal */}
+      {selectedEquipment && (
+        <WhatsAppBookingModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          equipment={selectedEquipment}
+          prefillDates={{
+            startDate: '',
+            endDate: ''
+          }}
+        />
+      )}
 
     </div>
   );

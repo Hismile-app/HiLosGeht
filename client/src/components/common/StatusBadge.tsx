@@ -7,36 +7,36 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, className }: StatusBadgeProps) {
-  const normalized = status?.toUpperCase() || 'UNKNOWN';
+  const normalized = (status || 'UNKNOWN').toUpperCase();
 
   const badgeStyles: Record<string, string> = {
-    AVAILABLE: 'bg-emerald-950/60 text-emerald-400 border-emerald-700/50',
-    BOOKED: 'bg-amber-950/60 text-amber-400 border-amber-700/50',
-    MAINTENANCE: 'bg-rose-950/60 text-rose-400 border-rose-700/50',
-    CONFIRMED: 'bg-emerald-950/60 text-emerald-400 border-emerald-700/50',
-    PENDING: 'bg-amber-950/60 text-amber-400 border-amber-700/50',
-    CANCELLED: 'bg-neutral-900 text-neutral-500 border-neutral-800',
-    ACTIVE: 'bg-emerald-950/60 text-emerald-400 border-emerald-700/50',
-    PENDING_SETUP: 'bg-sky-950/60 text-sky-400 border-sky-700/50',
-    SUSPENDED: 'bg-rose-950/60 text-rose-400 border-rose-700/50',
-    HIGH: 'bg-rose-950/60 text-rose-400 border-rose-700/50',
-    CRITICAL: 'bg-red-950 text-red-300 border-red-600 animate-pulse',
-    NORMAL: 'bg-sky-950/60 text-sky-400 border-sky-700/50',
-    LOW: 'bg-neutral-900 text-neutral-400 border-neutral-800',
+    AVAILABLE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    BOOKED: 'bg-orange-50 text-orange-700 border-orange-200',
+    MAINTENANCE: 'bg-rose-50 text-rose-700 border-rose-200',
+    CONFIRMED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
+    CANCELLED: 'bg-zinc-100 text-zinc-600 border-zinc-200',
+    ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    PENDING_SETUP: 'bg-sky-50 text-sky-700 border-sky-200',
+    SUSPENDED: 'bg-rose-50 text-rose-700 border-rose-200',
+    HIGH: 'bg-rose-50 text-rose-700 border-rose-200 font-bold',
+    CRITICAL: 'bg-rose-100 text-rose-800 border-rose-300 font-bold animate-pulse',
+    NORMAL: 'bg-sky-50 text-sky-700 border-sky-200',
+    LOW: 'bg-zinc-100 text-zinc-600 border-zinc-200',
   };
 
-  const style = badgeStyles[normalized] || 'bg-neutral-900 text-gray-300 border-neutral-800';
+  const style = badgeStyles[normalized] || 'bg-zinc-100 text-zinc-700 border-zinc-200';
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium border uppercase tracking-wider',
+        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold border uppercase tracking-wider',
         style,
         className
       )}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
-      {normalized.replace('_', ' ')}
+      {normalized.replace(/_/g, ' ')}
     </span>
   );
 }

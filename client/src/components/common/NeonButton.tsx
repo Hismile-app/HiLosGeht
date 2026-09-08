@@ -18,21 +18,21 @@ export default function NeonButton({
 }: NeonButtonProps) {
   const sizeClasses = {
     sm: 'py-1.5 px-3 text-xs',
-    md: 'py-2.5 px-5 text-sm',
-    lg: 'py-3.5 px-7 text-base',
+    md: 'py-2 px-4 text-xs sm:text-sm',
+    lg: 'py-3 px-6 text-sm sm:text-base',
   };
 
   const variantClasses = {
-    primary: 'bg-primary text-white hover:bg-primary-hover border border-[#FF833B] shadow-neon hover:shadow-neon-lg',
-    secondary: 'bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30',
-    outline: 'bg-transparent text-gray-300 hover:text-white border border-border hover:border-primary/50',
-    danger: 'bg-red-950/40 text-red-400 border border-red-800/50 hover:bg-red-900/50',
+    primary: 'bg-primary text-white hover:bg-primary-hover border border-primary-hover shadow-subtle hover:shadow-orange',
+    secondary: 'bg-surface hover:bg-surface-hover text-foreground border border-border hover:border-primary/40',
+    outline: 'bg-white text-foreground hover:text-primary border border-border hover:border-primary',
+    danger: 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100',
   };
 
   return (
     <button
       className={cn(
-        'font-heading uppercase tracking-wider font-semibold rounded-md transition-all duration-300 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed',
+        'font-heading uppercase tracking-wider font-bold rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
         sizeClasses[size],
         variantClasses[variant],
         className

@@ -1,35 +1,31 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Truck, 
+  Search, 
   Filter, 
   Calendar, 
-  Search, 
   CheckCircle2, 
-  AlertCircle, 
+  Fuel, 
+  Gauge, 
+  Wrench, 
+  Layers, 
+  Clock, 
+  ArrowRight,
+  RefreshCw,
+  Phone,
   MessageSquare,
-  ChevronDown
+  Sparkles,
+  SlidersHorizontal,
+  X
 } from 'lucide-react';
-import GlassCard from '@/components/common/GlassCard';
-import StatusBadge from '@/components/common/StatusBadge';
-import NeonButton from '@/components/common/NeonButton';
 import WhatsAppBookingModal from '@/components/booking/WhatsAppBookingModal';
 import { Equipment } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 
-const CATEGORIES = [
-  'ALL',
-  'Excavator',
-  'Dozer',
-  'Backhoe',
-  'Wheel Loader',
-  'Grader',
-  'Roller',
-  'Tipper',
-  'Lowbed'
-];
-
+// Static Verified Brochure Fleet Seed
 const INITIAL_FLEET: Equipment[] = [
   {
     id: '11111111-1111-1111-1111-111111111101',
@@ -45,7 +41,6 @@ const INITIAL_FLEET: Equipment[] = [
       operating_weight: '20,500 kg',
       bucket_capacity: '1.0 m³',
       max_dig_depth: '6.62 m',
-      fuel_capacity: '400 L'
     }
   },
   {
@@ -61,8 +56,6 @@ const INITIAL_FLEET: Equipment[] = [
       engine_power: '268 kW / 360 HP',
       operating_weight: '41,200 kg',
       blade_capacity: '9.4 m³',
-      transmission: 'Automatic with Lockup',
-      ground_pressure: '84.3 kPa'
     }
   },
   {
@@ -76,10 +69,8 @@ const INITIAL_FLEET: Equipment[] = [
     current_hour_meter: 128.0,
     specs: {
       engine_power: '55 kW / 74 HP',
-      operating_weight: '7,460 kg',
       loader_capacity: '1.1 m³',
       backhoe_depth: '4.77 m',
-      telematics: 'JCB LiveLink Ready'
     }
   },
   {
@@ -93,10 +84,8 @@ const INITIAL_FLEET: Equipment[] = [
     current_hour_meter: 215.4,
     specs: {
       rated_load: '6,000 kg (6 Ton)',
-      operating_weight: '21,000 kg',
       bucket_capacity: '3.5 m³',
-      dumping_height: '3,180 mm',
-      engine_power: '178 kW'
+      operating_weight: '21,000 kg',
     }
   },
   {
@@ -110,27 +99,23 @@ const INITIAL_FLEET: Equipment[] = [
     current_hour_meter: 175.0,
     specs: {
       engine_power: '132 kW / 180 HP',
-      operating_weight: '16,200 kg',
       blade_width: '3,965 mm',
-      max_speed: '38 km/h',
-      articulated_frame: 'Yes'
+      operating_weight: '16,200 kg',
     }
   },
   {
     id: '11111111-1111-1111-1111-111111111106',
-    name: 'XCMG XS163J Vibratory Compactor Roller',
+    name: 'XCMG XS163J Vibratory Road Roller',
     category: 'Roller',
     model: 'XCMG XS163J',
     daily_rate: 32000,
     status: 'AVAILABLE',
     image_url: '/images/equipment/xcmg_xs163j.png',
-    current_hour_meter: 95.2,
+    current_hour_meter: 89.5,
     specs: {
-      operating_weight: '16,000 kg',
+      operating_weight: '16,000 kg (16 Ton)',
       drum_width: '2,130 mm',
       vibration_frequency: '28/33 Hz',
-      centrifugal_force: '290/190 kN',
-      engine_power: '103 kW'
     }
   },
   {
@@ -144,25 +129,23 @@ const INITIAL_FLEET: Equipment[] = [
     current_hour_meter: 512.8,
     specs: {
       payload_capacity: '15,000 kg (15 Ton)',
-      gross_vehicle_mass: '26,000 kg',
       power_output: '280 HP',
-      tipping_body: 'Heavy Duty Box'
+      tipping_body: 'Heavy Duty Box',
     }
   },
   {
     id: '11111111-1111-1111-1111-111111111108',
-    name: 'Heavy Lowbed Semi-Trailer (Machinery Haulage)',
-    category: 'Lowbed',
-    model: 'HLG Heavy Lowbed 60T',
-    daily_rate: 50000,
+    name: 'Heavy Lowbed Semi-Trailer',
+    category: 'Haulage',
+    model: 'Multi-Axle Heavy Hauler',
+    daily_rate: 55000,
     status: 'AVAILABLE',
     image_url: '/images/equipment/lowbed_trailer.png',
-    current_hour_meter: 420.0,
+    current_hour_meter: 620.0,
     specs: {
-      haulage_capacity: '60,000 kg (60 Ton)',
-      axles: '3-Axle Heavy Duty',
+      payload_capacity: '60,000 kg (60 Ton)',
       deck_length: '12.5 m',
-      ramps: 'Hydraulic Folding Ramps'
+      axles: '3-Axle Heavy Duty',
     }
   }
 ];
@@ -175,28 +158,29 @@ export default function CatalogPage() {
   const [endDate, setEndDate] = useState('');
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [compareList, setCompareList] = useState<Equipment[]>([]);
 
-  // Fetch real fleet from API if available
+  // Fetch live fleet from API
   useEffect(() => {
     async function fetchFleet() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
         const res = await fetch(`${apiUrl}/equipment`);
         if (res.ok) {
-          const data = await res.json();
-          if (data.data && data.data.length > 0) {
-            setFleet(data.data);
+          const json = await res.json();
+          if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
+            setFleet(json.data);
           }
         }
       } catch (err) {
-        // Fallback to static seed
+        // Fallback to static verified brochure data
       }
     }
     fetchFleet();
   }, []);
 
   const filteredFleet = fleet.filter((item) => {
-    const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'ALL' || item.category.toUpperCase() === selectedCategory.toUpperCase();
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           item.model.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -207,179 +191,253 @@ export default function CatalogPage() {
     setModalOpen(true);
   };
 
+  const toggleCompare = (item: Equipment) => {
+    if (compareList.some(c => c.id === item.id)) {
+      setCompareList(compareList.filter(c => c.id !== item.id));
+    } else {
+      if (compareList.length < 3) {
+        setCompareList([...compareList, item]);
+      }
+    }
+  };
+
+  const getSlug = (item: Equipment) => {
+    return item.model.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 bg-white text-ink">
       
       {/* Page Header */}
-      <div className="mb-10 space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-primary/10 border border-primary/30 text-primary font-mono text-xs uppercase">
+      <div className="space-y-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary font-mono text-xs uppercase font-bold">
           <Truck className="w-3.5 h-3.5" />
           <span>HLG Fleet Catalog • Meru, Kenya</span>
         </div>
-        <h1 className="font-heading font-black text-3xl sm:text-5xl text-white uppercase">
+        <h1 className="font-heading font-black text-3xl sm:text-5xl text-ink uppercase">
           HEAVY MACHINERY & EQUIPMENT FLEET
         </h1>
-        <p className="text-sm text-gray-400 max-w-2xl">
-          Certified construction machinery available for immediate site deployment. Double-booking prevented by kernel-level GiST constraints.
+        <p className="text-sm text-zinc-600 max-w-3xl">
+          Browse verified plant machinery available for daily and long-term project hire across Mt. Kenya infrastructure sites. Instant quotation, live availability checks, and direct WhatsApp negotiation.
         </p>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="glass-panel p-5 rounded-xl border border-border mb-10 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Filter and Search Bar */}
+      <div className="industrial-panel p-4 space-y-4 shadow-subtle">
+        <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           
-          {/* Search */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
+          {/* Search Input */}
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search by model or equipment name..."
+              placeholder="Search Komatsu, JCB, Shantui, Isuzu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-neutral-900 border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:border-primary focus:outline-none"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-border rounded-lg text-sm text-ink placeholder-zinc-400 focus:outline-none focus:border-primary"
             />
           </div>
 
-          {/* Date Range Filter */}
-          <div className="flex items-center gap-2">
+          {/* Date Filter */}
+          <div className="flex items-center gap-2 w-full md:w-auto text-xs font-mono">
+            <Calendar className="w-4 h-4 text-primary shrink-0" />
             <input
               type="date"
-              min={new Date().toISOString().split('T')[0]}
               value={startDate}
+              min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full bg-neutral-900 border border-border rounded-lg px-3 py-2 text-xs text-white focus:border-primary focus:outline-none"
-              title="Project Start Date"
+              className="bg-white border border-border rounded-lg px-2.5 py-1.5 text-xs text-ink focus:border-primary focus:outline-none"
+              placeholder="Start Date"
             />
-            <span className="text-muted text-xs">to</span>
+            <span className="text-muted">&rarr;</span>
             <input
               type="date"
-              min={startDate || new Date().toISOString().split('T')[0]}
               value={endDate}
+              min={startDate || new Date().toISOString().split('T')[0]}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full bg-neutral-900 border border-border rounded-lg px-3 py-2 text-xs text-white focus:border-primary focus:outline-none"
-              title="Project End Date"
+              className="bg-white border border-border rounded-lg px-2.5 py-1.5 text-xs text-ink focus:border-primary focus:outline-none"
+              placeholder="End Date"
             />
-          </div>
-
-          {/* Dispatch Phone Badge */}
-          <div className="flex items-center justify-end gap-3 text-xs font-mono text-gray-300">
-            <span className="text-muted">Instant Dispatch:</span>
-            <a 
-              href="https://wa.me/254717186396" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-3 py-2 rounded bg-emerald-950/60 border border-emerald-600 text-emerald-400 font-bold flex items-center gap-1.5 hover:bg-emerald-900/60 transition-colors"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              0717 186396
-            </a>
+            {(startDate || endDate || searchQuery || selectedCategory !== 'ALL') && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setStartDate('');
+                  setEndDate('');
+                  setSelectedCategory('ALL');
+                }}
+                className="text-xs text-primary font-bold hover:underline ml-2"
+              >
+                Reset Filters
+              </button>
+            )}
           </div>
 
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-2 border-t border-border/50">
-          <Filter className="w-4 h-4 text-primary shrink-0 mr-1" />
-          {CATEGORIES.map((cat) => (
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+          {[
+            { label: 'All Fleet', val: 'ALL' },
+            { label: 'Earthmoving', val: 'EXCAVATOR' },
+            { label: 'Dozers', val: 'DOZER' },
+            { label: 'Backhoes', val: 'BACKHOE' },
+            { label: 'Wheel Loaders', val: 'WHEEL LOADER' },
+            { label: 'Motor Graders', val: 'GRADER' },
+            { label: 'Rollers / Compaction', val: 'ROLLER' },
+            { label: 'Tippers / Haulage', val: 'TIPPER' },
+            { label: 'Lowbed Hauler', val: 'HAULAGE' },
+          ].map((cat) => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-all shrink-0 ${
-                selectedCategory === cat
-                  ? 'bg-primary text-white font-bold shadow-neon'
-                  : 'bg-surface-card text-gray-400 border border-border hover:border-primary/40 hover:text-white'
+              key={cat.val}
+              onClick={() => setSelectedCategory(cat.val)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                selectedCategory === cat.val
+                  ? 'bg-primary text-white shadow-subtle'
+                  : 'bg-white text-zinc-700 border border-border hover:border-primary/50'
               }`}
             >
-              {cat}
+              {cat.label}
             </button>
           ))}
         </div>
-
       </div>
 
-      {/* Fleet Cards Grid */}
+      {/* Machinery Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredFleet.map((machine) => (
-          <GlassCard key={machine.id} className="flex flex-col justify-between group">
-            <div>
-              
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-mono text-primary font-semibold uppercase tracking-wider">
-                  {machine.category}
-                </span>
-                <StatusBadge status={machine.status} />
-              </div>
+        {filteredFleet.map((item) => {
+          const isSelectedForCompare = compareList.some(c => c.id === item.id);
+          const slug = getSlug(item);
 
-              {/* Machinery Visual Box */}
-              <div className="h-48 rounded-lg bg-neutral-900 border border-border flex items-center justify-center mb-5 relative overflow-hidden group-hover:border-primary/50 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
-                <Truck className="w-24 h-24 text-primary/25 group-hover:scale-110 group-hover:text-primary/60 transition-all duration-500" />
-                
-                <div className="absolute bottom-3 left-3 z-20 font-mono text-xs">
-                  <span className="text-gray-400">Model: </span>
-                  <span className="text-white font-bold">{machine.model}</span>
+          return (
+            <div 
+              key={item.id} 
+              className="industrial-card flex flex-col justify-between overflow-hidden"
+            >
+              <div className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {item.status || 'AVAILABLE'}
+                  </span>
+                  <span className="text-xs font-mono text-muted">{item.category}</span>
                 </div>
 
-                {machine.current_hour_meter > 0 && (
-                  <div className="absolute top-3 right-3 z-20 font-mono text-[10px] bg-black/80 border border-border px-2 py-0.5 rounded text-gray-300">
-                    Meter: {machine.current_hour_meter} hrs
+                <div>
+                  <Link href={`/catalog/${slug}`} className="hover:text-primary transition-colors">
+                    <h3 className="font-heading font-bold text-lg text-ink">
+                      {item.name}
+                    </h3>
+                  </Link>
+                  <div className="text-xs text-muted font-mono">{item.model}</div>
+                </div>
+
+                {/* Specs Box */}
+                {item.specs && (
+                  <div className="p-3 bg-surface rounded-xl border border-border space-y-1.5 text-xs font-mono text-zinc-700">
+                    {Object.entries(item.specs).slice(0, 3).map(([key, val], idx) => (
+                      <div key={idx} className="flex justify-between">
+                        <span className="text-muted capitalize">{key.replace(/_/g, ' ')}:</span>
+                        <span className="font-bold text-ink">{String(val)}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Title & Daily Rate */}
-              <h3 className="font-heading font-bold text-lg text-white mb-2 line-clamp-1">
-                {machine.name}
-              </h3>
-
-              <div className="mb-4">
-                <span className="text-2xl font-black font-heading text-primary">
-                  {formatCurrency(machine.daily_rate)}
-                </span>
-                <span className="text-xs text-muted font-mono ml-1">/ day</span>
-              </div>
-
-              {/* Brochure Specifications */}
-              <div className="space-y-1.5 text-xs font-mono text-gray-400 mb-6 bg-surface-card p-3.5 rounded-lg border border-border/70">
-                {Object.entries(machine.specs || {}).slice(0, 4).map(([k, v]) => (
-                  <div key={k} className="flex items-center justify-between">
-                    <span className="text-muted capitalize">{k.replace('_', ' ')}:</span>
-                    <span className="text-gray-200 font-semibold">{String(v)}</span>
+              <div className="p-5 pt-0 space-y-3">
+                <div className="pt-3 border-t border-border flex items-baseline justify-between">
+                  <span className="text-xs text-muted font-mono">Daily Rate:</span>
+                  <div className="font-heading font-black text-xl text-primary">
+                    {formatCurrency(item.daily_rate)}
+                    <span className="text-xs font-normal text-muted font-sans"> / day</span>
                   </div>
-                ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href={`/catalog/${slug}`}
+                    className="btn-secondary text-xs py-2 text-center"
+                  >
+                    View Specs
+                  </Link>
+
+                  <button
+                    onClick={() => handleBook(item)}
+                    className="btn-primary text-xs py-2"
+                  >
+                    Quote & Book
+                  </button>
+                </div>
+
+                {/* Compare Checkbox */}
+                <div className="pt-1 flex items-center justify-between text-[11px] text-muted">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isSelectedForCompare}
+                      onChange={() => toggleCompare(item)}
+                      className="accent-primary"
+                    />
+                    <span>Compare specs</span>
+                  </label>
+                  <span className="font-mono text-[10px]">Meru Yard</span>
+                </div>
               </div>
-
             </div>
-
-            {/* CTA Button */}
-            <NeonButton
-              size="sm"
-              onClick={() => handleBook(machine)}
-              className="w-full text-xs"
-              icon={<MessageSquare className="w-3.5 h-3.5" />}
-            >
-              Book via WhatsApp (0717 186396)
-            </NeonButton>
-
-          </GlassCard>
-        ))}
+          );
+        })}
       </div>
 
       {filteredFleet.length === 0 && (
-        <div className="text-center py-16 space-y-3">
-          <AlertCircle className="w-12 h-12 text-muted mx-auto" />
-          <h3 className="font-heading text-lg text-white">No Machinery Found</h3>
-          <p className="text-xs text-muted">Try adjusting your search terms or category filter.</p>
+        <div className="p-16 text-center text-zinc-500 industrial-panel space-y-3">
+          <Truck className="w-12 h-12 mx-auto text-zinc-400" />
+          <div className="font-heading font-bold text-lg text-ink">No Machinery Found</div>
+          <p className="text-xs text-muted">Try adjusting your search terms or category filters.</p>
+        </div>
+      )}
+
+      {/* Floating Compare Toolbar */}
+      {compareList.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white border border-border shadow-2xl rounded-2xl p-4 max-w-2xl w-full mx-4 flex items-center justify-between animate-in slide-in-from-bottom-6">
+          <div className="flex items-center gap-3">
+            <span className="font-heading font-bold text-xs text-primary uppercase">
+              Comparing ({compareList.length}/3):
+            </span>
+            <div className="flex items-center gap-2">
+              {compareList.map((c) => (
+                <span key={c.id} className="text-xs bg-surface border border-border px-2 py-1 rounded font-mono text-ink">
+                  {c.model}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCompareList([])}
+              className="text-xs text-zinc-500 hover:text-ink font-semibold px-2 py-1"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => handleBook(compareList[0])}
+              className="btn-primary text-xs py-1.5 px-3"
+            >
+              Book Selected
+            </button>
+          </div>
         </div>
       )}
 
       {/* Booking Modal */}
-      <WhatsAppBookingModal
-        equipment={selectedEquipment}
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
+      {selectedEquipment && (
+        <WhatsAppBookingModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          equipment={selectedEquipment}
+          prefillDates={{ startDate, endDate }}
+        />
+      )}
 
     </div>
   );

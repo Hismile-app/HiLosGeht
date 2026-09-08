@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 
 interface FinancialTimelineProps {
-  data: Array<{
+  data?: Array<{
     day_label: string;
     hours_yield: number;
     fuel_litres: number;
@@ -27,7 +27,7 @@ interface FinancialTimelineProps {
 }
 
 export function FuelAndHoursAreaChart({ data }: FinancialTimelineProps) {
-  const chartData = data && data.length > 0 ? data : [
+  const chartData = (data && data.length > 0) ? data : [
     { day_label: 'Mon', hours_yield: 24.5, fuel_litres: 340, fuel_cost_kes: 61200 },
     { day_label: 'Tue', hours_yield: 31.0, fuel_litres: 420, fuel_cost_kes: 75600 },
     { day_label: 'Wed', hours_yield: 28.5, fuel_litres: 390, fuel_cost_kes: 70200 },
@@ -43,24 +43,30 @@ export function FuelAndHoursAreaChart({ data }: FinancialTimelineProps) {
         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#F37021" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#F37021" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#D95400" stopOpacity={0.6}/>
+              <stop offset="95%" stopColor="#D95400" stopOpacity={0.05}/>
             </linearGradient>
             <linearGradient id="colorFuel" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#FFB800" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#FFB800" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#EAB308" stopOpacity={0.6}/>
+              <stop offset="95%" stopColor="#EAB308" stopOpacity={0.05}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
-          <XAxis dataKey="day_label" stroke="#8A8A8A" fontSize={11} />
-          <YAxis stroke="#8A8A8A" fontSize={11} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E4E4E7" />
+          <XAxis dataKey="day_label" stroke="#71717A" fontSize={11} tickLine={false} />
+          <YAxis stroke="#71717A" fontSize={11} tickLine={false} />
           <Tooltip 
-            contentStyle={{ backgroundColor: '#121212', borderColor: '#F37021', borderRadius: '8px', fontSize: '12px' }}
-            itemStyle={{ color: '#FFFFFF' }}
+            contentStyle={{ 
+              backgroundColor: '#FFFFFF', 
+              borderColor: '#D95400', 
+              borderRadius: '8px', 
+              fontSize: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)' 
+            }}
+            itemStyle={{ color: '#09090B' }}
           />
-          <Legend wrapperStyle={{ fontSize: '11px' }} />
-          <Area type="monotone" dataKey="hours_yield" name="Engine Hours (hrs)" stroke="#F37021" fillOpacity={1} fill="url(#colorHours)" />
-          <Area type="monotone" dataKey="fuel_litres" name="Fuel Consumed (L)" stroke="#FFB800" fillOpacity={1} fill="url(#colorFuel)" />
+          <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+          <Area type="monotone" dataKey="hours_yield" name="Engine Hours (hrs)" stroke="#D95400" strokeWidth={2} fillOpacity={1} fill="url(#colorHours)" />
+          <Area type="monotone" dataKey="fuel_litres" name="Fuel Consumed (L)" stroke="#EAB308" strokeWidth={2} fillOpacity={1} fill="url(#colorFuel)" />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -68,7 +74,7 @@ export function FuelAndHoursAreaChart({ data }: FinancialTimelineProps) {
 }
 
 interface MachineCostBarProps {
-  data: Array<{
+  data?: Array<{
     machine_name: string;
     total_hours: number;
     total_fuel_litres: number;
@@ -77,7 +83,7 @@ interface MachineCostBarProps {
 }
 
 export function MachineCostBarChart({ data }: MachineCostBarProps) {
-  const chartData = data && data.length > 0 ? data.slice(0, 6) : [
+  const chartData = (data && data.length > 0) ? data.slice(0, 6) : [
     { machine_name: 'Komatsu PC-200', total_hours: 48, cost_per_hour_kes: 2450 },
     { machine_name: 'Komatsu D155AX-8', total_hours: 36, cost_per_hour_kes: 3800 },
     { machine_name: 'JCB 3DXPLUS', total_hours: 52, cost_per_hour_kes: 1650 },
@@ -90,14 +96,20 @@ export function MachineCostBarChart({ data }: MachineCostBarProps) {
     <div className="w-full h-72">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 25 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
-          <XAxis dataKey="machine_name" stroke="#8A8A8A" fontSize={9} angle={-15} textAnchor="end" />
-          <YAxis stroke="#8A8A8A" fontSize={11} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E4E4E7" />
+          <XAxis dataKey="machine_name" stroke="#71717A" fontSize={10} angle={-15} textAnchor="end" tickLine={false} />
+          <YAxis stroke="#71717A" fontSize={11} tickLine={false} />
           <Tooltip 
-            contentStyle={{ backgroundColor: '#121212', borderColor: '#F37021', borderRadius: '8px', fontSize: '12px' }}
-            itemStyle={{ color: '#FFFFFF' }}
+            contentStyle={{ 
+              backgroundColor: '#FFFFFF', 
+              borderColor: '#D95400', 
+              borderRadius: '8px', 
+              fontSize: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)' 
+            }}
+            itemStyle={{ color: '#09090B' }}
           />
-          <Bar dataKey="cost_per_hour_kes" name="Cost per Hour (KES)" fill="#F37021" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="cost_per_hour_kes" name="Cost per Hour (KES)" fill="#D95400" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -115,7 +127,7 @@ export function FleetUtilizationDonut({
 }) {
   const data = [
     { name: 'Available for Hire', value: available, color: '#10B981' },
-    { name: 'Active on Jobsite (Rented)', value: booked, color: '#F37021' },
+    { name: 'Active on Jobsite (Rented)', value: booked, color: '#D95400' },
     { name: 'Under Maintenance', value: maintenance, color: '#F43F5E' },
   ];
 
@@ -127,8 +139,8 @@ export function FleetUtilizationDonut({
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={85}
+            innerRadius={55}
+            outerRadius={80}
             paddingAngle={4}
             dataKey="value"
           >
@@ -137,10 +149,16 @@ export function FleetUtilizationDonut({
             ))}
           </Pie>
           <Tooltip 
-            contentStyle={{ backgroundColor: '#121212', borderColor: '#F37021', borderRadius: '8px', fontSize: '12px' }}
-            itemStyle={{ color: '#FFFFFF' }}
+            contentStyle={{ 
+              backgroundColor: '#FFFFFF', 
+              borderColor: '#D95400', 
+              borderRadius: '8px', 
+              fontSize: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)' 
+            }}
+            itemStyle={{ color: '#09090B' }}
           />
-          <Legend wrapperStyle={{ fontSize: '11px' }} />
+          <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
         </PieChart>
       </ResponsiveContainer>
     </div>
