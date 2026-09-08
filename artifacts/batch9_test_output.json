@@ -1,0 +1,156 @@
+{
+  "timestamp": "2026-09-08T17:11:02.499Z",
+  "batch": 9,
+  "tests": [
+    {
+      "name": "AI Weekly Operational Summary Generation",
+      "status": "PASSED",
+      "weeklySummary": "Operations Summary (Past 7 Days): Fleet logged 20.2 aggregate operational hours and consumed 356.2 Litres of fuel across active jobsites in Meru County. Total recorded haulage throughput reached 0 material trips. Average fuel operational cost calculated at KES 3174.06/hour. 🚨 3 operational anomalies detected and flagged for administrative inspection."
+    },
+    {
+      "name": "High Fuel Consumption Anomaly Detection",
+      "status": "PASSED",
+      "flaggedMachine": "Isuzu FVZ 34 Heavy Tipper Truck (15 Ton)",
+      "severity": "CRITICAL"
+    },
+    {
+      "name": "Zero-Work Fuel Anomaly Detection",
+      "status": "PASSED",
+      "flaggedMachine": "Komatsu PC-200 Heavy Excavator",
+      "severity": "CRITICAL"
+    }
+  ],
+  "insights": {
+    "weeklySummary": "Operations Summary (Past 7 Days): Fleet logged 20.2 aggregate operational hours and consumed 356.2 Litres of fuel across active jobsites in Meru County. Total recorded haulage throughput reached 0 material trips. Average fuel operational cost calculated at KES 3174.06/hour. 🚨 3 operational anomalies detected and flagged for administrative inspection.",
+    "totalHoursWorked": 20.2,
+    "totalFuelLiters": 356.2,
+    "totalTripsLogged": 0,
+    "costPerHourAverageKES": 3174.06,
+    "anomalies": [
+      {
+        "machine": "Komatsu PC-200 Heavy Excavator",
+        "issue": "Unusually High Fuel Consumption: 40 Litres consumed for 0.2 engine hours (200.0 L/hr). Normal expected range: 18-30 L/hr.",
+        "severity": "CRITICAL",
+        "recommendation": "Inspect fuel injectors, check for physical tank leakage or unmetered auxiliary idling.",
+        "fuelPerHour": 200,
+        "date": "2026-09-08T17:11:02.703Z",
+        "operator": null
+      },
+      {
+        "machine": "Komatsu PC-200 Heavy Excavator",
+        "issue": "Fuel Purchase without Working Hours: 40 Litres logged for only 0.2 engine hours.",
+        "severity": "CRITICAL",
+        "recommendation": "Audit fuel transaction receipt and verify operator M-Pesa submission.",
+        "date": "2026-09-08T17:11:02.703Z",
+        "operator": null
+      },
+      {
+        "machine": "Isuzu FVZ 34 Heavy Tipper Truck (15 Ton)",
+        "issue": "Unusually High Fuel Consumption: 150 Litres consumed for 2.0 engine hours (75.0 L/hr). Normal expected range: 18-30 L/hr.",
+        "severity": "CRITICAL",
+        "recommendation": "Inspect fuel injectors, check for physical tank leakage or unmetered auxiliary idling.",
+        "fuelPerHour": 75,
+        "date": "2026-09-08T17:11:02.676Z",
+        "operator": null
+      }
+    ],
+    "maintenanceForecasts": [
+      {
+        "machine": "Komatsu PC-200 Heavy Excavator",
+        "currentHours": 342.5,
+        "threshold": 500,
+        "hoursRemaining": 157.5,
+        "status": "NORMAL",
+        "serviceDescription": "500-Hour Hydraulic Oil Filter & Engine Valve Inspection"
+      },
+      {
+        "machine": "Komatsu D155AX-8 Crawler Dozer",
+        "currentHours": 490,
+        "threshold": 500,
+        "hoursRemaining": 10,
+        "status": "UPCOMING",
+        "serviceDescription": "500-Hour Final Drive Lubrication & Track Tension Check"
+      },
+      {
+        "machine": "JCB 3DXPLUS Backhoe Loader",
+        "currentHours": 128,
+        "threshold": 250,
+        "hoursRemaining": 122,
+        "status": "NORMAL",
+        "serviceDescription": "250-Hour Greasing & Transmission Fluid Level Service"
+      },
+      {
+        "machine": "Isuzu FVZ 34 Heavy Tipper Truck (15 Ton)",
+        "currentHours": 512.8,
+        "threshold": 500,
+        "hoursRemaining": -12.799999999999955,
+        "status": "OVERDUE",
+        "serviceDescription": "500-Hour Brake Liner, Differential & Turbocharger Inspection"
+      },
+      {
+        "machine": "Komatsu PC-200 Heavy Excavator",
+        "currentHours": 342.5,
+        "threshold": 500,
+        "hoursRemaining": 157.5,
+        "status": "NORMAL",
+        "serviceDescription": "500-Hour Hydraulic Oil Filter & Engine Valve Inspection"
+      },
+      {
+        "machine": "Komatsu D155AX-8 Crawler Dozer",
+        "currentHours": 490,
+        "threshold": 500,
+        "hoursRemaining": 10,
+        "status": "UPCOMING",
+        "serviceDescription": "500-Hour Final Drive Lubrication & Track Tension Check"
+      },
+      {
+        "machine": "JCB 3DXPLUS Backhoe Loader",
+        "currentHours": 128,
+        "threshold": 250,
+        "hoursRemaining": 122,
+        "status": "NORMAL",
+        "serviceDescription": "250-Hour Greasing & Transmission Fluid Level Service"
+      },
+      {
+        "machine": "Isuzu FVZ 34 Heavy Tipper Truck (15 Ton)",
+        "currentHours": 512.8,
+        "threshold": 500,
+        "hoursRemaining": -12.799999999999955,
+        "status": "OVERDUE",
+        "serviceDescription": "500-Hour Brake Liner, Differential & Turbocharger Inspection"
+      },
+      {
+        "machine": "Komatsu PC-200 Heavy Excavator",
+        "currentHours": 342.5,
+        "threshold": 500,
+        "hoursRemaining": 157.5,
+        "status": "NORMAL",
+        "serviceDescription": "500-Hour Hydraulic Oil Filter & Engine Valve Inspection"
+      },
+      {
+        "machine": "Komatsu D155AX-8 Crawler Dozer",
+        "currentHours": 490,
+        "threshold": 500,
+        "hoursRemaining": 10,
+        "status": "UPCOMING",
+        "serviceDescription": "500-Hour Final Drive Lubrication & Track Tension Check"
+      },
+      {
+        "machine": "JCB 3DXPLUS Backhoe Loader",
+        "currentHours": 128,
+        "threshold": 250,
+        "hoursRemaining": 122,
+        "status": "NORMAL",
+        "serviceDescription": "250-Hour Greasing & Transmission Fluid Level Service"
+      },
+      {
+        "machine": "Isuzu FVZ 34 Heavy Tipper Truck (15 Ton)",
+        "currentHours": 512.8,
+        "threshold": 500,
+        "hoursRemaining": -12.799999999999955,
+        "status": "OVERDUE",
+        "serviceDescription": "500-Hour Brake Liner, Differential & Turbocharger Inspection"
+      }
+    ]
+  }
+}

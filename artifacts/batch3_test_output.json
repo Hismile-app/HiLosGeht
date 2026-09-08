@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-09-08T17:10:45.083Z",
+  "batch": 3,
+  "concurrency": 50,
+  "totalDurationMs": 3348,
+  "avgQueryDurationMs": 2887.88,
+  "poolMetrics": {
+    "totalCount": 50,
+    "idleCount": 50,
+    "waitingCount": 0
+  },
+  "sampleQueries": [
+    {
+      "queryIndex": 1,
+      "durationMs": 3089,
+      "rowCount": 3,
+      "status": "SUCCESS"
+    },
+    {
+      "queryIndex": 2,
+      "durationMs": 3122,
+      "rowCount": 3,
+      "status": "SUCCESS"
+    },
+    {
+      "queryIndex": 3,
+      "durationMs": 3084,
+      "rowCount": 3,
+      "status": "SUCCESS"
+    },
+    {
+      "queryIndex": 4,
+      "durationMs": 3294,
+      "rowCount": 3,
+      "status": "SUCCESS"
+    },
+    {
+      "queryIndex": 5,
+      "durationMs": 856,
+      "rowCount": 3,
+      "status": "SUCCESS"
+    }
+  ]
+}

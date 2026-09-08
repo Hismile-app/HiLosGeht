@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-09-08T17:11:49.728Z",
+  "batch": 10,
+  "tests": [
+    {
+      "name": "Telematics Hour Meter Update",
+      "status": "PASSED",
+      "newHours": 501
+    },
+    {
+      "name": "Automated Preventive Maintenance DB Trigger",
+      "status": "PASSED",
+      "taskId": "7930bbd5-5b49-4455-b2ae-280dd1feb4a9",
+      "priority": "HIGH",
+      "description": "Automated Preventive Maintenance Alert: Komatsu PC-200 Heavy Excavator has reached 501.0 engine hours (Limit: 500.0 hrs). Action: 500-Hour Hydraulic Oil Filter & Engine Valve Inspection"
+    }
+  ],
+  "payload": {
+    "version": "2.0",
+    "Equipment": {
+      "EquipmentHeader": {
+        "Make": "Komatsu",
+        "Model": "PC-200",
+        "EquipmentSerialNumber": "KOM-PC200-KE-001",
+        "PIN": "KOM-PC200-KE-001",
+        "AssetId": "11111111-1111-1111-1111-111111111101"
+      },
+      "CumulativeOperatingHours": {
+        "Hour": 501,
+        "Datetime": "2026-09-08T17:11:49.868Z"
+      },
+      "FuelRemaining": {
+        "Percent": 78.5,
+        "Datetime": "2026-09-08T17:11:49.868Z"
+      },
+      "Location": {
+        "Latitude": 0.0463,
+        "Longitude": 37.6559,
+        "Altitude": 1530,
+        "Datetime": "2026-09-08T17:11:49.868Z"
+      },
+      "DiagnosticTroubleCodes": []
+    }
+  },
+  "generatedTask": {
+    "id": "7930bbd5-5b49-4455-b2ae-280dd1feb4a9",
+    "assigned_to": null,
+    "equipment_id": "11111111-1111-1111-1111-111111111101",
+    "task_type": "PREVENTIVE_MAINTENANCE",
+    "priority": "HIGH",
+    "status": "PENDING",
+    "description": "Automated Preventive Maintenance Alert: Komatsu PC-200 Heavy Excavator has reached 501.0 engine hours (Limit: 500.0 hrs). Action: 500-Hour Hydraulic Oil Filter & Engine Valve Inspection",
+    "created_at": "2026-09-08T17:11:49.874Z",
+    "completed_at": null
+  }
+}
