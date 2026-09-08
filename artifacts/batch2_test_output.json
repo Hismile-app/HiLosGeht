@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-09-08T16:58:47.852Z",
+  "batch": 2,
+  "tests": [
+    {
+      "name": "Custom Access Token Hook Enrichment",
+      "status": "PASSED"
+    },
+    {
+      "name": "User Roles Sync Trigger",
+      "status": "PASSED",
+      "count": 2
+    },
+    {
+      "name": "Operator Own Log Insertion",
+      "status": "PASSED",
+      "logId": "84a5b6fc-9171-4a73-86db-1eeccf785861"
+    },
+    {
+      "name": "RLS Asset Mutation Block for Operator",
+      "status": "PASSED"
+    },
+    {
+      "name": "Admin Global RBAC Access",
+      "status": "PASSED",
+      "logsVisible": "3"
+    }
+  ]
+}

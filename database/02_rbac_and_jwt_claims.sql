@@ -3,6 +3,22 @@
 -- Batch 2: Supabase Custom JWT Claims, RBAC & RLS Policies
 -- ==========================================================
 
+-- Create standard Supabase roles if not exists
+DO $$ BEGIN
+    CREATE ROLE anon NOLOGIN;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE ROLE authenticated NOLOGIN;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE ROLE service_role NOLOGIN;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
 -- Ensure auth schema and helpers exist for Supabase compatibility
 CREATE SCHEMA IF NOT EXISTS auth;
 
@@ -115,11 +131,17 @@ ALTER TABLE public.staff_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.maintenance_triggers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.staff_tasks ENABLE ROW LEVEL SECURITY;
 
+-- Grant permissions to authenticated, anon, and service_role
+GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+GRANT INSERT ON public.reservations TO anon;
+
 -- 1. Profiles Policies
 DROP POLICY IF EXISTS "Public can view own profile or Admin full access" ON public.profiles;
 CREATE POLICY "Public can view own profile or Admin full access" ON public.profiles
 FOR ALL USING (
-    auth.uid() = id OR public.authorize('ADMIN') OR auth.role() = 'service_role' OR auth.role() = 'postgres'
+    auth.uid() = id OR public.authorize('ADMIN') OR auth.role() = 'service_role'
 );
 
 -- 2. Physical Assets Policies
@@ -130,7 +152,7 @@ FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins can manage physical assets" ON public.physical_assets;
 CREATE POLICY "Admins can manage physical assets" ON public.physical_assets
 FOR ALL USING (
-    public.authorize('ADMIN') OR auth.role() = 'service_role' OR auth.role() = 'postgres'
+    public.authorize('ADMIN') OR auth.role() = 'service_role'
 );
 
 -- 3. Reservations Policies
@@ -141,25 +163,25 @@ FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "Clients can view own reservations, Admins full access" ON public.reservations;
 CREATE POLICY "Clients can view own reservations, Admins full access" ON public.reservations
 FOR SELECT USING (
-    customer_id = auth.uid() OR public.authorize('ADMIN') OR auth.role() = 'service_role' OR auth.role() = 'postgres'
+    customer_id = auth.uid() OR public.authorize('ADMIN') OR auth.role() = 'service_role'
 );
 
 DROP POLICY IF EXISTS "Admins can update reservations" ON public.reservations;
 CREATE POLICY "Admins can update reservations" ON public.reservations
 FOR UPDATE USING (
-    public.authorize('ADMIN') OR auth.role() = 'service_role' OR auth.role() = 'postgres'
+    public.authorize('ADMIN') OR auth.role() = 'service_role'
 );
 
 -- 4. Staff Logs Policies
 DROP POLICY IF EXISTS "Staff can insert logs and view own, Admin full access" ON public.staff_logs;
 CREATE POLICY "Staff can insert logs and view own, Admin full access" ON public.staff_logs
 FOR ALL USING (
-    staff_id = auth.uid() OR public.authorize('ADMIN') OR auth.role() = 'service_role' OR auth.role() = 'postgres'
+    staff_id = auth.uid() OR public.authorize('ADMIN') OR auth.role() = 'service_role'
 );
 
 -- 5. Staff Tasks & Maintenance Policies
 DROP POLICY IF EXISTS "Staff can view assigned tasks, Admin full access" ON public.staff_tasks;
 CREATE POLICY "Staff can view assigned tasks, Admin full access" ON public.staff_tasks
 FOR ALL USING (
-    assigned_to = auth.uid() OR public.authorize('ADMIN') OR auth.role() = 'service_role' OR auth.role() = 'postgres'
+    assigned_to = auth.uid() OR public.authorize('ADMIN') OR auth.role() = 'service_role'
 );
