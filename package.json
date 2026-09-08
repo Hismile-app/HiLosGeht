@@ -4,6 +4,8 @@
   "description": "Hi Los Geht (HLG) Heavy Machinery Management, Booking & Operations Platform",
   "main": "server/server.ts",
   "scripts": {
+    "build": "cd client && npm run build",
+    "start": "cd client && npm run start",
     "db:migrate": "node database/run_migrations.js",
     "test:b1": "node database/test_batch1_overlap.js",
     "test:b2": "node database/test_batch2_rbac.js",
