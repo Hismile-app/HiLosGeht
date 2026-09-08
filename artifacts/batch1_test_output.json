@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-09-08T16:56:05.108Z",
+  "batch": 1,
+  "tests": [
+    {
+      "name": "Fleet Models Verification",
+      "status": "PASSED",
+      "count": 8
+    },
+    {
+      "name": "Initial Booking Insertion",
+      "status": "PASSED",
+      "id": "b7e1cfeb-fa29-4ac6-a9b5-96a623875e35"
+    },
+    {
+      "name": "GiST Exclusion Constraint Rejection",
+      "status": "PASSED",
+      "code": "23P01"
+    },
+    {
+      "name": "Cancellation Re-booking Bypass",
+      "status": "PASSED",
+      "id": "423f9158-4a56-4e9c-846d-10a7a0273d6d"
+    }
+  ]
+}

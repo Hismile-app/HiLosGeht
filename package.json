@@ -1,0 +1,26 @@
+{
+  "name": "hi-los-geht-platform",
+  "version": "1.0.0",
+  "description": "Hi Los Geht (HLG) Heavy Machinery Management, Booking & Operations Platform",
+  "main": "server/server.ts",
+  "scripts": {
+    "db:migrate": "node database/run_migrations.js",
+    "test:b1": "node database/test_batch1_overlap.js",
+    "test:b2": "node database/test_batch2_rbac.js",
+    "test:b3": "node server/tests/test_batch3_pool.js",
+    "test:b6": "node server/tests/test_batch6_smtp.js",
+    "test:b9": "node server/tests/test_batch9_ai.js",
+    "test:b10": "node server/tests/test_batch10_telemetry.js",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@types/pg": "^8.11.11"
+  }
+}

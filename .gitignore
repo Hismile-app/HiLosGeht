@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Database local cluster data
+database/.pgdata/
+database/pw.txt
+*.log
+
+# Environment variables
+.env*.local
+.env
+
+# Antigravity artifacts (transcripts/internal)
+.system_generated/
