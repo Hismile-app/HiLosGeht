@@ -80,7 +80,7 @@ export default function AdminSidebar() {
   const navItems = role === 'OPERATOR' ? OPERATOR_MODULES : ADMIN_MODULES;
 
   return (
-    <aside className="w-full lg:w-64 bg-surface border-r border-border shrink-0 min-h-[calc(100vh-5rem)] p-4 space-y-5">
+    <aside className="w-full lg:w-64 bg-surface border-r border-border shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto p-4 space-y-5 z-30">
       
       {/* Role Banner */}
       <div className="px-3.5 py-3 bg-white rounded-xl border border-border shadow-subtle">
