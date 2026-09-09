@@ -50,22 +50,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
-      {/* Ambient background glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-
+    <div className="min-h-[85vh] bg-surface flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden text-ink">
+      
       <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Branding header */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center font-heading font-black text-white text-xl shadow-neon">
-              HLG
+          <Link href="/" className="inline-flex items-center gap-2 group">
+            <div className="w-11 h-11 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+              <Truck className="w-6 h-6" />
             </div>
-            <span className="font-heading font-black text-2xl tracking-wider text-white">
-              HI LOS GEHT
+            <span className="font-heading font-black text-2xl tracking-wider text-ink">
+              <span className="text-primary">HLG</span> HI LOS GEHT
             </span>
           </Link>
-          <h2 className="text-xl font-heading font-bold text-gray-200">
+          <h2 className="text-xl font-heading font-bold text-ink">
             Sign in to Operations Hub
           </h2>
           <p className="text-xs text-muted font-mono">
@@ -74,45 +72,45 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-surface border border-border rounded-2xl p-8 shadow-2xl space-y-6 backdrop-blur-sm">
+        <div className="bg-white border border-border rounded-2xl p-8 shadow-card space-y-6">
           {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-2.5 text-rose-400 text-xs font-mono">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl flex items-center gap-2.5 text-rose-800 text-xs font-mono">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-mono text-muted uppercase block mb-1.5">
+              <label className="text-xs font-mono text-zinc-700 font-semibold uppercase block mb-1.5">
                 Work Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="operator@hilosgeht.co.ke"
-                  className="w-full pl-10 pr-4 py-2.5 bg-neutral-900 border border-border rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-primary transition-all font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-ink placeholder-zinc-400 focus:outline-none focus:border-primary focus:bg-white transition-all font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-mono text-muted uppercase block mb-1.5">
+              <label className="text-xs font-mono text-zinc-700 font-semibold uppercase block mb-1.5">
                 Account Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 bg-neutral-900 border border-border rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-primary transition-all font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-ink placeholder-zinc-400 focus:outline-none focus:border-primary focus:bg-white transition-all font-mono"
                 />
               </div>
             </div>
@@ -120,7 +118,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-heading font-bold text-sm tracking-wider uppercase transition-all shadow-neon flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-heading font-bold text-sm tracking-wider uppercase transition-all shadow-subtle flex items-center justify-center gap-2 mt-2 cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
               {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
@@ -128,7 +126,7 @@ export default function LoginPage() {
           </form>
 
           {/* Quick Demo Fill Helper */}
-          <div className="pt-4 border-t border-border/60 space-y-2">
+          <div className="pt-4 border-t border-border space-y-2">
             <div className="text-[11px] font-mono text-muted text-center">Demo Quick-Logins:</div>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -137,7 +135,7 @@ export default function LoginPage() {
                   setEmail('admin@hilosgeht.co.ke');
                   setPassword('AdminPass123!');
                 }}
-                className="py-1.5 px-2 bg-neutral-900 hover:bg-neutral-800 border border-border rounded-lg text-[11px] font-mono text-primary font-bold transition-all text-center"
+                className="py-1.5 px-2 bg-surface hover:bg-orange-50 border border-border rounded-lg text-[11px] font-mono text-primary font-bold transition-all text-center cursor-pointer"
               >
                 Admin Auto-Fill
               </button>
@@ -147,7 +145,7 @@ export default function LoginPage() {
                   setEmail('operator.john@hilosgeht.co.ke');
                   setPassword('OperatorPass123!');
                 }}
-                className="py-1.5 px-2 bg-neutral-900 hover:bg-neutral-800 border border-border rounded-lg text-[11px] font-mono text-gray-300 font-bold transition-all text-center"
+                className="py-1.5 px-2 bg-surface hover:bg-zinc-200 border border-border rounded-lg text-[11px] font-mono text-zinc-700 font-bold transition-all text-center cursor-pointer"
               >
                 Operator Auto-Fill
               </button>
@@ -158,8 +156,8 @@ export default function LoginPage() {
         {/* Dispatch Hotline Help */}
         <div className="text-center text-xs text-muted font-mono space-y-1">
           <div>Need account access or field deployment assistance?</div>
-          <div className="text-gray-300">
-            Meru Dispatch: <span className="text-primary font-bold">0717 186396</span> / 0748866823
+          <div className="text-zinc-700">
+            Meru Dispatch: <span className="text-primary font-bold">0717 186396</span> / <span className="text-zinc-900 font-bold">0748866823</span>
           </div>
         </div>
       </div>
