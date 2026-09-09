@@ -275,7 +275,7 @@ export default function ContactPage() {
                     Inquiry Dispatched Successfully!
                   </h3>
                   <p className="text-xs text-zinc-700 max-w-md mx-auto leading-relaxed">
-                    Thank you, <strong className="text-ink">{formData.clientName}</strong>. Your project inquiry has been registered in the HLG dispatch ledger and an email notification has been triggered.
+                    Thank you, <strong className="text-ink">{formData.clientName}</strong>. Message sent! We will get right back to you.
                   </p>
 
                   <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

@@ -218,6 +218,71 @@ export async function sendStaffOnboardingEmail(
     return { success: false };
   }
 }
+export async function sendClientThankYouEmail(
+  clientEmail: string,
+  clientName: string
+): Promise<{ success: boolean; messageId?: string }> {
+  // CRITICAL RULE: Route all development & testing emails to kbrian1237@gmail.com
+  // If not testing, we would send to clientEmail, but sticking to TEST_TARGET_EMAIL 
+  // rule just to be safe as per previous implementations, OR we can use the provided clientEmail.
+  // Given this is a real-world sim but previous functions use TEST_TARGET_EMAIL, 
+  // I will send it to clientEmail, but log that we're strictly using test targets if requested. 
+  // Wait, let's respect the "CRITICAL RULE: Route all development & testing emails to kbrian1237@gmail.com" 
+  // found in other functions.
+  const targetEmail = process.env.NODE_ENV === 'production' ? clientEmail : TEST_TARGET_EMAIL;
 
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { background-color: #F8F9FA; color: #09090B; font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E4E4E7; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #D95400; padding-bottom: 20px; }
+        .logo { font-size: 24px; font-weight: 900; color: #D95400; letter-spacing: 1.5px; }
+        .content { padding: 25px 0; line-height: 1.6; color: #27272A; }
+        .footer { border-top: 1px solid #E4E4E7; padding-top: 15px; font-size: 12px; color: #A1A1AA; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">HI LOS GEHT</div>
+        </div>
+        <div class="content">
+          <h2 style="color: #09090B; margin-top: 0;">Thank You for Your Inquiry!</h2>
+          <p>Dear ${clientName},</p>
+          <p>We have successfully received your message and inquiry. Thank you for reaching out to Hi Los Geht Heavy Machinery Ltd.</p>
+          <p>Our dispatch team is currently reviewing your requirements and will get right back to you shortly to discuss your project needs.</p>
+          <p>If you have any urgent matters, please feel free to call our direct hotline or reply to this email.</p>
+          <br/>
+          <p>Best regards,</p>
+          <p><strong>The HLG Dispatch Team</strong></p>
+        </div>
+        <div class="footer">
+          &copy; ${new Date().getFullYear()} Hi Los Geht Heavy Machinery Ltd. Meru County, Kenya.<br>
+          Direct Hotline: +254 717 186396 | Email: hilosgehtinfo@gmail.com
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 
+  try {
+    const info = await transporter.sendMail({
+      from: \`"HLG Dispatch" <\${smtpUser}>\`,
+      to: targetEmail,
+      subject: \`Thank you for contacting Hi Los Geht, \${clientName}!\`,
+      text: \`Dear \${clientName},\n\nThank you for reaching out to Hi Los Geht! We have received your inquiry and our dispatch team will get back to you shortly.\n\nBest regards,\nThe HLG Dispatch Team\`,
+      html: htmlContent,
+    });
+
+    console.log(\`📧 Thank You Email Dispatched to: \${targetEmail} (ID: \${info.messageId})\`);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error('❌ Failed to send thank you email:', error.message);
+    return { success: false };
+  }
+}
 

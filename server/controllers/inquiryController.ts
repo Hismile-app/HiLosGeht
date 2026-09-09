@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import db from '../config/db';
-import { sendContactInquiryEmail } from '../services/nodemailer';
+import { sendContactInquiryEmail, sendClientThankYouEmail } from '../services/nodemailer';
 
 export async function createInquiry(req: Request, res: Response) {
   try {
@@ -103,6 +103,10 @@ export async function createInquiry(req: Request, res: Response) {
       startDate: startDate || new Date().toISOString().split('T')[0],
       notes: compiledNotes || notes || '',
     }).catch(err => console.error('Nodemailer async dispatch error:', err));
+
+    // Send thank you email to client
+    sendClientThankYouEmail(clientEmail, clientName)
+      .catch(err => console.error('Nodemailer client thank you email error:', err));
 
     return res.status(201).json({
       success: true,
