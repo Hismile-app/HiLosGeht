@@ -19,12 +19,13 @@ import { Profile } from '@/types';
 import { formatDate } from '@/lib/utils';
 
 export default function StaffManagementPage() {
+  const [role, setRole] = useState<'ADMIN' | 'OPERATOR'>('ADMIN');
   const [staffList, setStaffList] = useState<Profile[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [role, setRole] = useState<'OPERATOR' | 'ADMIN'>('OPERATOR');
+  const [staffRole, setStaffRole] = useState<'OPERATOR' | 'ADMIN'>('OPERATOR');
   
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -44,8 +45,39 @@ export default function StaffManagementPage() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedRole = localStorage.getItem('hlg_role');
+      if (storedRole === 'OPERATOR') {
+        setRole('OPERATOR');
+        return;
+      }
+    }
     fetchStaff();
   }, []);
+
+  if (role === 'OPERATOR') {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mx-auto flex items-center justify-center">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <h2 className="font-heading font-black text-2xl text-ink uppercase">
+          Access Restricted to Central Administrators
+        </h2>
+        <p className="text-xs text-muted max-w-md mx-auto leading-relaxed">
+          Staff onboarding, personnel role provisioning, and administrative credentials management are restricted to HLG Chief Administrators.
+        </p>
+        <div className="pt-2">
+          <a
+            href="/staff"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-heading font-bold uppercase transition-all shadow-subtle"
+          >
+            Go to Operator Daily Log Portal
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();

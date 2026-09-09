@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Truck, Phone, Mail, MapPin, ShieldCheck, Clock, CreditCard } from 'lucide-react';
+import { Truck, Phone, Mail, MapPin, ShieldCheck, CreditCard, Lock } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -23,11 +23,11 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-2 text-xs text-primary font-mono font-semibold">
               <ShieldCheck className="w-4 h-4" />
-              <span>Certified Equipment • ISO 15143-3 Telemetry</span>
+              <span>Certified Fleet • ISO 15143-3 Telematics</span>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Fleet Catalog Links */}
           <div>
             <h3 className="text-ink font-heading text-xs tracking-wider uppercase mb-4 text-primary font-bold">
               Fleet Catalog
@@ -42,17 +42,18 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Operations Portal */}
+          {/* Company & Services */}
           <div>
             <h3 className="text-ink font-heading text-xs tracking-wider uppercase mb-4 text-primary font-bold">
-              Operations & Portals
+              Company & Services
             </h3>
             <ul className="space-y-2.5 text-xs">
-              <li><Link href="/staff" className="hover:text-primary transition-colors">Operator Daily Logging</Link></li>
-              <li><Link href="/admin" className="hover:text-primary transition-colors">12-Module Command Center</Link></li>
-              <li><Link href="/admin/fleet" className="hover:text-primary transition-colors">Fleet Management & CRUD</Link></li>
-              <li><Link href="/admin/ai-insights" className="hover:text-primary transition-colors">AI Anomaly & Fuel Diagnostics</Link></li>
-              <li><Link href="/login" className="hover:text-primary transition-colors">Staff Authentication</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">About Hi Los Geht</Link></li>
+              <li><Link href="/catalog" className="hover:text-primary transition-colors">Machinery Hire Catalog</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Dispatch Office</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">Earthmoving & Roadworks</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">Quarry & Dam Construction</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Get Project Quotation</Link></li>
             </ul>
           </div>
 
@@ -91,14 +92,22 @@ export default function Footer() {
 
         </div>
 
+        {/* Footer Bottom with Exclusive Padlock Staff Portal Link */}
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4">
           <p>&copy; {new Date().getFullYear()} Hi Los Geht (HLG) Heavy Machinery Ltd. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span className="font-mono text-[11px] text-zinc-500">PostgreSQL • GiST Integrity Protected</span>
-            <Link href="/admin" className="text-zinc-600 hover:text-primary">Admin Console</Link>
+            <Link 
+              href="/login" 
+              className="inline-flex items-center gap-1.5 text-zinc-600 hover:text-primary font-mono text-xs transition-colors group"
+            >
+              <Lock className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
+              <span>Staff Portal</span>
+            </Link>
           </div>
         </div>
       </div>
     </footer>
   );
 }
+

@@ -6,22 +6,29 @@ import { usePathname } from 'next/navigation';
 import { 
   Truck, 
   Phone, 
-  ShieldCheck, 
   Menu, 
   X, 
-  LayoutDashboard, 
-  ClipboardList, 
-  LogIn 
+  ArrowRight
 } from 'lucide-react';
+
+const NAV_LINKS = [
+  { name: 'Home', path: '/' },
+  { name: 'About Us', path: '/about' },
+  { name: 'Contact Us', path: '/contact' },
+  { name: 'Fleet Catalog', path: '/catalog' },
+];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  const isLinkActive = (path: string) => pathname === path;
+  const isLinkActive = (path: string) => {
+    if (path === '/') return pathname === '/';
+    return pathname?.startsWith(path);
+  };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 industrial-nav bg-white/95">
+    <nav className="fixed top-0 left-0 right-0 z-50 industrial-nav bg-white/95 backdrop-blur-md border-b border-border shadow-subtle">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
@@ -40,36 +47,19 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link 
-              href="/catalog" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isLinkActive('/catalog') ? 'text-primary font-bold' : 'text-zinc-700'
-              }`}
-            >
-              Fleet Catalog
-            </Link>
-            
-            <Link 
-              href="/staff" 
-              className={`text-sm font-medium flex items-center gap-1.5 transition-colors hover:text-primary ${
-                isLinkActive('/staff') ? 'text-primary font-bold' : 'text-zinc-700'
-              }`}
-            >
-              <ClipboardList className="w-4 h-4 text-primary" />
-              Operator Portal
-            </Link>
-
-            <Link 
-              href="/admin" 
-              className={`text-sm font-medium flex items-center gap-1.5 transition-colors hover:text-primary ${
-                pathname?.startsWith('/admin') ? 'text-primary font-bold' : 'text-zinc-700'
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4 text-primary" />
-              Admin Command
-            </Link>
+          {/* Desktop Nav Links - Exclusively Home, About Us, Contact Us, Fleet Catalog */}
+          <div className="hidden md:flex items-center gap-7">
+            {NAV_LINKS.map((link) => (
+              <Link 
+                key={link.path}
+                href={link.path} 
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isLinkActive(link.path) ? 'text-primary font-bold' : 'text-zinc-700'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
 
             <a 
               href="https://wa.me/254717186396?text=Hello%20HLG%20Dispatch%20Team%2C%20I%20would%20like%20to%20inquire%20about%20heavy%20machinery%20availability."
@@ -83,9 +73,10 @@ export default function Navbar() {
 
             <Link 
               href="/catalog" 
-              className="btn-primary text-xs py-2 px-4"
+              className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
             >
-              Book Equipment
+              <span>Book Equipment</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -96,7 +87,8 @@ export default function Navbar() {
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg bg-surface border border-border text-zinc-700 hover:text-ink"
+              aria-label="Toggle Navigation Menu"
+              className="p-2 rounded-lg bg-surface border border-border text-zinc-700 hover:text-ink cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -105,45 +97,37 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Collapsible Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-border px-4 pt-3 pb-6 space-y-3 shadow-lg">
-          <Link 
-            href="/catalog"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-zinc-900 hover:bg-surface hover:text-primary"
-          >
-            🚜 Fleet Catalog
-          </Link>
-          <Link 
-            href="/staff"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-zinc-900 hover:bg-surface hover:text-primary"
-          >
-            📋 Operator Daily Log Portal
-          </Link>
-          <Link 
-            href="/admin"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-zinc-900 hover:bg-surface hover:text-primary"
-          >
-            ⚡ Admin 12-Module Command Center
-          </Link>
-          <Link 
-            href="/login"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-zinc-900 hover:bg-surface hover:text-primary"
-          >
-            🔒 Staff Login
-          </Link>
+        <div className="md:hidden bg-white border-b border-border px-4 pt-3 pb-6 space-y-2 shadow-xl animate-in slide-in-from-top duration-200">
+          {NAV_LINKS.map((link) => (
+            <Link 
+              key={link.path}
+              href={link.path}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3.5 py-2.5 rounded-lg text-base font-medium transition-colors ${
+                isLinkActive(link.path) 
+                  ? 'bg-orange-50 text-primary font-bold border-l-4 border-primary' 
+                  : 'text-zinc-900 hover:bg-surface hover:text-primary'
+              }`}
+            >
+              {link.name}
+            </Link>
+          ))}
           
-          <div className="pt-2 border-t border-border text-xs text-muted space-y-1">
-            <p className="font-mono text-zinc-800">Dispatch Lines:</p>
-            <p>Primary: <a href="tel:+254717186396" className="text-primary font-bold">0717 186396</a></p>
-            <p>Backup: <a href="tel:+254748866823" className="text-primary font-bold">0748866823</a></p>
+          <div className="pt-3 mt-2 border-t border-border text-xs text-muted space-y-2">
+            <div className="flex items-center justify-between font-mono text-zinc-800">
+              <span>Meru Dispatch Hotline:</span>
+              <a href="tel:+254717186396" className="text-primary font-bold">0717 186396</a>
+            </div>
+            <div className="flex items-center justify-between font-mono text-zinc-800">
+              <span>Backup Operations:</span>
+              <a href="tel:+254748866823" className="text-zinc-700 font-bold">0748866823</a>
+            </div>
           </div>
         </div>
       )}
     </nav>
   );
 }
+

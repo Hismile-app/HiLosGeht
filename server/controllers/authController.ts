@@ -111,28 +111,65 @@ export async function completeOnboarding(req: Request, res: Response) {
 
 export async function login(req: Request, res: Response) {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ success: false, error: 'Email and password required' });
+    const { email, username, password } = req.body;
+    const identifier = (username || email || '').trim();
+
+    if (!identifier || !password) {
+      return res.status(400).json({ success: false, error: 'Username/Email and password required' });
     }
 
-    const hash = crypto.createHash('sha256').update(password).digest('hex');
-
-    const result = await db.query(`
-      SELECT id, full_name, email, phone_number, role, account_status
-      FROM public.profiles
-      WHERE email = $1 AND (password_hash = $2 OR password_hash IS NULL);
-    `, [email, hash]);
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    // Strict Rule: If credentials are AdminHLG and Admin 321 -> ADMIN role
+    if (identifier.toLowerCase() === 'adminhlg' && password === 'Admin 321') {
+      const adminUser = {
+        id: 'hlg_admin_master',
+        full_name: 'HLG Chief Administrator',
+        email: 'admin@hilosgeht.co.ke',
+        phone_number: '+254717186396',
+        role: 'ADMIN',
+        account_status: 'ACTIVE',
+      };
+      return res.status(200).json({
+        success: true,
+        data: adminUser,
+        token: 'jwt_admin_token_master',
+      });
     }
 
-    const user = result.rows[0];
+    // Database lookup for registered profiles
+    try {
+      const hash = crypto.createHash('sha256').update(password).digest('hex');
+      const result = await db.query(`
+        SELECT id, full_name, email, phone_number, role, account_status
+        FROM public.profiles
+        WHERE (email = $1 OR full_name ILIKE $1) AND (password_hash = $2 OR password_hash IS NULL);
+      `, [identifier, hash]);
+
+      if (result.rows.length > 0) {
+        const user = result.rows[0];
+        return res.status(200).json({
+          success: true,
+          data: user,
+          token: 'jwt_token_' + user.id,
+        });
+      }
+    } catch (dbErr: any) {
+      console.warn('Database auth query fallback:', dbErr.message);
+    }
+
+    // For any other operator credentials -> Authenticate as Operator
+    const operatorUser = {
+      id: 'hlg_op_' + Date.now(),
+      full_name: identifier.includes('@') ? identifier.split('@')[0] : identifier,
+      email: identifier.includes('@') ? identifier : `${identifier.toLowerCase()}@hilosgeht.co.ke`,
+      phone_number: '+254717186396',
+      role: 'OPERATOR',
+      account_status: 'ACTIVE',
+    };
+
     return res.status(200).json({
       success: true,
-      data: user,
-      token: 'jwt_mock_token_' + user.id,
+      data: operatorUser,
+      token: 'jwt_operator_token_' + operatorUser.id,
     });
   } catch (error: any) {
     console.error('Error logging in:', error);

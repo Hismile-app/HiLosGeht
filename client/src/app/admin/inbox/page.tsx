@@ -12,7 +12,8 @@ import {
   CheckCircle2, 
   XCircle, 
   Truck,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle
 } from 'lucide-react';
 import GlassCard from '@/components/common/GlassCard';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -21,6 +22,7 @@ import { Reservation } from '@/types';
 import { formatCurrency, formatDate, buildWhatsAppBookingLink } from '@/lib/utils';
 
 export default function InboxKanbanPage() {
+  const [role, setRole] = useState<'ADMIN' | 'OPERATOR'>('ADMIN');
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,8 +42,40 @@ export default function InboxKanbanPage() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedRole = localStorage.getItem('hlg_role');
+      if (storedRole === 'OPERATOR') {
+        setRole('OPERATOR');
+        setLoading(false);
+        return;
+      }
+    }
     fetchInquiries();
   }, []);
+
+  if (role === 'OPERATOR') {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mx-auto flex items-center justify-center">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <h2 className="font-heading font-black text-2xl text-ink uppercase">
+          Access Restricted to Central Administrators
+        </h2>
+        <p className="text-xs text-muted max-w-md mx-auto leading-relaxed">
+          Order inbox, client contract negotiations, and reservation approvals are restricted to HLG Chief Administrators.
+        </p>
+        <div className="pt-2">
+          <a
+            href="/staff"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-heading font-bold uppercase transition-all shadow-subtle"
+          >
+            Go to Operator Daily Log Portal
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {

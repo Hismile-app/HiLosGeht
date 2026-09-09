@@ -12,10 +12,12 @@ import {
   Server, 
   Zap, 
   Bell,
-  Cpu
+  Cpu,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function SystemSettingsPage() {
+  const [role, setRole] = useState<'ADMIN' | 'OPERATOR'>('ADMIN');
   const [primaryPhone, setPrimaryPhone] = useState('0717 186396');
   const [backupPhone, setBackupPhone] = useState('0748866823');
   const [supportEmail, setSupportEmail] = useState('hilosgehtinfo@gmail.com');
@@ -29,6 +31,39 @@ export default function SystemSettingsPage() {
   const [telemetryFuel, setTelemetryFuel] = useState('85.0');
   const [telemetryStatus, setTelemetryStatus] = useState<string | null>(null);
   const [telemetryLoading, setTelemetryLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedRole = localStorage.getItem('hlg_role');
+      if (storedRole === 'OPERATOR') {
+        setRole('OPERATOR');
+      }
+    }
+  }, []);
+
+  if (role === 'OPERATOR') {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mx-auto flex items-center justify-center">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <h2 className="font-heading font-black text-2xl text-ink uppercase">
+          Access Restricted to Central Administrators
+        </h2>
+        <p className="text-xs text-muted max-w-md mx-auto leading-relaxed">
+          System telemetry gateway settings, notification dispatch hooks, and maintenance thresholds are restricted to HLG Chief Administrators.
+        </p>
+        <div className="pt-2">
+          <a
+            href="/staff"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-heading font-bold uppercase transition-all shadow-subtle"
+          >
+            Go to Operator Daily Log Portal
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
