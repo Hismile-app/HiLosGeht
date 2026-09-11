@@ -120,10 +120,6 @@ export default function Navbar() {
               <span>Meru Dispatch Hotline:</span>
               <a href="tel:+254717186396" className="text-primary font-bold">0717 186396</a>
             </div>
-            <div className="flex items-center justify-between font-mono text-zinc-800">
-              <span>Backup Operations:</span>
-              <a href="tel:+254748866823" className="text-zinc-700 font-bold">0748866823</a>
-            </div>
           </div>
         </div>
       )}

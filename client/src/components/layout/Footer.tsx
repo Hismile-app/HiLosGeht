@@ -21,10 +21,6 @@ export default function Footer() {
             <p className="text-xs text-muted leading-relaxed">
               Meru's premier heavy construction equipment rental and fleet logistics platform. Direct B2B WhatsApp dispatch, telemetry monitoring, and jobsite haulage solutions.
             </p>
-            <div className="flex items-center gap-2 text-xs text-primary font-mono font-semibold">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Certified Fleet • ISO 15143-3 Telematics</span>
-            </div>
           </div>
 
           {/* Fleet Catalog Links */}
@@ -68,10 +64,6 @@ export default function Footer() {
                 <span>Primary WhatsApp: <strong className="text-ink">0717 186396</strong></span>
               </li>
               <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-muted shrink-0" />
-                <span>Backup Line: <strong className="text-ink">0748866823</strong></span>
-              </li>
-              <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary shrink-0" />
                 <span>Email: <strong className="text-ink">hilosgehtinfo@gmail.com</strong></span>
               </li>
@@ -96,7 +88,6 @@ export default function Footer() {
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4">
           <p>&copy; {new Date().getFullYear()} Hi Los Geht (HLG) Heavy Machinery Ltd. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <span className="font-mono text-[11px] text-zinc-500">PostgreSQL • GiST Integrity Protected</span>
             <Link 
               href="/login" 
               className="inline-flex items-center gap-1.5 text-zinc-600 hover:text-primary font-mono text-xs transition-colors group"

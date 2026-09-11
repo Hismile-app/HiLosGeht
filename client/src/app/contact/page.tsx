@@ -176,18 +176,6 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center shrink-0 text-muted mt-0.5">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-ink">Backup Operations Line</div>
-                    <a href="tel:+254748866823" className="text-zinc-800 font-mono font-bold text-sm hover:underline">
-                      0748866823
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center shrink-0 text-primary mt-0.5">
                     <Mail className="w-4 h-4" />
                   </div>

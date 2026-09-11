@@ -202,7 +202,7 @@ export default function AboutPage() {
           {[
             { hub: 'Meru Central Yard', location: 'Meru Town Commercial Hub', coverage: 'Imenti North, Imenti Central, Bypass Works', phone: '0717 186396' },
             { hub: 'Nkubu Southern Hub', location: 'Nkubu – Meru South Corridor', coverage: 'Imenti South, Chuka, Tharaka Nithi Bridges', phone: '0717 186396' },
-            { hub: 'Maua & Nyambene Hub', location: 'Maua – Igembe Region', coverage: 'Igembe Central, South & North Agricultural Works', phone: '0748866823' },
+            { hub: 'Maua & Nyambene Hub', location: 'Maua – Igembe Region', coverage: 'Igembe Central, South & North Agricultural Works', phone: '0717 186396' },
             { hub: 'Timau & Isiolo Corridor', location: 'Timau – Northern Gateway', coverage: 'Buuri Sub-county, LAPSSET Corridor, Isiolo Plains', phone: '0717 186396' },
           ].map((item, idx) => (
             <div key={idx} className="p-5 bg-white rounded-xl border border-border shadow-subtle space-y-2 hover:border-primary/50 transition-colors">

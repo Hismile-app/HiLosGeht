@@ -441,7 +441,7 @@ export default function MachineDetailPage() {
             <div className="p-3 bg-surface rounded-xl border border-border space-y-1 text-center text-xs text-muted font-mono">
               <div>Direct Dispatch Hotline:</div>
               <a href="tel:+254717186396" className="text-primary font-bold hover:underline block text-sm">
-                0717 186396 / 0748866823
+                0717 186396
               </a>
             </div>
 

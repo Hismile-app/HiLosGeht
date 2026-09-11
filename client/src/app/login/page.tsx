@@ -191,7 +191,7 @@ export default function LoginPage() {
         <div className="text-center text-xs text-muted font-mono space-y-1">
           <div>Need password reset or operator deployment assistance?</div>
           <div className="text-zinc-700">
-            Meru Dispatch: <span className="text-primary font-bold">0717 186396</span> / <span className="text-zinc-900 font-bold">0748866823</span>
+            Meru Dispatch: <span className="text-primary font-bold">0717 186396</span>
           </div>
         </div>
       </div>
