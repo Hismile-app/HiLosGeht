@@ -25,7 +25,6 @@ import WhatsAppBookingModal from '@/components/booking/WhatsAppBookingModal';
 import { Equipment } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 
-// Static Verified Brochure Fleet
 const ALL_MACHINES: Equipment[] = [
   {
     id: '11111111-1111-1111-1111-111111111101',
@@ -37,12 +36,16 @@ const ALL_MACHINES: Equipment[] = [
     image_url: '/images/equipment/excavator.jpg',
     current_hour_meter: 342.5,
     specs: {
+      engine_model: 'Komatsu SAA6D107E-1',
       engine_power: '110 kW / 148 HP',
       operating_weight: '20,500 kg',
       bucket_capacity: '1.0 m³',
       max_dig_depth: '6.62 m',
+      max_horizontal_reach: '9.7 m',
       hydraulic_flow: '450 L/min',
       fuel_tank_capacity: '400 L',
+      dimensions_lwh: '9.4m × 2.8m × 3.0m',
+      telemetry: 'KOMTRAX® Supported',
     }
   },
   {
@@ -55,11 +58,15 @@ const ALL_MACHINES: Equipment[] = [
     image_url: '/images/equipment/dozer.jpg',
     current_hour_meter: 490.0,
     specs: {
-      engine_power: '268 kW / 360 HP',
-      operating_weight: '41,200 kg',
+      engine_model: 'Komatsu SAA6D140E-7',
+      engine_power: '264 kW / 354 HP @ 1900 rpm',
+      operating_weight: '40,500 kg',
       blade_capacity: '9.4 m³',
+      blade_type: 'SIGMADOZER',
       track_gauge: '2,140 mm',
-      ground_pressure: '77.0 kPa',
+      ground_pressure: '11.6 psi (77.0 kPa)',
+      transmission: 'Automatic with Lockup Torque Converter',
+      dimensions_lwh: '8.7m × 4.06m × 3.39m',
     }
   },
   {
@@ -73,8 +80,12 @@ const ALL_MACHINES: Equipment[] = [
     current_hour_meter: 128.0,
     specs: {
       engine_power: '55 kW / 74 HP',
+      operating_weight: '7,510 kg (7.51 Ton)',
       loader_capacity: '1.1 m³',
-      backhoe_depth: '4.77 m',
+      backhoe_capacity: '0.26 m³',
+      max_dig_depth: '4.77 m',
+      max_dump_height: '2.74 m',
+      hydraulic_pump: '123 L/min',
       transmission: 'Synchroshuttle 4WD',
       breakout_force: '5,730 kgf',
     }
@@ -89,11 +100,15 @@ const ALL_MACHINES: Equipment[] = [
     image_url: '/images/equipment/wheel_loader.jpg',
     current_hour_meter: 215.4,
     specs: {
+      engine_model: 'Weichai WD10G240E21',
+      rated_power: '175 kW @ 2200 rpm',
       rated_load: '6,000 kg (6 Ton)',
       bucket_capacity: '3.5 m³',
       operating_weight: '21,000 kg',
-      dump_clearance: '3,180 mm',
-      engine_type: 'Weichai Steyr WD10G240',
+      max_dump_clearance: '3,322 mm',
+      max_speed: '38 km/h (Forward) / 17 km/h (Reverse)',
+      transmission: 'Power Shift (4 Forward / 4 Reverse)',
+      dimensions_lwh: '8.69m × 3.08m × 3.54m',
     }
   },
   {
@@ -106,11 +121,15 @@ const ALL_MACHINES: Equipment[] = [
     image_url: '/images/equipment/grader.jpg',
     current_hour_meter: 175.0,
     specs: {
-      engine_power: '132 kW / 180 HP',
-      blade_width: '3,965 mm',
+      engine_model: 'Cummins 6BTAA5.9-C180',
+      engine_power: '132 kW / 180 HP @ 2200 rpm',
       operating_weight: '16,200 kg',
+      blade_width: '3,965 mm',
       max_cut_depth: '500 mm',
+      steering_angle: '±45° Front Wheel / ±25° Articulation',
       turning_radius: '7,800 mm',
+      drive_system: 'Roller chain with no-spin limited-slip diff',
+      transmission: 'Electro-hydraulic Power Shift (6F / 3R)',
     }
   },
   {
@@ -123,10 +142,15 @@ const ALL_MACHINES: Equipment[] = [
     image_url: '/images/equipment/roller.jpg',
     current_hour_meter: 89.5,
     specs: {
+      engine_model: 'SDEC SC4H140.1G2 (103 kW)',
       operating_weight: '16,000 kg (16 Ton)',
       drum_width: '2,130 mm',
-      vibration_frequency: '28/33 Hz',
-      linear_load: '375 N/cm',
+      static_linear_load: '376 N/cm',
+      vibration_frequency: '28 / 33 Hz',
+      vibration_amplitude: '1.9 / 0.95 mm',
+      centrifugal_force: '290 / 200 kN',
+      gradeability: '30%',
+      dimensions_lwh: '6.15m × 2.30m × 3.20m',
     }
   },
   {
@@ -139,10 +163,15 @@ const ALL_MACHINES: Equipment[] = [
     image_url: '/images/equipment/tipper.jpg',
     current_hour_meter: 512.8,
     specs: {
+      engine_model: '6HK1-TCN Turbo Diesel',
+      power_output: '206 kW / 280 HP @ 2400 rpm',
+      max_torque: '882 Nm @ 1450 rpm',
       payload_capacity: '15,000 kg (15 Ton)',
-      power_output: '280 HP',
+      gross_vehicle_weight: '26,000 kg (26 Ton)',
       tipping_body: 'Heavy Duty Box',
-      engine: '6HK1-TCN Turbo Diesel',
+      transmission: '9-Speed Manual (with crawler gear)',
+      fuel_tank_capacity: '370 L',
+      axle_layout: '6x4',
     }
   },
   {
@@ -159,6 +188,10 @@ const ALL_MACHINES: Equipment[] = [
       deck_length: '12.5 m',
       axles: '3-Axle Heavy Duty',
       loading_ramps: 'Hydraulic Heavy Duty',
+      suspension: 'Heavy Duty Mechanical Suspension',
+      king_pin: '3.5 inch (Bolted)',
+      tire_spec: '12.00R20 Heavy Duty Radials',
+      brakes: 'Dual Line Pneumatic with ABS',
     }
   }
 ];
