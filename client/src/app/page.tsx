@@ -199,18 +199,18 @@ export default function HomePage() {
         className="relative pt-12 pb-20 border-b border-border overflow-hidden bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: 'url("/images/hero-bg.jfif")' }}
       >
+        <div className="absolute inset-0 bg-black/50"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             <div className="lg:col-span-7 space-y-6">
               
 
-
-              <h1 className="font-heading font-black text-4xl sm:text-6xl text-ink leading-tight tracking-tight uppercase">
+              <h1 className="font-heading font-black text-4xl sm:text-6xl text-white leading-tight tracking-tight uppercase">
                 HEAVY MACHINERY <span className="text-primary">RENTAL & FLEET</span> LOGISTICS
               </h1>
 
-              <p className="text-base sm:text-lg text-zinc-600 max-w-2xl leading-relaxed">
+              <p className="text-base sm:text-lg text-zinc-200 max-w-2xl leading-relaxed">
                 Direct B2B equipment dispatch in Meru, Kenya. Rent Komatsu excavators, Shantui graders, JCB backhoes, and Isuzu tipper trucks with real-time availability and verified operator logs.
               </p>
 
