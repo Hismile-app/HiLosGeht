@@ -1,4 +1,4 @@
-import db from '../config/db';
+import db from '@/lib/server-config/db';
 
 export interface AnomalyReport {
   machine: string;

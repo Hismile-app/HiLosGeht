@@ -53,7 +53,7 @@ export async function inviteStaff(req: NextRequest, { params }: { params: any })
 
 export async function verifyOnboardingToken(req: NextRequest, { params }: { params: any }) {
   try {
-    const { token } = req.params;
+    const { token } = await params;
     const result = await db.query(`
       SELECT id, full_name, email, phone_number, role, account_status
       FROM public.profiles
@@ -73,7 +73,7 @@ export async function verifyOnboardingToken(req: NextRequest, { params }: { para
 
 export async function completeOnboarding(req: NextRequest, { params }: { params: any }) {
   try {
-    const { token } = req.params;
+    const { token } = await params;
     const { password, phoneNumber } = await req.json();
 
     if (!password || password.length < 6) {

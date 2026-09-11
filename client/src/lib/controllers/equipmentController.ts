@@ -33,7 +33,7 @@ export async function getAllEquipment(req: NextRequest, { params }: { params: an
 
 export async function getEquipmentById(req: NextRequest, { params }: { params: any }) {
   try {
-    const { id } = req.params;
+    const { id } = await params;
     const result = await db.query('SELECT * FROM public.physical_assets WHERE id = $1;', [id]);
 
     if (result.rows.length === 0) {
@@ -67,7 +67,7 @@ export async function getEquipmentById(req: NextRequest, { params }: { params: a
 
 export async function checkEquipmentAvailability(req: NextRequest, { params }: { params: any }) {
   try {
-    const { id } = req.params;
+    const { id } = await params;
     const { startDate, endDate } = Object.fromEntries(req.nextUrl.searchParams.entries());
 
     if (!startDate || !endDate) {
@@ -114,7 +114,7 @@ export async function createEquipment(req: NextRequest, { params }: { params: an
 
 export async function updateEquipment(req: NextRequest, { params }: { params: any }) {
   try {
-    const { id } = req.params;
+    const { id } = await params;
     const { name, category, model, dailyRate, status, imageUrl, currentHourMeter, specs } = await req.json();
 
     const result = await db.query(`
@@ -155,7 +155,7 @@ export async function updateEquipment(req: NextRequest, { params }: { params: an
 
 export async function deleteEquipment(req: NextRequest, { params }: { params: any }) {
   try {
-    const { id } = req.params;
+    const { id } = await params;
     const result = await db.query('DELETE FROM public.physical_assets WHERE id = $1 RETURNING id;', [id]);
     if (result.rows.length === 0) {
       return NextResponse.json({ success: false, error: 'Equipment not found' }, { status: 404 });

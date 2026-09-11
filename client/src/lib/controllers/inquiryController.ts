@@ -175,7 +175,7 @@ export async function getAllInquiries(req: NextRequest, { params }: { params: an
 
 export async function updateInquiryStatus(req: NextRequest, { params }: { params: any }) {
   try {
-    const { id } = req.params;
+    const { id } = await params;
     const { status } = await req.json();
 
     if (!['PENDING', 'CONFIRMED', 'CANCELLED'].includes(status)) {

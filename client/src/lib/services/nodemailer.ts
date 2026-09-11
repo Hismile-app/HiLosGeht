@@ -265,14 +265,14 @@ export async function sendClientThankYouEmail(
 
   try {
     const info = await transporter.sendMail({
-      from: \`"HLG Dispatch" <\${smtpUser}>\`,
+      from: `"HLG Dispatch" <${smtpUser}>`,
       to: targetEmail,
-      subject: \`Thank you for contacting Hi Los Geht, \${clientName}!\`,
-      text: \`Dear \${clientName},\n\nThank you for reaching out to Hi Los Geht! We have received your inquiry and our dispatch team will get back to you shortly.\n\nBest regards,\nThe HLG Dispatch Team\`,
+      subject: `Thank you for contacting Hi Los Geht, ${clientName}!`,
+      text: `Dear ${clientName},\n\nThank you for reaching out to Hi Los Geht! We have received your inquiry and our dispatch team will get back to you shortly.\n\nBest regards,\nThe HLG Dispatch Team`,
       html: htmlContent,
     });
 
-    console.log(\`📧 Thank You Email Dispatched to: \${targetEmail} (ID: \${info.messageId})\`);
+    console.log(`📧 Thank You Email Dispatched to: ${targetEmail} (ID: ${info.messageId})`);
     return { success: true, messageId: info.messageId };
   } catch (error: any) {
     console.error('❌ Failed to send thank you email:', error.message);

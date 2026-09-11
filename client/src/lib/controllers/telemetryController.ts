@@ -72,7 +72,7 @@ export async function getStaffTasks(req: NextRequest, { params }: { params: any 
 
 export async function updateStaffTaskStatus(req: NextRequest, { params }: { params: any }) {
   try {
-    const { id } = req.params;
+    const { id } = await params;
     const { status, assignedTo } = await req.json();
 
     const result = await db.query(`
