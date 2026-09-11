@@ -48,18 +48,20 @@ export default function WhatsAppBookingModal({
 
   if (!isOpen || !equipment) return null;
 
-  // Calculate estimated days and total
-  const getDaysCount = () => {
-    if (!startDate || !endDate) return 1;
+  // Calculate estimated duration
+  const getDurationString = () => {
+    if (!startDate || !endDate) return '1 Day';
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime();
-    const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : 1;
+    const diffHours = Math.ceil((end - start) / (1000 * 60 * 60));
+    if (diffHours <= 0) return '0 Hours';
+    if (diffHours < 24) return `${diffHours} Hour(s)`;
+    const days = Math.floor(diffHours / 24);
+    const hours = diffHours % 24;
+    return hours > 0 ? `${days} Day(s) ${hours} Hour(s)` : `${days} Day(s)`;
   };
 
-  const days = getDaysCount();
-  const dailyRate = typeof equipment.daily_rate === 'number' ? equipment.daily_rate : parseFloat(equipment.daily_rate as string || '0');
-  const estimatedTotal = days * dailyRate;
+  const durationStr = getDurationString();
 
   const targetWhatsApp = whatsappLine === 'PRIMARY' ? '254717186396' : '254748866823';
   const displayPhone = whatsappLine === 'PRIMARY' ? '0717 186396 (Primary)' : '0748866823 (Backup)';
@@ -171,7 +173,7 @@ export default function WhatsAppBookingModal({
             
             <div className="p-4 bg-surface rounded-xl border border-border text-xs text-zinc-700 space-y-2 text-left max-w-md mx-auto font-mono">
               <p><strong>Contractor:</strong> {clientName} ({clientEmail || clientPhone})</p>
-              <p><strong>Duration:</strong> {days} days</p>
+              <p><strong>Duration:</strong> {durationStr}</p>
               <p><strong>Dispatch Channel:</strong> {preferredContact === 'WHATSAPP' ? `WhatsApp (${displayPhone})` : 'Email Negotiation'}</p>
             </div>
 
@@ -235,12 +237,11 @@ export default function WhatsAppBookingModal({
               <div>
                 <label className="block text-xs font-mono text-zinc-700 mb-1.5 flex items-center gap-1.5 font-bold">
                   <Calendar className="w-3.5 h-3.5 text-primary" />
-                  Project Start Date *
+                  Project Start Date & Time *
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   required
-                  min={new Date().toISOString().split('T')[0]}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
@@ -250,12 +251,11 @@ export default function WhatsAppBookingModal({
               <div>
                 <label className="block text-xs font-mono text-zinc-700 mb-1.5 flex items-center gap-1.5 font-bold">
                   <Calendar className="w-3.5 h-3.5 text-primary" />
-                  Project End Date *
+                  Project End Date & Time *
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   required
-                  min={startDate || new Date().toISOString().split('T')[0]}
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
@@ -379,7 +379,7 @@ export default function WhatsAppBookingModal({
             {startDate && endDate && (
               <div className="p-3.5 bg-surface rounded-xl border border-primary/30 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-muted block font-mono">Duration: {days} Day(s)</span>
+                  <span className="text-muted block font-mono">Duration: {durationStr}</span>
                   <span className="text-zinc-800 font-mono font-semibold">{startDate} &rarr; {endDate}</span>
                 </div>
               </div>
