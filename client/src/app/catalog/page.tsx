@@ -314,6 +314,9 @@ export default function CatalogPage() {
               key={item.id} 
               className="industrial-card flex flex-col justify-between overflow-hidden"
             >
+              <div className="w-full h-48 bg-zinc-100 overflow-hidden relative border-b border-border">
+                <img src={item.image_url} alt={item.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-300" />
+              </div>
               <div className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">

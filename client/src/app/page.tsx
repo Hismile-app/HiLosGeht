@@ -349,6 +349,9 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {fleet.slice(0, 8).map((machine) => (
               <div key={machine.id} className="industrial-card flex flex-col justify-between overflow-hidden">
+                <div className="w-full h-48 bg-zinc-100 overflow-hidden relative border-b border-border">
+                  <img src={machine.image_url} alt={machine.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-300" />
+                </div>
                 <div className="p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
