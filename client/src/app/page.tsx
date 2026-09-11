@@ -256,24 +256,24 @@ export default function HomePage() {
                   <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-ink block font-sans">Guaranteed GiST Availability</strong>
-                      <span className="text-muted">PostgreSQL temporal locks prevent double bookings.</span>
+                      <strong className="text-ink block font-sans">Instant Machine Availability</strong>
+                      <span className="text-muted">Real-time tracking ensures the equipment you book is ready to work.</span>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-ink block font-sans">Verified Shift Hour Meters</strong>
-                      <span className="text-muted">Daily operator fuel and runtime logs with receipt proofs.</span>
+                      <strong className="text-ink block font-sans">Transparent Billing</strong>
+                      <span className="text-muted">Clear operator and fuel logs with no hidden charges.</span>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-ink block font-sans">Direct Mobilization Haulage</strong>
-                      <span className="text-muted">60-ton lowbed semi-trailers for on-site delivery in Meru.</span>
+                      <strong className="text-ink block font-sans">Fast Site Delivery</strong>
+                      <span className="text-muted">Direct lowbed dispatch to your construction site anywhere in Meru.</span>
                     </div>
                   </div>
                 </div>
