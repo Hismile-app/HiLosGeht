@@ -236,12 +236,7 @@ export default function HomePage() {
                 </a>
               </div>
 
-              {/* Live Dispatch Lines */}
-              <div className="pt-4 border-t border-border flex flex-wrap items-center gap-6 text-xs font-mono text-muted">
-                <div>Contact: <a href="tel:+254717186396" className="text-primary font-bold hover:underline">0717 186396</a></div>
-                <div>•</div>
-                <div>Status: <span className="text-emerald-600 font-bold">● Live Dispatch Active</span></div>
-              </div>
+
 
             </div>
 
