@@ -33,7 +33,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'Komatsu PC-200 Heavy Excavator',
     category: 'Excavator',
     model: 'Komatsu PC-200',
-    daily_rate: 45000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/excavator.jpg',
     current_hour_meter: 342.5,
@@ -49,7 +49,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'Komatsu D155AX-8 Crawler Dozer',
     category: 'Dozer',
     model: 'Komatsu D155AX-8',
-    daily_rate: 65000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/dozer.jpg',
     current_hour_meter: 490.0,
@@ -64,7 +64,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'JCB 3DXPLUS Backhoe Loader',
     category: 'Backhoe',
     model: 'JCB 3DXPLUS',
-    daily_rate: 28000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/backhoe.jpg',
     current_hour_meter: 128.0,
@@ -79,7 +79,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'Shantui SL60W-2 Heavy Wheel Loader',
     category: 'Wheel Loader',
     model: 'Shantui SL60W-2',
-    daily_rate: 38000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/wheel_loader.jpg',
     current_hour_meter: 215.4,
@@ -94,7 +94,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'Shantui SG18-3 Motor Grader',
     category: 'Grader',
     model: 'Shantui SG18-3',
-    daily_rate: 42000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/grader.jpg',
     current_hour_meter: 175.0,
@@ -109,7 +109,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'XCMG XS163J Vibratory Road Roller',
     category: 'Roller',
     model: 'XCMG XS163J',
-    daily_rate: 32000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/roller.jpg',
     current_hour_meter: 89.5,
@@ -124,7 +124,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'Isuzu FVZ 34 Heavy Tipper (15 Ton)',
     category: 'Tipper',
     model: 'Isuzu FVZ 34',
-    daily_rate: 24000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/tipper.jpg',
     current_hour_meter: 512.8,
@@ -139,7 +139,7 @@ const FEATURED_FLEET: Equipment[] = [
     name: 'Heavy Lowbed Semi-Trailer',
     category: 'Haulage',
     model: 'Multi-Axle Heavy Hauler',
-    daily_rate: 55000,
+    daily_rate: 0,
     status: 'AVAILABLE',
     image_url: '/images/equipment/lowbed.jpg',
     current_hour_meter: 620.0,
@@ -195,7 +195,11 @@ export default function HomePage() {
     <div className="bg-white text-ink">
       
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 border-b border-border bg-grid-light overflow-hidden">
+      <section 
+        className="relative pt-12 pb-20 border-b border-border overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url("/images/hero-bg.jfif")' }}
+      >
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             

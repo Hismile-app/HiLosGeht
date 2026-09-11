@@ -6,6 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number): string {
+  if (amount === 0) return 'Negotiable';
   return new Intl.NumberFormat('en-KE', {
     style: 'currency',
     currency: 'KES',
