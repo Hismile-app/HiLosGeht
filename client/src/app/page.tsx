@@ -199,7 +199,6 @@ export default function HomePage() {
         className="relative pt-12 pb-20 border-b border-border overflow-hidden bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: 'url("/images/hero-bg.jfif")' }}
       >
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
