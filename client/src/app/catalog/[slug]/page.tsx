@@ -259,6 +259,11 @@ export default function MachineDetailPage() {
             </p>
           </div>
 
+          {/* Machine Image */}
+          <div className="w-full h-64 sm:h-96 bg-zinc-100 rounded-xl overflow-hidden border border-border shadow-sm">
+            <img src={machine.image_url} alt={machine.name} className="w-full h-full object-cover" />
+          </div>
+
           {/* Navigation Tabs */}
           <div className="flex gap-2 border-b border-border pb-2">
             <button
