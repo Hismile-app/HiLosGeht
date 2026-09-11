@@ -201,11 +201,7 @@ export default function HomePage() {
             
             <div className="lg:col-span-7 space-y-6">
               
-              {/* Location & Coordinates Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-mono text-zinc-700">
-                <MapPin className="w-4 h-4 text-primary shrink-0" />
-                <span>0.0463° N, 37.6559° E • Meru County HQ, Kenya</span>
-              </div>
+
 
               <h1 className="font-heading font-black text-4xl sm:text-6xl text-ink leading-tight tracking-tight uppercase">
                 HEAVY MACHINERY <span className="text-primary">RENTAL & FLEET</span> LOGISTICS
