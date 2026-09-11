@@ -401,14 +401,6 @@ export default function MachineDetailPage() {
         <div className="lg:col-span-4 sticky top-24">
           <div className="industrial-card p-6 space-y-5 shadow-card">
             
-            <div className="flex items-baseline justify-between border-b border-border pb-3">
-              <span className="text-xs text-muted font-mono">Daily Rental Rate:</span>
-              <div className="font-heading font-black text-2xl text-primary">
-                {formatCurrency(machine.daily_rate)}
-                <span className="text-xs text-muted font-normal font-sans"> / day</span>
-              </div>
-            </div>
-
             <div className="space-y-3 text-xs font-mono">
               <div className="flex justify-between text-zinc-600">
                 <span>Mobilization:</span>
@@ -429,12 +421,6 @@ export default function MachineDetailPage() {
                 <div className="flex justify-between text-zinc-600">
                   <span>Selected Duration:</span>
                   <span className="font-bold text-ink">{getDays()} Days</span>
-                </div>
-                <div className="flex justify-between text-zinc-600 pt-1 border-t border-border">
-                  <span>Estimated Total:</span>
-                  <span className="font-heading font-bold text-base text-primary">
-                    {formatCurrency(getDays() * (typeof machine.daily_rate === 'number' ? machine.daily_rate : parseFloat(machine.daily_rate)))}
-                  </span>
                 </div>
               </div>
             )}

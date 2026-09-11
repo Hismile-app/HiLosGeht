@@ -80,7 +80,7 @@ export default function FleetManagementPage() {
           name: formData.name,
           category: formData.category,
           model: formData.model,
-          dailyRate: parseFloat(formData.dailyRate),
+          dailyRate: 0,
           status: formData.status,
           imageUrl: formData.imageUrl,
           telemetryApiId: formData.telemetryApiId,
@@ -169,7 +169,6 @@ export default function FleetManagementPage() {
             <tr>
               <th className="p-4">Machinery Asset</th>
               <th className="p-4">Category & Model</th>
-              <th className="p-4">Daily Rate</th>
               <th className="p-4">Hour Meter</th>
               <th className="p-4">Status & Toggle</th>
               <th className="p-4 text-right">Actions</th>
@@ -195,10 +194,6 @@ export default function FleetManagementPage() {
                 <td className="p-4 font-mono">
                   <span className="text-primary font-semibold">{item.category}</span>
                   <span className="block text-muted text-[11px]">{item.model}</span>
-                </td>
-
-                <td className="p-4 font-mono font-bold text-foreground text-sm">
-                  {formatCurrency(item.daily_rate)}/day
                 </td>
 
                 <td className="p-4 font-mono font-semibold text-zinc-700">
@@ -228,7 +223,6 @@ export default function FleetManagementPage() {
                         name: item.name,
                         category: item.category,
                         model: item.model,
-                        dailyRate: String(item.daily_rate),
                         status: item.status,
                         imageUrl: item.image_url || '',
                         telemetryApiId: item.telemetry_api_id || '',
@@ -309,17 +303,6 @@ export default function FleetManagementPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-700 font-mono mb-1 font-semibold">Daily Rate (KES) *</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="45000"
-                    value={formData.dailyRate}
-                    onChange={(e) => setFormData({ ...formData, dailyRate: e.target.value })}
-                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-zinc-700 font-mono mb-1 font-semibold">Telemetry Serial / API ID</label>

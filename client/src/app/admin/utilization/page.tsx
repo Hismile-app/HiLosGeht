@@ -171,10 +171,6 @@ export default function FleetUtilizationPage() {
 
                 <div className="space-y-1.5 text-xs font-mono">
                   <div className="flex justify-between text-muted">
-                    <span>Base Daily Rate:</span>
-                    <span className="text-foreground font-bold">KES {parseFloat(item.daily_rate as any || 0).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-muted">
                     <span>Total Hours:</span>
                     <span className="text-amber-700 font-semibold">{currentHours.toFixed(1)} hrs</span>
                   </div>

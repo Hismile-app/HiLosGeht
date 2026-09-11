@@ -348,13 +348,6 @@ export default function CatalogPage() {
               </div>
 
               <div className="p-5 pt-0 space-y-3">
-                <div className="pt-3 border-t border-border flex items-baseline justify-between">
-                  <span className="text-xs text-muted font-mono">Daily Rate:</span>
-                  <div className="font-heading font-black text-xl text-primary">
-                    {formatCurrency(item.daily_rate)}
-                    <span className="text-xs font-normal text-muted font-sans"> / day</span>
-                  </div>
-                </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <Link

@@ -379,15 +379,7 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <div className="p-5 pt-0 space-y-3">
-                  <div className="pt-3 border-t border-border flex items-baseline justify-between">
-                    <span className="text-xs text-muted font-mono">Daily Rate:</span>
-                    <div className="font-heading font-black text-lg text-primary">
-                      {formatCurrency(machine.daily_rate)}
-                      <span className="text-[10px] font-normal text-muted font-sans"> / day</span>
-                    </div>
-                  </div>
-
+                <div className="p-5">
                   <button
                     onClick={() => handleBookNow(machine)}
                     className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-heading font-bold uppercase tracking-wider transition-all"

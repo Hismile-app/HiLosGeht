@@ -171,7 +171,7 @@ export default function WhatsAppBookingModal({
             
             <div className="p-4 bg-surface rounded-xl border border-border text-xs text-zinc-700 space-y-2 text-left max-w-md mx-auto font-mono">
               <p><strong>Contractor:</strong> {clientName} ({clientEmail || clientPhone})</p>
-              <p><strong>Quotation:</strong> {formatCurrency(estimatedTotal)} ({days} days @ {formatCurrency(dailyRate)}/day)</p>
+              <p><strong>Duration:</strong> {days} days</p>
               <p><strong>Dispatch Channel:</strong> {preferredContact === 'WHATSAPP' ? `WhatsApp (${displayPhone})` : 'Email Negotiation'}</p>
             </div>
 
@@ -212,7 +212,7 @@ export default function WhatsAppBookingModal({
               <div>
                 <span className="text-muted block">Category: {equipment.category}</span>
                 <span className="text-primary font-bold text-base font-heading">
-                  {formatCurrency(dailyRate)} <span className="text-xs text-muted font-normal">/ day</span>
+                  {equipment.category}
                 </span>
               </div>
               <div className="text-right">
@@ -376,18 +376,11 @@ export default function WhatsAppBookingModal({
               </div>
             )}
 
-            {/* Price Estimation */}
             {startDate && endDate && (
               <div className="p-3.5 bg-surface rounded-xl border border-primary/30 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-muted block font-mono">Duration: {days} Day(s)</span>
                   <span className="text-zinc-800 font-mono font-semibold">{startDate} &rarr; {endDate}</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-muted block font-mono">Estimated Quotation</span>
-                  <span className="text-primary font-bold text-lg font-heading">
-                    {formatCurrency(estimatedTotal)}
-                  </span>
                 </div>
               </div>
             )}

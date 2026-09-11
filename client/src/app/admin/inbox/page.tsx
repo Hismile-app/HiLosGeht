@@ -216,9 +216,6 @@ export default function InboxKanbanPage() {
                   <div className="text-zinc-700 text-[11px]">
                     Dates: {formatDate(item.start_date)} → {formatDate(item.end_date)}
                   </div>
-                  <div className="text-primary font-bold text-[11px]">
-                    Rate: {formatCurrency(item.daily_rate)}/day
-                  </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
