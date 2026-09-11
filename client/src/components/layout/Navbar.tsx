@@ -34,12 +34,12 @@ export default function Navbar() {
           
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center transition-all duration-200">
-              <Truck className="w-6 h-6 text-primary group-hover:scale-105 transition-transform" />
+            <div className="flex items-center justify-center transition-all duration-200">
+              <img src="/logo.png" alt="Hi Los Geht Logo" className="w-11 h-11 group-hover:scale-105 transition-transform object-contain" />
             </div>
             <div>
               <span className="font-heading font-black text-xl tracking-wider text-ink flex items-center gap-1.5">
-                <span className="text-primary">HLG</span> HI LOS GEHT
+                HI LOS GEHT
               </span>
               <span className="block text-[10px] uppercase font-mono tracking-widest text-muted">
                 Heavy Machinery • Meru, Kenya

@@ -90,11 +90,11 @@ export default function LoginPage() {
         {/* Branding Header */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="w-11 h-11 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
-              <Truck className="w-6 h-6" />
+            <div className="flex items-center justify-center transition-transform">
+              <img src="/logo.png" alt="Hi Los Geht Logo" className="w-11 h-11 group-hover:scale-105 transition-transform object-contain" />
             </div>
             <span className="font-heading font-black text-2xl tracking-wider text-ink">
-              <span className="text-primary">HLG</span> HI LOS GEHT
+              HI LOS GEHT
             </span>
           </Link>
           <h2 className="text-xl font-heading font-bold text-ink uppercase">

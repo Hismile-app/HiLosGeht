@@ -7,9 +7,9 @@ export const metadata: Metadata = {
   description: 'Book certified heavy construction machinery in Meru, Kenya. Komatsu excavators, dozers, JCB backhoes, Shantui motor graders, wheel loaders, and Isuzu tippers. Rapid WhatsApp dispatch and verified fleet operations.',
   keywords: 'heavy machinery rental Meru, excavator hire Kenya, Komatsu PC-200, JCB backhoe, Shantui grader, construction equipment logistics Kenya, Meru quarry machinery',
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   }
 };
 
