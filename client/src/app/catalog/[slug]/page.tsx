@@ -34,7 +34,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'Komatsu PC-200',
     daily_rate: 45000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/komatsu_pc200.png',
+    image_url: '/images/equipment/excavator.jpg',
     current_hour_meter: 342.5,
     specs: {
       engine_power: '110 kW / 148 HP',
@@ -52,7 +52,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'Komatsu D155AX-8',
     daily_rate: 65000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/komatsu_d155ax8.png',
+    image_url: '/images/equipment/dozer.jpg',
     current_hour_meter: 490.0,
     specs: {
       engine_power: '268 kW / 360 HP',
@@ -69,7 +69,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'JCB 3DXPLUS',
     daily_rate: 28000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/jcb_3dxplus.png',
+    image_url: '/images/equipment/backhoe.jpg',
     current_hour_meter: 128.0,
     specs: {
       engine_power: '55 kW / 74 HP',
@@ -86,7 +86,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'Shantui SL60W-2',
     daily_rate: 38000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/shantui_sl60w2.png',
+    image_url: '/images/equipment/wheel_loader.jpg',
     current_hour_meter: 215.4,
     specs: {
       rated_load: '6,000 kg (6 Ton)',
@@ -103,7 +103,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'Shantui SG18-3',
     daily_rate: 42000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/shantui_sg183.png',
+    image_url: '/images/equipment/grader.jpg',
     current_hour_meter: 175.0,
     specs: {
       engine_power: '132 kW / 180 HP',
@@ -120,7 +120,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'XCMG XS163J',
     daily_rate: 32000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/xcmg_xs163j.png',
+    image_url: '/images/equipment/roller.jpg',
     current_hour_meter: 89.5,
     specs: {
       operating_weight: '16,000 kg (16 Ton)',
@@ -136,7 +136,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'Isuzu FVZ 34',
     daily_rate: 24000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/isuzu_fvz34.png',
+    image_url: '/images/equipment/tipper.jpg',
     current_hour_meter: 512.8,
     specs: {
       payload_capacity: '15,000 kg (15 Ton)',
@@ -152,7 +152,7 @@ const ALL_MACHINES: Equipment[] = [
     model: 'Multi-Axle Heavy Hauler',
     daily_rate: 55000,
     status: 'AVAILABLE',
-    image_url: '/images/equipment/lowbed_trailer.png',
+    image_url: '/images/equipment/lowbed.jpg',
     current_hour_meter: 620.0,
     specs: {
       payload_capacity: '60,000 kg (60 Ton)',
