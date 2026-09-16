@@ -193,23 +193,22 @@ export default function HomePage() {
 
   return (
     <div className="bg-white text-ink">
-      
-      {/* Hero Section */}
+          {/* Hero Section */}
       <section 
-        className="relative pt-12 pb-20 border-b border-border overflow-hidden bg-cover bg-center bg-no-repeat print:bg-none print:bg-white print:py-6 print:border-b-2 print:border-zinc-300"
+        className="hero-section relative pt-12 pb-20 border-b border-border overflow-hidden bg-cover bg-center bg-no-repeat print:bg-none print:bg-white print:pt-2 print:pb-4 print:border-b print:border-zinc-300"
         style={{ backgroundImage: 'url("/images/hero-bg.jfif")' }}
       >
         <div className="absolute inset-0 bg-black/50 print:hidden"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center print:grid-cols-12 print:gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 print:px-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center print:grid-cols-12 print:gap-4">
             
-            <div className="lg:col-span-7 print:col-span-7 space-y-6 print:space-y-3">
+            <div className="lg:col-span-7 print:col-span-7 space-y-6 print:space-y-2">
               
-              <h1 className="font-heading font-black text-4xl sm:text-6xl text-white print:text-zinc-950 leading-tight tracking-tight uppercase print:text-3xl">
+              <h1 className="font-heading font-black text-4xl sm:text-6xl text-white print:text-zinc-950 leading-tight tracking-tight uppercase print:text-2xl print:leading-snug">
                 HEAVY MACHINERY <span className="text-primary">RENTAL & FLEET</span> LOGISTICS
               </h1>
 
-              <p className="text-base sm:text-lg text-zinc-200 print:text-zinc-700 max-w-2xl leading-relaxed print:text-xs">
+              <p className="text-base sm:text-lg text-zinc-200 print:text-zinc-700 max-w-2xl leading-relaxed print:text-[11px] print:leading-normal">
                 Direct B2B equipment dispatch in Meru, Kenya. Rent Komatsu excavators, Shantui graders, JCB backhoes, and Isuzu tipper trucks with real-time availability and verified operator logs.
               </p>
 
@@ -238,8 +237,8 @@ export default function HomePage() {
 
             {/* Hero Quick Quotation Card */}
             <div className="lg:col-span-5 print:col-span-5">
-              <div className="industrial-panel p-6 shadow-card space-y-5 print:p-4 print:space-y-2.5 print:border-zinc-300 print:bg-zinc-50 print:shadow-none">
-                <div className="flex items-center justify-between border-b border-border pb-3 print:pb-2">
+              <div className="industrial-panel p-6 shadow-card space-y-5 print:p-3 print:space-y-2 print:border-zinc-300 print:bg-zinc-50 print:shadow-none print:rounded-lg">
+                <div className="flex items-center justify-between border-b border-border pb-3 print:pb-1.5">
                   <div className="font-heading font-bold text-sm text-ink flex items-center gap-2 print:text-xs">
                     <ShieldCheck className="w-4 h-4 text-primary" />
                     Rapid Site Dispatch & Quotes
@@ -249,33 +248,33 @@ export default function HomePage() {
                   </span>
                 </div>
 
-                <div className="space-y-3 text-xs print:space-y-2 print:text-[11px]">
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <div className="space-y-3 text-xs print:space-y-1.5 print:text-[10.5px]">
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-1.5 print:gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5 print:w-3.5 print:h-3.5" />
                     <div>
                       <strong className="text-ink block font-sans">Instant Machine Availability</strong>
-                      <span className="text-muted">Real-time tracking ensures the equipment you book is ready to work.</span>
+                      <span className="text-muted text-[10px]">Real-time tracking ensures equipment is ready to work.</span>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-1.5 print:gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5 print:w-3.5 print:h-3.5" />
                     <div>
                       <strong className="text-ink block font-sans">Transparent Billing</strong>
-                      <span className="text-muted">Clear operator and fuel logs with no hidden charges.</span>
+                      <span className="text-muted text-[10px]">Clear operator and fuel logs with no hidden charges.</span>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-1.5 print:gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5 print:w-3.5 print:h-3.5" />
                     <div>
                       <strong className="text-ink block font-sans">Fast Site Delivery</strong>
-                      <span className="text-muted">Direct lowbed dispatch to your construction site anywhere in Meru.</span>
+                      <span className="text-muted text-[10px]">Direct lowbed dispatch to your construction site in Meru.</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="hidden print:block text-center font-mono font-bold text-primary text-xs pt-1">
+                <div className="hidden print:block text-center font-mono font-bold text-primary text-[11px] pt-0.5">
                   Dispatch Hotline: 0717 186396
                 </div>
 
@@ -293,31 +292,31 @@ export default function HomePage() {
       </section>
 
       {/* Services Overview Section (Smooth Scroll target: #services) */}
-      <section id="services" className="py-16 bg-surface border-b border-border print:py-8 print:bg-white print:border-b-2 print:border-zinc-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 print:space-y-6">
+      <section id="services" className="py-16 bg-surface border-b border-border print:py-4 print:bg-white print:border-b print:border-zinc-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 print:space-y-3 print:px-0">
           
-          <div className="text-center max-w-3xl mx-auto space-y-3 print:space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-primary/10 border border-primary/20 text-primary font-mono text-xs uppercase font-bold">
+          <div className="text-center max-w-3xl mx-auto space-y-3 print:space-y-0.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-primary/10 border border-primary/20 text-primary font-mono text-xs uppercase font-bold print:text-[10px] print:py-0.5">
               <span>Core Infrastructure Solutions</span>
             </div>
-            <h2 className="font-heading font-black text-3xl sm:text-4xl text-ink uppercase print:text-2xl">
+            <h2 className="font-heading font-black text-3xl sm:text-4xl text-ink uppercase print:text-xl">
               HEAVY PLANT CAPACITIES & SERVICES
             </h2>
-            <p className="text-sm text-zinc-600 print:text-xs">
+            <p className="text-sm text-zinc-600 print:text-[11px]">
               End-to-end heavy equipment logistics for road construction, quarry development, civil trenching, and mass site leveling across Kenya.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 print:grid-cols-2 print:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 print:grid-cols-4 print:gap-2.5">
             {CORE_SERVICES.map((svc, i) => {
               const Icon = svc.icon;
               return (
-                <div key={i} className="industrial-card p-5 space-y-3 print:p-3 print:space-y-1.5 print:break-inside-avoid print:shadow-none print:border-zinc-300">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary print:w-7 print:h-7">
-                    <Icon className="w-5 h-5 print:w-4 print:h-4" />
+                <div key={i} className="industrial-card p-5 space-y-3 print:p-2.5 print:space-y-1 print:break-inside-avoid print:shadow-none print:border-zinc-300 print:rounded-lg">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary print:w-6 print:h-6">
+                    <Icon className="w-5 h-5 print:w-3.5 print:h-3.5" />
                   </div>
-                  <h3 className="font-heading font-bold text-sm text-ink print:text-xs">{svc.title}</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed print:text-[11px]">{svc.desc}</p>
+                  <h3 className="font-heading font-bold text-sm text-ink print:text-[11px] print:leading-tight">{svc.title}</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed print:text-[9.5px] print:leading-tight">{svc.desc}</p>
                 </div>
               );
             })}
@@ -327,16 +326,16 @@ export default function HomePage() {
       </section>
 
       {/* Featured Heavy Machinery Grid */}
-      <section className="py-16 bg-white border-b border-border print:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 print:space-y-6">
+      <section className="py-16 bg-white border-b border-border print:py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 print:space-y-3 print:px-0">
           
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-primary font-mono text-xs uppercase font-bold">
-                <Truck className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 text-primary font-mono text-xs uppercase font-bold print:text-[10px]">
+                <Truck className="w-4 h-4 print:w-3.5 print:h-3.5" />
                 <span>Verified Equipment Brochure</span>
               </div>
-              <h2 className="font-heading font-black text-2xl sm:text-4xl text-ink uppercase mt-1 print:text-2xl">
+              <h2 className="font-heading font-black text-2xl sm:text-4xl text-ink uppercase mt-1 print:text-xl">
                 FEATURED MACHINERY FLEET
               </h2>
             </div>
@@ -350,36 +349,36 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 print:grid-cols-2 print:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 print:grid-cols-2 print:gap-3">
             {fleet.slice(0, 8).map((machine) => (
               <div 
                 key={machine.id} 
                 className="industrial-card flex flex-col justify-between overflow-hidden print:break-inside-avoid print:page-break-inside-avoid print:border-zinc-300 print:shadow-none print:rounded-lg"
               >
-                <div className="w-full h-48 bg-zinc-100 overflow-hidden relative border-b border-border print:h-40 print:bg-white print:border-zinc-200 flex items-center justify-center">
+                <div className="w-full h-48 bg-zinc-100 overflow-hidden relative border-b border-border print:h-32 print:bg-white print:border-zinc-200 flex items-center justify-center">
                   <img 
                     src={machine.image_url} 
                     alt={machine.name} 
-                    className="w-full h-full object-cover transition-transform hover:scale-105 duration-300 print:object-contain print:h-40 print:w-full print:max-h-40" 
+                    className="w-full h-full object-cover transition-transform hover:scale-105 duration-300 print:object-contain print:h-32 print:w-full print:max-h-32" 
                   />
                 </div>
-                <div className="p-5 space-y-3 print:p-3 print:space-y-2">
+                <div className="p-5 space-y-3 print:p-2.5 print:space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 print:text-[9px] print:py-0">
                       {machine.status || 'AVAILABLE'}
                     </span>
-                    <span className="text-xs font-mono text-muted">{machine.category}</span>
+                    <span className="text-xs font-mono text-muted print:text-[10px]">{machine.category}</span>
                   </div>
 
                   <div>
-                    <h3 className="font-heading font-bold text-base text-ink line-clamp-1 print:text-sm">
+                    <h3 className="font-heading font-bold text-base text-ink line-clamp-1 print:text-xs">
                       {machine.name}
                     </h3>
-                    <div className="text-xs text-muted font-mono">{machine.model}</div>
+                    <div className="text-xs text-muted font-mono print:text-[10px]">{machine.model}</div>
                   </div>
 
                   {machine.specs && (
-                    <div className="p-3 bg-surface rounded-lg space-y-1 text-[11px] font-mono text-zinc-700 border border-border print:bg-zinc-50 print:p-2 print:text-[10px]">
+                    <div className="p-3 bg-surface rounded-lg space-y-1 text-[11px] font-mono text-zinc-700 border border-border print:bg-zinc-50 print:p-1.5 print:space-y-0.5 print:text-[9.5px]">
                       {Object.entries(machine.specs).slice(0, 2).map(([k, v], idx) => (
                         <div key={idx} className="flex justify-between">
                           <span className="text-muted capitalize">{k.replace(/_/g, ' ')}:</span>
@@ -390,8 +389,8 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <div className="p-5 pt-0 print:p-3 print:pt-0">
-                  <div className="hidden print:block text-center font-mono font-bold text-[11px] text-primary border border-primary/30 rounded py-1 bg-orange-50/50">
+                <div className="p-5 pt-0 print:p-2 print:pt-0">
+                  <div className="hidden print:block text-center font-mono font-bold text-[10px] text-primary border border-primary/30 rounded py-0.5 bg-orange-50/50">
                     Dispatch: 0717 186396
                   </div>
                   <button

@@ -151,7 +151,7 @@ h1, h2, h3, .font-heading {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm 10mm 12mm 10mm;
+    margin: 8mm 8mm 10mm 8mm;
   }
 
   * {
@@ -163,23 +163,35 @@ h1, h2, h3, .font-heading {
   html, body {
     background: #FFFFFF !important;
     color: #09090B !important;
-    font-size: 11pt !important;
-    line-height: 1.4 !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
     overflow: visible !important;
     width: 100% !important;
     height: auto !important;
   }
 
-  /* Prevent elements from being sliced across A4 page breaks */
+  /* Strip background images from hero/banners in print for crisp readability */
+  [style*="background-image"],
+  .hero-section {
+    background-image: none !important;
+    background: #FFFFFF !important;
+  }
+
+  /* Prevent individual cards from breaking mid-box, but allow sections & pages to flow naturally without huge white spaces */
   .industrial-card,
   .industrial-panel,
   tr,
   figure,
-  .break-inside-avoid,
-  article,
-  section {
+  .break-inside-avoid {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  section,
+  main,
+  div {
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
   /* Unclip all images and prevent image cropping */
@@ -197,10 +209,19 @@ h1, h2, h3, .font-heading {
     position: static !important;
   }
 
-  /* Ensure card image containers show complete machine without clipping */
-  .industrial-card img {
+  /* Ensure equipment images are never clipped and have optimal height on A4 */
+  .industrial-card .w-full.h-48,
+  .industrial-card .relative,
+  .industrial-card .overflow-hidden {
+    overflow: hidden !important;
     height: auto !important;
-    max-height: 150px !important;
+    max-height: 130px !important;
+    background: #FFFFFF !important;
+  }
+
+  .industrial-card img {
+    height: 120px !important;
+    max-height: 120px !important;
     width: 100% !important;
     object-fit: contain !important;
     object-position: center !important;
