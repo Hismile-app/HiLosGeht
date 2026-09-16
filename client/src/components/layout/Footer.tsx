@@ -19,7 +19,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-xs text-muted leading-relaxed">
-              Meru's premier heavy construction equipment rental and fleet logistics platform. Direct B2B WhatsApp dispatch, telemetry monitoring, and jobsite haulage solutions.
+              Your trusted partner for heavy machinery hire, earthmoving, and construction solutions across Meru and Kenya. Reliable equipment and experienced operators for projects of any scale.
             </p>
           </div>
 
