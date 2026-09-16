@@ -80,6 +80,8 @@ h1, h2, h3, .font-heading {
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-primary:hover {
@@ -107,6 +109,8 @@ h1, h2, h3, .font-heading {
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-secondary:hover {

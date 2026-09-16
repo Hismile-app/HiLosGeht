@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  Truck, 
   Phone, 
   Menu, 
   X, 
-  ArrowRight
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
 
 const NAV_LINKS = [
@@ -29,26 +29,30 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 industrial-nav bg-white/95 backdrop-blur-md border-b border-border shadow-subtle">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="flex items-center justify-center transition-all duration-200">
-              <img src="/logo.png" alt="Hi Los Geht Logo" className="w-11 h-11 group-hover:scale-105 transition-transform object-contain" />
+          {/* Logo & Brand Header */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink min-w-0">
+            <div className="flex items-center justify-center transition-all duration-200 shrink-0">
+              <img 
+                src="/logo.png" 
+                alt="Hi Los Geht Logo" 
+                className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 group-hover:scale-105 transition-transform object-contain" 
+              />
             </div>
-            <div>
-              <span className="font-heading font-black text-xl tracking-wider text-ink flex items-center gap-1.5">
+            <div className="min-w-0">
+              <span className="font-heading font-black text-sm xs:text-base sm:text-lg md:text-xl tracking-wider text-ink block leading-tight truncate">
                 HI LOS GEHT
               </span>
-              <span className="block text-[10px] uppercase font-mono tracking-widest text-muted">
+              <span className="hidden xs:block text-[8px] sm:text-[9.5px] md:text-[10px] uppercase font-mono tracking-wider sm:tracking-widest text-muted leading-tight mt-0.5 truncate">
                 Heavy Machinery • Meru, Kenya
               </span>
             </div>
           </Link>
 
-          {/* Desktop Nav Links - Exclusively Home, About Us, Contact Us, Fleet Catalog */}
-          <div className="hidden md:flex items-center gap-7">
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center gap-5 lg:gap-7 shrink-0">
             {NAV_LINKS.map((link) => (
               <Link 
                 key={link.path}
@@ -65,7 +69,7 @@ export default function Navbar() {
               href="https://wa.me/254717186396?text=Hello%20HLG%20Dispatch%20Team%2C%20I%20would%20like%20to%20inquire%20about%20heavy%20machinery%20availability."
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs font-mono text-zinc-800 bg-surface px-3 py-1.5 rounded-lg border border-border hover:border-primary/50 transition-colors"
+              className="flex items-center gap-2 text-xs font-mono text-zinc-800 bg-surface px-3 py-1.5 rounded-lg border border-border hover:border-primary/50 transition-colors shrink-0"
             >
               <Phone className="w-3.5 h-3.5 text-primary" />
               <span>0717 186396</span>
@@ -73,24 +77,27 @@ export default function Navbar() {
 
             <Link 
               href="/catalog" 
-              className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
+              className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shrink-0"
             >
               <span>Book Equipment</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="flex md:hidden items-center gap-3">
-            <Link href="/catalog" className="btn-primary text-xs py-2 px-3">
-              Book Now
+          {/* Mobile Right Action Area */}
+          <div className="flex md:hidden items-center gap-1.5 sm:gap-2.5 shrink-0">
+            <Link 
+              href="/catalog" 
+              className="btn-primary text-[11px] sm:text-xs py-1.5 px-2.5 sm:py-2 sm:px-3.5 whitespace-nowrap shrink-0 shadow-sm"
+            >
+              <span>Book Now</span>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle Navigation Menu"
-              className="p-2 rounded-lg bg-surface border border-border text-zinc-700 hover:text-ink cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-lg bg-surface border border-border text-zinc-700 hover:text-ink active:bg-zinc-200 transition-colors flex items-center justify-center shrink-0"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-ink" /> : <Menu className="w-5 h-5 text-ink" />}
             </button>
           </div>
 
@@ -99,31 +106,50 @@ export default function Navbar() {
 
       {/* Mobile Collapsible Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-border px-4 pt-3 pb-6 space-y-2 shadow-xl animate-in slide-in-from-top duration-200">
-          {NAV_LINKS.map((link) => (
-            <Link 
-              key={link.path}
-              href={link.path}
+        <div className="md:hidden bg-white/98 backdrop-blur-lg border-b border-border px-4 pt-3 pb-6 space-y-3 shadow-xl animate-in slide-in-from-top-2 duration-200">
+          <div className="space-y-1">
+            {NAV_LINKS.map((link) => (
+              <Link 
+                key={link.path}
+                href={link.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isLinkActive(link.path) 
+                    ? 'bg-orange-50 text-primary font-bold border-l-4 border-primary' 
+                    : 'text-zinc-800 hover:bg-surface hover:text-primary'
+                }`}
+              >
+                <span>{link.name}</span>
+                <ArrowRight className={`w-4 h-4 ${isLinkActive(link.path) ? 'text-primary' : 'text-zinc-400'}`} />
+              </Link>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-border space-y-2.5">
+            <Link
+              href="/catalog"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3.5 py-2.5 rounded-lg text-base font-medium transition-colors ${
-                isLinkActive(link.path) 
-                  ? 'bg-orange-50 text-primary font-bold border-l-4 border-primary' 
-                  : 'text-zinc-900 hover:bg-surface hover:text-primary'
-              }`}
+              className="btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-2 shadow-md"
             >
-              {link.name}
+              <span>View Fleet & Book Equipment</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
-          ))}
-          
-          <div className="pt-3 mt-2 border-t border-border text-xs text-muted space-y-2">
-            <div className="flex items-center justify-between font-mono text-zinc-800">
-              <span>Meru Dispatch Hotline:</span>
-              <a href="tel:+254717186396" className="text-primary font-bold">0717 186396</a>
-            </div>
+
+            <a 
+              href="https://wa.me/254717186396?text=Hello%20HLG%20Dispatch%20Team%2C%20I%20would%20like%20to%20inquire%20about%20heavy%20machinery%20availability."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-surface border border-border text-xs font-mono text-zinc-800 hover:border-primary/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-primary" />
+                <span className="font-sans font-medium text-zinc-700">WhatsApp Dispatch:</span>
+              </div>
+              <span className="text-primary font-bold">0717 186396</span>
+            </a>
           </div>
         </div>
       )}
     </nav>
   );
 }
-
