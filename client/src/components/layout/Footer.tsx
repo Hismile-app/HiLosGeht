@@ -85,9 +85,9 @@ export default function Footer() {
         </div>
 
         {/* Footer Bottom with Exclusive Padlock Staff Portal Link */}
-        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4">
-          <p>&copy; {new Date().getFullYear()} Hi Los Geht (HLG) Heavy Machinery Ltd. All rights reserved.</p>
-          <div className="flex items-center gap-6">
+        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4 print:mt-6 print:pt-3">
+          <p>&copy; {new Date().getFullYear()} Hi Los Geht Heavy Machinery Ltd. All rights reserved.</p>
+          <div className="flex items-center gap-6 print:hidden">
             <Link 
               href="/login" 
               className="inline-flex items-center gap-1.5 text-zinc-600 hover:text-primary font-mono text-xs transition-colors group"

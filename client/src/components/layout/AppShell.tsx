@@ -26,7 +26,7 @@ export default function AppShell({
   return (
     <>
       <Navbar />
-      <main className="flex-grow pt-20">
+      <main className="flex-grow pt-20 print:pt-0">
         {children}
       </main>
       <Footer />

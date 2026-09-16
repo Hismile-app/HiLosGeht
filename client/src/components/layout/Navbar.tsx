@@ -28,9 +28,9 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 industrial-nav bg-white/95 backdrop-blur-md border-b border-border shadow-subtle">
+    <nav className="fixed top-0 left-0 right-0 z-50 industrial-nav bg-white/95 backdrop-blur-md border-b border-border shadow-subtle print:static print:bg-white print:border-b-2 print:border-zinc-900 print:shadow-none print:py-2">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4 print:h-auto">
           
           {/* Logo & Brand Header */}
           <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink min-w-0">
@@ -38,21 +38,27 @@ export default function Navbar() {
               <img 
                 src="/logo.png" 
                 alt="Hi Los Geht Logo" 
-                className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 group-hover:scale-105 transition-transform object-contain" 
+                className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 group-hover:scale-105 transition-transform object-contain print:w-12 print:h-12" 
               />
             </div>
             <div className="min-w-0">
-              <span className="font-heading font-black text-sm xs:text-base sm:text-lg md:text-xl tracking-wider text-ink block leading-tight truncate">
+              <span className="font-heading font-black text-sm xs:text-base sm:text-lg md:text-xl tracking-wider text-ink block leading-tight truncate print:text-xl">
                 HI LOS GEHT
               </span>
-              <span className="hidden xs:block text-[8px] sm:text-[9.5px] md:text-[10px] uppercase font-mono tracking-wider sm:tracking-widest text-muted leading-tight mt-0.5 truncate">
+              <span className="hidden xs:block text-[8px] sm:text-[9.5px] md:text-[10px] uppercase font-mono tracking-wider sm:tracking-widest text-muted leading-tight mt-0.5 truncate print:block print:text-xs print:text-zinc-600">
                 Heavy Machinery • Meru, Kenya
               </span>
             </div>
           </Link>
 
+          {/* Print Letterhead Header Details */}
+          <div className="hidden print:flex flex-col items-end text-xs font-mono text-zinc-800">
+            <span className="font-bold text-primary">MERU DISPATCH & BOOKING</span>
+            <span>Hotline: 0717 186396 | Email: hilosgehtinfo@gmail.com</span>
+          </div>
+
           {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-5 lg:gap-7 shrink-0">
+          <div className="hidden md:flex print:hidden items-center gap-5 lg:gap-7 shrink-0">
             {NAV_LINKS.map((link) => (
               <Link 
                 key={link.path}
@@ -85,7 +91,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Right Action Area */}
-          <div className="flex md:hidden items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <div className="flex md:hidden print:hidden items-center gap-1.5 sm:gap-2.5 shrink-0">
             <Link 
               href="/catalog" 
               className="btn-primary text-[11px] sm:text-xs py-1.5 px-2.5 sm:py-2 sm:px-3.5 whitespace-nowrap shrink-0 shadow-sm"

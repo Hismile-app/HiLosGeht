@@ -196,26 +196,25 @@ export default function HomePage() {
       
       {/* Hero Section */}
       <section 
-        className="relative pt-12 pb-20 border-b border-border overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative pt-12 pb-20 border-b border-border overflow-hidden bg-cover bg-center bg-no-repeat print:bg-none print:bg-white print:py-6 print:border-b-2 print:border-zinc-300"
         style={{ backgroundImage: 'url("/images/hero-bg.jfif")' }}
       >
-        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="absolute inset-0 bg-black/50 print:hidden"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center print:grid-cols-12 print:gap-6">
             
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 print:col-span-7 space-y-6 print:space-y-3">
               
-
-              <h1 className="font-heading font-black text-4xl sm:text-6xl text-white leading-tight tracking-tight uppercase">
+              <h1 className="font-heading font-black text-4xl sm:text-6xl text-white print:text-zinc-950 leading-tight tracking-tight uppercase print:text-3xl">
                 HEAVY MACHINERY <span className="text-primary">RENTAL & FLEET</span> LOGISTICS
               </h1>
 
-              <p className="text-base sm:text-lg text-zinc-200 max-w-2xl leading-relaxed">
+              <p className="text-base sm:text-lg text-zinc-200 print:text-zinc-700 max-w-2xl leading-relaxed print:text-xs">
                 Direct B2B equipment dispatch in Meru, Kenya. Rent Komatsu excavators, Shantui graders, JCB backhoes, and Isuzu tipper trucks with real-time availability and verified operator logs.
               </p>
 
               {/* Call-to-action buttons */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
+              <div className="flex flex-wrap items-center gap-4 pt-2 print:hidden">
                 <Link 
                   href="/catalog" 
                   className="btn-primary"
@@ -235,25 +234,23 @@ export default function HomePage() {
                 </a>
               </div>
 
-
-
             </div>
 
             {/* Hero Quick Quotation Card */}
-            <div className="lg:col-span-5">
-              <div className="industrial-panel p-6 shadow-card space-y-5">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <div className="font-heading font-bold text-sm text-ink flex items-center gap-2">
+            <div className="lg:col-span-5 print:col-span-5">
+              <div className="industrial-panel p-6 shadow-card space-y-5 print:p-4 print:space-y-2.5 print:border-zinc-300 print:bg-zinc-50 print:shadow-none">
+                <div className="flex items-center justify-between border-b border-border pb-3 print:pb-2">
+                  <div className="font-heading font-bold text-sm text-ink flex items-center gap-2 print:text-xs">
                     <ShieldCheck className="w-4 h-4 text-primary" />
                     Rapid Site Dispatch & Quotes
                   </div>
-                  <span className="text-[11px] font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  <span className="text-[11px] font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 print:text-[10px]">
                     24/7 ACTIVE
                   </span>
                 </div>
 
-                <div className="space-y-3 text-xs">
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
+                <div className="space-y-3 text-xs print:space-y-2 print:text-[11px]">
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-2">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
                       <strong className="text-ink block font-sans">Instant Machine Availability</strong>
@@ -261,7 +258,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-2">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
                       <strong className="text-ink block font-sans">Transparent Billing</strong>
@@ -269,7 +266,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border">
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-border print:p-2">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
                       <strong className="text-ink block font-sans">Fast Site Delivery</strong>
@@ -278,9 +275,13 @@ export default function HomePage() {
                   </div>
                 </div>
 
+                <div className="hidden print:block text-center font-mono font-bold text-primary text-xs pt-1">
+                  Dispatch Hotline: 0717 186396
+                </div>
+
                 <Link
                   href="/catalog"
-                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-heading font-bold text-xs uppercase tracking-wider text-center block transition-all shadow-subtle"
+                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-heading font-bold text-xs uppercase tracking-wider text-center block transition-all shadow-subtle print:hidden"
                 >
                   View Active Fleet Rates &rarr;
                 </Link>
@@ -292,31 +293,31 @@ export default function HomePage() {
       </section>
 
       {/* Services Overview Section (Smooth Scroll target: #services) */}
-      <section id="services" className="py-16 bg-surface border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <section id="services" className="py-16 bg-surface border-b border-border print:py-8 print:bg-white print:border-b-2 print:border-zinc-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 print:space-y-6">
           
-          <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="text-center max-w-3xl mx-auto space-y-3 print:space-y-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-primary/10 border border-primary/20 text-primary font-mono text-xs uppercase font-bold">
               <span>Core Infrastructure Solutions</span>
             </div>
-            <h2 className="font-heading font-black text-3xl sm:text-4xl text-ink uppercase">
+            <h2 className="font-heading font-black text-3xl sm:text-4xl text-ink uppercase print:text-2xl">
               HEAVY PLANT CAPACITIES & SERVICES
             </h2>
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-zinc-600 print:text-xs">
               End-to-end heavy equipment logistics for road construction, quarry development, civil trenching, and mass site leveling across Kenya.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 print:grid-cols-2 print:gap-3">
             {CORE_SERVICES.map((svc, i) => {
               const Icon = svc.icon;
               return (
-                <div key={i} className="industrial-card p-5 space-y-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                    <Icon className="w-5 h-5" />
+                <div key={i} className="industrial-card p-5 space-y-3 print:p-3 print:space-y-1.5 print:break-inside-avoid print:shadow-none print:border-zinc-300">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary print:w-7 print:h-7">
+                    <Icon className="w-5 h-5 print:w-4 print:h-4" />
                   </div>
-                  <h3 className="font-heading font-bold text-sm text-ink">{svc.title}</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed">{svc.desc}</p>
+                  <h3 className="font-heading font-bold text-sm text-ink print:text-xs">{svc.title}</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed print:text-[11px]">{svc.desc}</p>
                 </div>
               );
             })}
@@ -326,8 +327,8 @@ export default function HomePage() {
       </section>
 
       {/* Featured Heavy Machinery Grid */}
-      <section className="py-16 bg-white border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <section className="py-16 bg-white border-b border-border print:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 print:space-y-6">
           
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -335,27 +336,34 @@ export default function HomePage() {
                 <Truck className="w-4 h-4" />
                 <span>Verified Equipment Brochure</span>
               </div>
-              <h2 className="font-heading font-black text-2xl sm:text-4xl text-ink uppercase mt-1">
+              <h2 className="font-heading font-black text-2xl sm:text-4xl text-ink uppercase mt-1 print:text-2xl">
                 FEATURED MACHINERY FLEET
               </h2>
             </div>
 
             <Link 
               href="/catalog" 
-              className="text-xs font-mono font-bold text-primary hover:underline flex items-center gap-1.5"
+              className="text-xs font-mono font-bold text-primary hover:underline flex items-center gap-1.5 print:hidden"
             >
               <span>Explore All 8 Models</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 print:grid-cols-2 print:gap-4">
             {fleet.slice(0, 8).map((machine) => (
-              <div key={machine.id} className="industrial-card flex flex-col justify-between overflow-hidden">
-                <div className="w-full h-48 bg-zinc-100 overflow-hidden relative border-b border-border">
-                  <img src={machine.image_url} alt={machine.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-300" />
+              <div 
+                key={machine.id} 
+                className="industrial-card flex flex-col justify-between overflow-hidden print:break-inside-avoid print:page-break-inside-avoid print:border-zinc-300 print:shadow-none print:rounded-lg"
+              >
+                <div className="w-full h-48 bg-zinc-100 overflow-hidden relative border-b border-border print:h-40 print:bg-white print:border-zinc-200 flex items-center justify-center">
+                  <img 
+                    src={machine.image_url} 
+                    alt={machine.name} 
+                    className="w-full h-full object-cover transition-transform hover:scale-105 duration-300 print:object-contain print:h-40 print:w-full print:max-h-40" 
+                  />
                 </div>
-                <div className="p-5 space-y-3">
+                <div className="p-5 space-y-3 print:p-3 print:space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                       {machine.status || 'AVAILABLE'}
@@ -364,14 +372,14 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <h3 className="font-heading font-bold text-base text-ink line-clamp-1">
+                    <h3 className="font-heading font-bold text-base text-ink line-clamp-1 print:text-sm">
                       {machine.name}
                     </h3>
                     <div className="text-xs text-muted font-mono">{machine.model}</div>
                   </div>
 
                   {machine.specs && (
-                    <div className="p-3 bg-surface rounded-lg space-y-1 text-[11px] font-mono text-zinc-700 border border-border">
+                    <div className="p-3 bg-surface rounded-lg space-y-1 text-[11px] font-mono text-zinc-700 border border-border print:bg-zinc-50 print:p-2 print:text-[10px]">
                       {Object.entries(machine.specs).slice(0, 2).map(([k, v], idx) => (
                         <div key={idx} className="flex justify-between">
                           <span className="text-muted capitalize">{k.replace(/_/g, ' ')}:</span>
@@ -382,10 +390,13 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <div className="p-5">
+                <div className="p-5 pt-0 print:p-3 print:pt-0">
+                  <div className="hidden print:block text-center font-mono font-bold text-[11px] text-primary border border-primary/30 rounded py-1 bg-orange-50/50">
+                    Dispatch: 0717 186396
+                  </div>
                   <button
                     onClick={() => handleBookNow(machine)}
-                    className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-heading font-bold uppercase tracking-wider transition-all"
+                    className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-heading font-bold uppercase tracking-wider transition-all print:hidden"
                   >
                     Quick Quote & Hire
                   </button>

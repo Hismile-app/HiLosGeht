@@ -144,3 +144,94 @@ h1, h2, h3, .font-heading {
 ::-webkit-scrollbar-thumb:hover {
   background: #D95400;
 }
+
+/* ==========================================================================
+   Print Styles for Professional A4 Export / Hardcopy
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 10mm 12mm 10mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    background: #FFFFFF !important;
+    color: #09090B !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Prevent elements from being sliced across A4 page breaks */
+  .industrial-card,
+  .industrial-panel,
+  tr,
+  figure,
+  .break-inside-avoid,
+  article,
+  section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Unclip all images and prevent image cropping */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Reset fixed positioning that obscures printed pages */
+  .fixed,
+  .sticky {
+    position: static !important;
+  }
+
+  /* Ensure card image containers show complete machine without clipping */
+  .industrial-card img {
+    height: auto !important;
+    max-height: 150px !important;
+    width: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background-color: #FFFFFF !important;
+  }
+
+  /* Suppress noisy screen-only UI elements */
+  button:not(.print-keep),
+  .modal,
+  [aria-modal="true"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Keep links clean */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  /* Flatten heavy shadows and improve contrast */
+  .shadow-card,
+  .shadow-subtle,
+  .shadow-orange,
+  .shadow-xl,
+  .shadow-md {
+    box-shadow: none !important;
+  }
+
+  .border,
+  .border-border {
+    border-color: #D4D4D8 !important;
+  }
+}
