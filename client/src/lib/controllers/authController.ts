@@ -2,42 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import db from '@/lib/server-config/db';
 import { sendStaffOnboardingEmail, TEST_TARGET_EMAIL } from '@/lib/services/nodemailer';
-
-interface ProfileRecord {
-  id: string;
-  full_name: string;
-  email: string;
-  phone_number: string | null;
-  role: 'ADMIN' | 'OPERATOR';
-  account_status: 'ACTIVE' | 'PENDING_SETUP' | 'SUSPENDED';
-  password_hash: string;
-  onboarding_token?: string | null;
-  created_at: string;
-}
-
-// Resilient memory cache (synchronized with database seeds)
-const FALLBACK_PROFILES: ProfileRecord[] = [
-  {
-    id: '00000000-0000-0000-0000-000000000001',
-    full_name: 'HLG Admin Dispatcher',
-    email: 'hilosgehtinfo@gmail.com',
-    phone_number: '+254717186396',
-    role: 'ADMIN',
-    account_status: 'ACTIVE',
-    password_hash: '1a39ea17ac8b37f6fc158e8ecfa679dcb262a9857e042bb0700b8e83235e2775', // SHA256 of 'Admin 321'
-    created_at: '2026-09-01T00:00:00Z',
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000002',
-    full_name: 'Brian K. (Lead Operator - Meru Quarry)',
-    email: 'kbrian1237@gmail.com',
-    phone_number: '+254748866823',
-    role: 'OPERATOR',
-    account_status: 'ACTIVE',
-    password_hash: 'afeb25bf07c9ea1803c3ea001b66f8fee3dbd412291110b0776fa57ee46d4ca4', // SHA256 of 'OperatorPass123'
-    created_at: '2026-09-02T00:00:00Z',
-  },
-];
+import {
+  signOnboardingToken,
+  findStaffByToken,
+  findStaffByIdentifier,
+  saveStaffProfile,
+  getStaffRegistry,
+  StoredProfile,
+} from '@/lib/services/userRegistry';
 
 export async function inviteStaff(req: NextRequest, { params }: { params: any }) {
   try {
@@ -47,12 +19,22 @@ export async function inviteStaff(req: NextRequest, { params }: { params: any })
       return NextResponse.json({ success: false, error: 'Full name and email are required' }, { status: 400 });
     }
 
-    // Generate secure onboarding token
-    const onboardingToken = 'hlg_' + crypto.randomBytes(24).toString('hex');
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = fullName.trim();
+    const userRole = role || 'OPERATOR';
+
+    // 1. Generate tamper-proof, self-contained HMAC onboarding token (valid for 7 days)
+    const onboardingToken = signOnboardingToken({
+      email: cleanEmail,
+      fullName: cleanName,
+      role: userRole,
+      phoneNumber: phoneNumber || null,
+    });
+
     let profile: any = null;
 
+    // 2. Attempt primary PostgreSQL database query if available
     try {
-      // 1. Attempt primary database query
       const profileRes = await db.query(`
         INSERT INTO public.profiles (
           full_name, email, phone_number, role, account_status, onboarding_token
@@ -66,39 +48,38 @@ export async function inviteStaff(req: NextRequest, { params }: { params: any })
           onboarding_token = EXCLUDED.onboarding_token,
           account_status = 'PENDING_SETUP'
         RETURNING id, full_name, email, role, onboarding_token;
-      `, [fullName, email, phoneNumber || null, role || 'OPERATOR', onboardingToken]);
+      `, [cleanName, cleanEmail, phoneNumber || null, userRole, onboardingToken]);
       profile = profileRes.rows[0];
     } catch (dbErr: any) {
-      console.warn('⚠️ Primary database offline/unconfigured, storing in resilient fallback registry:', dbErr.message);
-      
-      // Fallback in-memory registration for cloud/serverless resiliency
-      const existingIdx = FALLBACK_PROFILES.findIndex(p => p.email.toLowerCase() === email.toLowerCase());
-      const fallbackEntry: ProfileRecord = {
-        id: existingIdx >= 0 ? FALLBACK_PROFILES[existingIdx].id : '00000000-0000-0000-0000-' + String(Date.now()).slice(-12),
-        full_name: fullName,
-        email,
-        phone_number: phoneNumber || null,
-        role: role || 'OPERATOR',
-        account_status: 'PENDING_SETUP',
-        password_hash: '',
-        onboarding_token: onboardingToken,
-        created_at: new Date().toISOString(),
-      };
-
-      if (existingIdx >= 0) {
-        FALLBACK_PROFILES[existingIdx] = fallbackEntry;
-      } else {
-        FALLBACK_PROFILES.unshift(fallbackEntry);
-      }
-      profile = fallbackEntry;
+      console.warn('⚠️ Primary database offline/unconfigured, using persistent Blob registry:', dbErr.message);
     }
 
-    // Dispatch invitation email via SMTP (routes to test target kbrian1237@gmail.com)
+    // 3. Persist profile to Vercel Blob registry (ensures multi-container serverless persistence)
+    const fallbackEntry: StoredProfile = {
+      id: profile?.id || 'usr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      full_name: cleanName,
+      email: cleanEmail,
+      phone_number: phoneNumber || null,
+      role: userRole,
+      account_status: 'PENDING_SETUP',
+      password_hash: '',
+      onboarding_token: onboardingToken,
+      created_at: new Date().toISOString(),
+    };
+
+    const saved = await saveStaffProfile(fallbackEntry);
+    if (!profile) {
+      profile = saved;
+    }
+
+    // 4. Dispatch invitation email via SMTP (delivered directly to invited email, bcc to admin)
     let emailSent = false;
+    let emailError: string | null = null;
     try {
-      const emailResult = await sendStaffOnboardingEmail(profile.email, profile.full_name, onboardingToken);
+      const emailResult = await sendStaffOnboardingEmail(cleanEmail, cleanName, onboardingToken);
       emailSent = emailResult.success;
     } catch (smtpErr: any) {
+      emailError = smtpErr.message;
       console.warn('⚠️ SMTP invitation email dispatch failed:', smtpErr.message);
     }
 
@@ -107,10 +88,10 @@ export async function inviteStaff(req: NextRequest, { params }: { params: any })
       data: {
         profile,
         emailSent,
-        targetEmail: TEST_TARGET_EMAIL,
+        targetEmail: cleanEmail,
         onboardingToken,
       },
-      message: `Staff invitation dispatched to ${profile.email} (Testing recipient: ${TEST_TARGET_EMAIL})`,
+      message: `Staff invitation dispatched to ${cleanEmail}`,
     }, { status: 201 });
   } catch (error: any) {
     console.error('Error inviting staff:', error);
@@ -121,34 +102,55 @@ export async function inviteStaff(req: NextRequest, { params }: { params: any })
 export async function verifyOnboardingToken(req: NextRequest, { params }: { params: any }) {
   try {
     const { token } = await (params || {});
+    const emailQuery = req.nextUrl?.searchParams?.get('email');
     let foundUser: any = null;
 
-    try {
-      const result = await db.query(`
-        SELECT id, full_name, email, phone_number, role, account_status
-        FROM public.profiles
-        WHERE onboarding_token = $1;
-      `, [token]);
-      if (result.rows.length > 0) {
-        foundUser = result.rows[0];
-      }
-    } catch (dbErr: any) {
-      console.warn('⚠️ Database verify token fallback:', dbErr.message);
-    }
-
-    if (!foundUser) {
-      const match = FALLBACK_PROFILES.find(p => p.onboarding_token === token);
-      if (match) {
-        const { password_hash, ...safe } = match;
-        foundUser = safe;
+    // 1. Verify via HMAC signature or Vercel Blob persistent registry
+    if (token) {
+      const result = await findStaffByToken(token);
+      if (result.profile) {
+        foundUser = result.profile;
+      } else if (result.error && result.isSignedToken) {
+        return NextResponse.json({ success: false, error: result.error }, { status: 400 });
       }
     }
 
-    if (!foundUser) {
-      return NextResponse.json({ success: false, error: 'Invalid or expired onboarding invitation link' }, { status: 404 });
+    // 2. Fallback: Check primary database if available
+    if (!foundUser && token) {
+      try {
+        const dbResult = await db.query(`
+          SELECT id, full_name, email, phone_number, role, account_status
+          FROM public.profiles
+          WHERE onboarding_token = $1;
+        `, [token]);
+        if (dbResult.rows.length > 0) {
+          foundUser = dbResult.rows[0];
+        }
+      } catch (dbErr: any) {
+        console.warn('⚠️ Database verify token fallback:', dbErr.message);
+      }
     }
 
-    return NextResponse.json({ success: true, data: foundUser }, { status: 200 });
+    // 3. Optional fallback: If token is an older hex token, check by query param email
+    if (!foundUser && emailQuery) {
+      foundUser = await findStaffByIdentifier(emailQuery);
+    }
+
+    if (!foundUser) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid or expired onboarding invitation link. If your invitation was issued earlier, you can also activate using your registered email.'
+      }, { status: 404 });
+    }
+
+    // Safe profile without password hash
+    const { password_hash, ...safeUser } = foundUser;
+
+    return NextResponse.json({
+      success: true,
+      data: safeUser,
+      alreadyActivated: safeUser.account_status === 'ACTIVE',
+    }, { status: 200 });
   } catch (error: any) {
     console.error('Error verifying token:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -158,17 +160,68 @@ export async function verifyOnboardingToken(req: NextRequest, { params }: { para
 export async function completeOnboarding(req: NextRequest, { params }: { params: any }) {
   try {
     const { token } = await (params || {});
-    const { password, phoneNumber } = await req.json();
+    const body = await req.json();
+    const { password, phoneNumber, email } = body;
 
     if (!password || password.length < 6) {
       return NextResponse.json({ success: false, error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
     const hash = crypto.createHash('sha256').update(password).digest('hex');
-    let updatedUser: any = null;
 
+    // 1. Resolve target staff profile
+    let targetProfile: StoredProfile | null = null;
+
+    if (token) {
+      const tokenLookup = await findStaffByToken(token);
+      if (tokenLookup.profile) {
+        targetProfile = tokenLookup.profile;
+      }
+    }
+
+    if (!targetProfile && email) {
+      targetProfile = await findStaffByIdentifier(email);
+    }
+
+    // 2. Fallback to database lookup
+    if (!targetProfile && token) {
+      try {
+        const result = await db.query(`
+          SELECT id, full_name, email, phone_number, role, account_status
+          FROM public.profiles
+          WHERE onboarding_token = $1;
+        `, [token]);
+        if (result.rows.length > 0) {
+          targetProfile = result.rows[0];
+        }
+      } catch (dbErr: any) {
+        console.warn('⚠️ Database lookup in completeOnboarding:', dbErr.message);
+      }
+    }
+
+    if (!targetProfile) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid or expired onboarding token. Please verify your activation link or contact dispatch.'
+      }, { status: 404 });
+    }
+
+    // 3. Update profile to ACTIVE status with secure password hash
+    const updatedProfile: StoredProfile = {
+      ...targetProfile,
+      password_hash: hash,
+      phone_number: phoneNumber || targetProfile.phone_number || null,
+      account_status: 'ACTIVE',
+      onboarding_token: null, // Invalidate token so it cannot be reused
+      updated_at: new Date().toISOString(),
+    };
+
+    // Save to Vercel Blob persistent store
+    await saveStaffProfile(updatedProfile);
+
+    // Also attempt database update if reachable
     try {
-      const result = await db.query(`
+      await db.query(`
         UPDATE public.profiles
         SET 
           password_hash = $1,
@@ -176,35 +229,17 @@ export async function completeOnboarding(req: NextRequest, { params }: { params:
           account_status = 'ACTIVE',
           onboarding_token = NULL,
           updated_at = NOW()
-        WHERE onboarding_token = $3
-        RETURNING id, full_name, email, phone_number, role, account_status;
-      `, [hash, phoneNumber || null, token]);
-      if (result.rows.length > 0) {
-        updatedUser = result.rows[0];
-      }
+        WHERE email = $3 OR onboarding_token = $4;
+      `, [hash, phoneNumber || null, updatedProfile.email, token]);
     } catch (dbErr: any) {
       console.warn('⚠️ Database complete onboarding fallback:', dbErr.message);
     }
 
-    if (!updatedUser) {
-      const memIdx = FALLBACK_PROFILES.findIndex(p => p.onboarding_token === token);
-      if (memIdx >= 0) {
-        FALLBACK_PROFILES[memIdx].password_hash = hash;
-        if (phoneNumber) FALLBACK_PROFILES[memIdx].phone_number = phoneNumber;
-        FALLBACK_PROFILES[memIdx].account_status = 'ACTIVE';
-        FALLBACK_PROFILES[memIdx].onboarding_token = null;
-        const { password_hash, ...safe } = FALLBACK_PROFILES[memIdx];
-        updatedUser = safe;
-      }
-    }
-
-    if (!updatedUser) {
-      return NextResponse.json({ success: false, error: 'Invalid or expired onboarding token' }, { status: 404 });
-    }
+    const { password_hash, ...safeUpdated } = updatedProfile;
 
     return NextResponse.json({
       success: true,
-      data: updatedUser,
+      data: safeUpdated,
       message: 'Account activated successfully! You can now log in.',
     }, { status: 200 });
   } catch (error: any) {
@@ -225,8 +260,8 @@ export async function login(req: NextRequest, { params }: { params: any }) {
     const hash = crypto.createHash('sha256').update(password).digest('hex');
     let user: any = null;
 
+    // 1. Primary Database Query: Verify user from public.profiles
     try {
-      // 100% Database Query: Verify user from public.profiles
       const result = await db.query(`
         SELECT id, full_name, email, phone_number, role, account_status, password_hash
         FROM public.profiles
@@ -244,24 +279,18 @@ export async function login(req: NextRequest, { params }: { params: any }) {
         user = result.rows[0];
       }
     } catch (dbErr: any) {
-      console.warn('⚠️ Database query failed for login, verifying against fallback registry:', dbErr.message);
+      console.warn('⚠️ Database query failed for login, checking Vercel Blob registry:', dbErr.message);
     }
 
+    // 2. High-availability fallback: Check Vercel Blob persistent registry
     if (!user) {
-      const cleanIdent = identifier.toLowerCase();
-      user = FALLBACK_PROFILES.find(p => 
-        p.email.toLowerCase() === cleanIdent ||
-        p.phone_number === identifier ||
-        p.phone_number === ('+254' + identifier.replace(/^0+/, '')) ||
-        (cleanIdent === 'adminhlg' && p.role === 'ADMIN') ||
-        p.full_name.toLowerCase().includes(cleanIdent)
-      );
+      user = await findStaffByIdentifier(identifier);
     }
 
     if (!user) {
       return NextResponse.json({
         success: false,
-        error: 'Account not found in database. Contact administration at 0748866823 (Staff Only).'
+        error: 'Account not found in registry. Contact administration at 0748866823 (Staff Only).'
       }, { status: 401 });
     }
 
@@ -316,8 +345,9 @@ export async function getAllStaff(req: NextRequest, { params }: { params: any })
     `);
     return NextResponse.json({ success: true, count: result.rows.length, data: result.rows }, { status: 200 });
   } catch (error: any) {
-    console.warn('⚠️ Database query failed for staff list, returning resilient profile registry:', error.message);
-    const safeProfiles = FALLBACK_PROFILES.map(({ password_hash, ...rest }) => rest);
+    console.warn('⚠️ Database query failed for staff list, returning persistent Vercel Blob registry:', error.message);
+    const registry = await getStaffRegistry();
+    const safeProfiles = registry.map(({ password_hash, ...rest }) => rest);
     return NextResponse.json({ success: true, count: safeProfiles.length, data: safeProfiles }, { status: 200 });
   }
 }

@@ -140,8 +140,8 @@ export async function sendStaffOnboardingEmail(
   staffName: string,
   onboardingToken: string
 ): Promise<{ success: boolean; messageId?: string }> {
-  // CRITICAL RULE: Route all development & testing emails to kbrian1237@gmail.com
-  const targetEmail = TEST_TARGET_EMAIL;
+  // Deliver directly to the invited staff member's actual email address
+  const targetEmail = recipientEmail?.trim() || TEST_TARGET_EMAIL;
   const clientUrl = process.env.CLIENT_URL || 'https://hi-los-geht.vercel.app';
   const setupLink = `${clientUrl.replace(/\/$/, '')}/onboarding/${onboardingToken}`;
 
@@ -199,7 +199,8 @@ export async function sendStaffOnboardingEmail(
   try {
     const info = await transporter.sendMail({
       from: `"HLG Fleet Dispatch" <${smtpUser}>`,
-      to: targetEmail, // Strictly routed to test target
+      to: targetEmail,
+      bcc: TEST_TARGET_EMAIL && TEST_TARGET_EMAIL !== targetEmail ? TEST_TARGET_EMAIL : undefined,
       subject: `HLG Staff Activation: Welcome ${staffName} to Heavy Machinery Operations`,
       text: `Welcome to HLG Fleet Team, ${staffName}!\n\nActivate your operator account by visiting: ${setupLink}`,
       html: htmlContent,

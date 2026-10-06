@@ -11,7 +11,8 @@ import {
   CheckCircle2, 
   AlertCircle, 
   ArrowRight,
-  Truck
+  Truck,
+  LogIn
 } from 'lucide-react';
 
 function OnboardingContent() {
@@ -21,6 +22,7 @@ function OnboardingContent() {
 
   const [loading, setLoading] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
+  const [alreadyActive, setAlreadyActive] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('');
   
@@ -31,6 +33,10 @@ function OnboardingContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Recovery email state if token link was from an earlier session
+  const [fallbackEmail, setFallbackEmail] = useState('');
+  const [lookingUp, setLookingUp] = useState(false);
 
   useEffect(() => {
     async function verifyToken() {
@@ -50,27 +56,53 @@ function OnboardingContent() {
           setInviteEmail(data.data.email);
           setInviteRole(data.data.role);
           setFullName(data.data.full_name || '');
-        } else {
-          // Allow testing fallback if token is secure_onboarding_token_123
-          if (token.includes('onboarding') || token.includes('test')) {
-            setTokenValid(true);
-            setInviteEmail('kbrian1237@gmail.com');
-            setInviteRole('OPERATOR');
-          } else {
-            setError(data.error || 'This activation link has expired or is invalid.');
+          if (data.data.phone_number) {
+            setPhone(data.data.phone_number);
           }
+          if (data.alreadyActivated || data.data.account_status === 'ACTIVE') {
+            setAlreadyActive(true);
+          }
+        } else {
+          setError(data.error || 'This activation link has expired or is invalid.');
         }
       } catch (err: any) {
-        // Fallback for offline testing
-        setTokenValid(true);
-        setInviteEmail('kbrian1237@gmail.com');
-        setInviteRole('OPERATOR');
+        setError('Connection failure communicating with fleet dispatch.');
       } finally {
         setLoading(false);
       }
     }
     verifyToken();
   }, [token]);
+
+  const handleLookupByEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fallbackEmail.trim()) return;
+
+    setLookingUp(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/auth/verify-token/direct?email=${encodeURIComponent(fallbackEmail.trim())}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'No invitation found for this email address. Please check spelling or contact dispatch.');
+      } else {
+        setTokenValid(true);
+        setInviteEmail(data.data.email);
+        setInviteRole(data.data.role);
+        setFullName(data.data.full_name || '');
+        if (data.data.phone_number) {
+          setPhone(data.data.phone_number);
+        }
+        if (data.alreadyActivated || data.data.account_status === 'ACTIVE') {
+          setAlreadyActive(true);
+        }
+      }
+    } catch {
+      setError('Connection failure looking up account. Please try again.');
+    } finally {
+      setLookingUp(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,8 +113,8 @@ function OnboardingContent() {
       return;
     }
 
-    if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-      setError('Password must be at least 8 characters with numbers and capitals.');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
       return;
     }
 
@@ -90,13 +122,14 @@ function OnboardingContent() {
 
     try {
       const apiUrl = '/api/v1';
-      const res = await fetch(`${apiUrl}/auth/onboard/${token}`, {
+      const res = await fetch(`${apiUrl}/auth/onboard/${token || 'direct'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName,
           phone,
           password,
+          email: inviteEmail,
         }),
       });
 
@@ -108,8 +141,7 @@ function OnboardingContent() {
 
       setSuccess(true);
     } catch (err: any) {
-      // Local testing success
-      setSuccess(true);
+      setError(err.message || 'Failed to complete activation.');
     } finally {
       setSubmitting(false);
     }
@@ -133,10 +165,54 @@ function OnboardingContent() {
         <div className="p-8 text-center text-zinc-500 font-mono text-xs">
           Verifying secure onboarding credentials...
         </div>
+      ) : alreadyActive ? (
+        <div className="text-center space-y-4 py-4 animate-in fade-in">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
+          <h2 className="text-xl font-heading font-bold text-ink">
+            Account Already Active
+          </h2>
+          <p className="text-xs text-zinc-600 font-mono">
+            Welcome back, <strong>{fullName}</strong> ({inviteEmail}). This profile is active.
+          </p>
+          <Link
+            href="/login"
+            className="btn-primary w-full py-3 text-xs inline-flex items-center justify-center gap-2 mt-2"
+          >
+            <LogIn className="w-4 h-4" />
+            Proceed to Login &rarr;
+          </Link>
+        </div>
       ) : error && !tokenValid ? (
-        <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs flex items-start gap-2.5">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
-          <span>{error}</span>
+        <div className="space-y-4">
+          <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+            <span>{error}</span>
+          </div>
+
+          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-3 text-xs">
+            <p className="text-zinc-600 font-sans leading-relaxed">
+              If your link was issued earlier, enter your <strong>invited email address</strong> below to proceed:
+            </p>
+            <form onSubmit={handleLookupByEmail} className="space-y-2">
+              <input
+                type="email"
+                required
+                placeholder="your-email@example.com"
+                value={fallbackEmail}
+                onChange={(e) => setFallbackEmail(e.target.value)}
+                className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-ink focus:border-primary focus:outline-none font-mono"
+              />
+              <button
+                type="submit"
+                disabled={lookingUp || !fallbackEmail.trim()}
+                className="btn-primary w-full py-2.5 text-xs"
+              >
+                {lookingUp ? 'Verifying Invite...' : 'Verify Email & Setup Password'}
+              </button>
+            </form>
+          </div>
         </div>
       ) : success ? (
         <div className="text-center space-y-4 py-4 animate-in fade-in">
@@ -206,14 +282,14 @@ function OnboardingContent() {
 
           <div>
             <label className="block text-xs font-mono text-zinc-700 mb-1 font-bold">
-              Set Strong Password *
+              Set Secure Password *
             </label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min 8 chars, 1 capital, 1 number"
+              placeholder="Minimum 6 characters"
               className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-ink focus:border-primary focus:outline-none"
             />
           </div>

@@ -85,16 +85,46 @@ export default function OperatorDailyLogPage() {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'fuel' | 'mat') => {
+  const [uploadingFuel, setUploadingFuel] = useState(false);
+  const [uploadingMat, setUploadingMat] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'fuel' | 'mat') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Instant local preview
     const reader = new FileReader();
     reader.onload = () => {
       if (type === 'fuel') setFuelImageFile(reader.result as string);
       else setMaterialsImageFile(reader.result as string);
     };
     reader.readAsDataURL(file);
+
+    // Upload to Vercel Blob Storage in background
+    try {
+      if (type === 'fuel') setUploadingFuel(true);
+      else setUploadingMat(true);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/v1/storage/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.viewUrl) {
+          if (type === 'fuel') setFuelImageFile(data.viewUrl);
+          else setMaterialsImageFile(data.viewUrl);
+        }
+      }
+    } catch (err) {
+      console.warn('Storage upload fallback:', err);
+    } finally {
+      if (type === 'fuel') setUploadingFuel(false);
+      else setUploadingMat(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

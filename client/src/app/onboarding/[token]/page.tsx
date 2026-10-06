@@ -12,10 +12,9 @@ import {
   AlertTriangle, 
   User, 
   Mail, 
-  ArrowRight 
+  ArrowRight,
+  LogIn
 } from 'lucide-react';
-import GlassCard from '@/components/common/GlassCard';
-import NeonButton from '@/components/common/NeonButton';
 
 export default function StaffOnboardingPage() {
   const params = useParams();
@@ -24,6 +23,7 @@ export default function StaffOnboardingPage() {
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any | null>(null);
+  const [alreadyActive, setAlreadyActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [password, setPassword] = useState('');
@@ -31,6 +31,10 @@ export default function StaffOnboardingPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Recovery email state if token link was from an earlier session
+  const [fallbackEmail, setFallbackEmail] = useState('');
+  const [lookingUp, setLookingUp] = useState(false);
 
   useEffect(() => {
     async function verifyToken() {
@@ -41,9 +45,12 @@ export default function StaffOnboardingPage() {
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.error || 'This onboarding invitation link is invalid or has already been used.');
+          setError(data.error || 'This onboarding invitation link is invalid or has already expired.');
         } else {
           setProfile(data.data);
+          if (data.alreadyActivated || data.data.account_status === 'ACTIVE') {
+            setAlreadyActive(true);
+          }
           if (data.data.phone_number) {
             setPhoneNumber(data.data.phone_number);
           }
@@ -56,6 +63,33 @@ export default function StaffOnboardingPage() {
     }
     verifyToken();
   }, [token]);
+
+  const handleLookupByEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fallbackEmail.trim()) return;
+
+    setLookingUp(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/auth/verify-token/${token || 'direct'}?email=${encodeURIComponent(fallbackEmail.trim())}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'No invitation found for this email address. Please check spelling or contact dispatch.');
+      } else {
+        setProfile(data.data);
+        if (data.alreadyActivated || data.data.account_status === 'ACTIVE') {
+          setAlreadyActive(true);
+        }
+        if (data.data.phone_number) {
+          setPhoneNumber(data.data.phone_number);
+        }
+      }
+    } catch {
+      setError('Connection failure looking up account. Please try again.');
+    } finally {
+      setLookingUp(false);
+    }
+  };
 
   const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,12 +108,13 @@ export default function StaffOnboardingPage() {
 
     try {
       const apiUrl = '/api/v1';
-      const res = await fetch(`${apiUrl}/auth/onboard/${token}`, {
+      const res = await fetch(`${apiUrl}/auth/onboard/${token || 'direct'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           password,
           phoneNumber,
+          email: profile?.email,
         }),
       });
 
@@ -134,7 +169,25 @@ export default function StaffOnboardingPage() {
           </div>
         )}
 
-        {success ? (
+        {/* Already Activated State */}
+        {alreadyActive ? (
+          <div className="text-center py-6 space-y-4">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-600 mx-auto flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <h2 className="font-heading text-lg font-bold text-ink">Account Already Active</h2>
+            <p className="text-xs text-zinc-600">
+              Welcome back, <strong>{profile?.full_name}</strong> ({profile?.email}). This account is fully activated.
+            </p>
+            <Link
+              href="/login"
+              className="btn-primary inline-flex items-center justify-center gap-2 w-full py-3 text-xs"
+            >
+              <LogIn className="w-4 h-4" />
+              Proceed to Fleet Login
+            </Link>
+          </div>
+        ) : success ? (
           <div className="text-center py-6 space-y-4">
             <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-600 mx-auto flex items-center justify-center">
               <CheckCircle2 className="w-8 h-8" />
@@ -215,7 +268,38 @@ export default function StaffOnboardingPage() {
             </button>
 
           </form>
-        ) : null}
+        ) : (
+          /* Graceful recovery if an earlier token could not be verified automatically */
+          <div className="space-y-4 text-xs pt-2">
+            <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-3">
+              <p className="text-zinc-600 leading-relaxed font-sans">
+                If your link was issued earlier, enter the <strong>invited email address</strong> below to verify your invitation and set up your password:
+              </p>
+              <form onSubmit={handleLookupByEmail} className="space-y-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="your-email@example.com"
+                  value={fallbackEmail}
+                  onChange={(e) => setFallbackEmail(e.target.value)}
+                  className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-ink focus:border-primary focus:outline-none font-mono"
+                />
+                <button
+                  type="submit"
+                  disabled={lookingUp || !fallbackEmail.trim()}
+                  className="btn-primary w-full py-2.5 text-xs"
+                >
+                  {lookingUp ? 'Verifying Invite...' : 'Verify Invitation & Setup Password'}
+                </button>
+              </form>
+            </div>
+            <div className="text-center pt-2">
+              <Link href="/login" className="text-xs text-primary hover:underline font-mono">
+                Already have an active account? Sign in here &rarr;
+              </Link>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
