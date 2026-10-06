@@ -57,7 +57,7 @@ export default function AIInsightsPage() {
   const fetchAIInsights = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/analytics/ai-insights?days=${days}`);
       const json = await res.json();
       if (json?.success) {
@@ -72,7 +72,7 @@ export default function AIInsightsPage() {
 
   const handleCreateWorkOrder = async (anom: any) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       // Fetch equipment list to map machine name to ID
       const eqRes = await fetch(`${apiUrl}/equipment`);
       const eqJson = await eqRes.json();
@@ -108,7 +108,7 @@ export default function AIInsightsPage() {
     setAskingAI(true);
     setAiResponse(null);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/ai/consultant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

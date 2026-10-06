@@ -37,7 +37,7 @@ export default function DocumentVerificationPage() {
   const fetchAudits = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/analytics/documents`);
       const json = await res.json();
       if (json?.success) {
@@ -52,7 +52,7 @@ export default function DocumentVerificationPage() {
 
   const handleUpdateStatus = async (logId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       await fetch(`${apiUrl}/logs/${logId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

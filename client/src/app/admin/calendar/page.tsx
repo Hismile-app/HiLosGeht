@@ -44,7 +44,7 @@ export default function MasterCalendarPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const [eqRes, inqRes] = await Promise.all([
         fetch(`${apiUrl}/equipment`),
         fetch(`${apiUrl}/inquiries`),

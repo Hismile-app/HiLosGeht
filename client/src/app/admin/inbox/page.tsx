@@ -28,7 +28,7 @@ export default function InboxKanbanPage() {
 
   const fetchInquiries = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/inquiries`);
       if (res.ok) {
         const data = await res.json();
@@ -79,7 +79,7 @@ export default function InboxKanbanPage() {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       await fetch(`${apiUrl}/inquiries/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

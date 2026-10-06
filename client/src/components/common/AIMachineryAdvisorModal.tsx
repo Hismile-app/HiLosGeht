@@ -32,7 +32,7 @@ export default function AIMachineryAdvisorModal({ isOpen, onClose, initialQuery 
     setResponseMarkdown(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/ai/consultant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

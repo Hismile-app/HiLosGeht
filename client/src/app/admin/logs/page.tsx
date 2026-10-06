@@ -46,7 +46,7 @@ export default function DailyLogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/logs`);
       const data = await res.json();
       if (data?.success) {

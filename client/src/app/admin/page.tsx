@@ -31,7 +31,7 @@ export default function CommandOverviewPage() {
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const [ovRes, aiRes] = await Promise.all([
         fetch(`${apiUrl}/analytics/overview`).catch(() => null),
         fetch(`${apiUrl}/analytics/ai-insights`).catch(() => null)

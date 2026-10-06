@@ -65,7 +65,7 @@ export default function ContactPage() {
   React.useEffect(() => {
     async function loadDynamicOptions() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        const apiUrl = '/api/v1';
         const [eqRes, setRes] = await Promise.all([
           fetch(`${apiUrl}/equipment`).catch(() => null),
           fetch(`${apiUrl}/settings`).catch(() => null)
@@ -126,7 +126,7 @@ export default function ContactPage() {
     setGeneratedWhatsAppLink(waLink);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/inquiries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

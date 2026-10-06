@@ -41,7 +41,7 @@ function OnboardingContent() {
       }
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        const apiUrl = '/api/v1';
         const res = await fetch(`${apiUrl}/auth/verify-token/${token}`);
         const data = await res.json();
 
@@ -89,7 +89,7 @@ function OnboardingContent() {
     setSubmitting(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/auth/onboard/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

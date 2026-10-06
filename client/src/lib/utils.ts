@@ -46,3 +46,15 @@ export function buildWhatsAppBookingLink(
   const message = `Hello HLG Dispatch Team,\n\nI would like to book the following heavy machinery for an infrastructure project in/around Meru:\n\n🚜 Equipment: ${equipmentName}\n📅 Start Date: ${startDate}\n📅 End Date: ${endDate}\n👤 Client Name: ${clientName}\n✉️ Email: ${clientEmail}\n\nPlease provide quotation and confirmation details. Thank you!`;
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * Robust API Base URL resolver.
+ * Always resolves to relative '/api/v1' on client and serverless runtime,
+ * strictly ignoring any obsolete localhost:5000 overrides.
+ */
+export const API_BASE_URL = '/api/v1';
+
+export function getApiUrl(): string {
+  return '/api/v1';
+}
+

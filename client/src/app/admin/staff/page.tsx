@@ -33,7 +33,7 @@ export default function StaffManagementPage() {
 
   const fetchStaff = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/auth/staff`);
       if (res.ok) {
         const data = await res.json();
@@ -86,7 +86,7 @@ export default function StaffManagementPage() {
     setErrorMsg(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/auth/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

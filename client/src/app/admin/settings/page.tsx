@@ -80,7 +80,7 @@ export default function SystemSettingsPage() {
 
     const fetchSettings = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        const apiUrl = '/api/v1';
         const res = await fetch(`${apiUrl}/settings`);
         if (res.ok) {
           const json = await res.json();
@@ -137,7 +137,7 @@ export default function SystemSettingsPage() {
 
   const saveAllSettings = async (overrides?: any) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       await fetch(`${apiUrl}/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -221,7 +221,7 @@ export default function SystemSettingsPage() {
     setTelemetryLoading(true);
     setTelemetryStatus(null);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/telemetry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -171,7 +171,7 @@ export default function HomePage() {
   useEffect(() => {
     async function loadRealFleet() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        const apiUrl = '/api/v1';
         const res = await fetch(`${apiUrl}/equipment`);
         if (res.ok) {
           const json = await res.json();

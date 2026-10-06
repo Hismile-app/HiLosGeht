@@ -39,7 +39,7 @@ export default function FinancialsPage() {
   const fetchFinancials = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const apiUrl = '/api/v1';
       const res = await fetch(`${apiUrl}/analytics/financials`);
       const json = await res.json();
       if (json?.success) {
