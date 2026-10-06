@@ -362,6 +362,7 @@ export async function saveInquiryRecord(inquiry: InquiryRecord): Promise<Inquiry
         token,
         access: 'private',
         addRandomSuffix: false,
+        allowOverwrite: true,
         contentType: 'application/json',
       });
       cachedBlobUrl = result.url;
@@ -401,6 +402,7 @@ export async function updateInquiryStatusRecord(
         token,
         access: 'private',
         addRandomSuffix: false,
+        allowOverwrite: true,
         contentType: 'application/json',
       });
       cachedBlobUrl = result.url;
@@ -475,6 +477,7 @@ export async function updateInquiryDetailsRecord(
         token,
         access: 'private',
         addRandomSuffix: false,
+        allowOverwrite: true,
         contentType: 'application/json',
       });
       cachedBlobUrl = result.url;

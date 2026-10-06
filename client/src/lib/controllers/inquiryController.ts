@@ -337,9 +337,9 @@ export async function updateInquiry(req: NextRequest, { params }: { params: any 
     const resolvedParams = await Promise.resolve(params || {});
     const pathParts = req.nextUrl.pathname.split('/').filter(Boolean);
     const idFromPath = pathParts[pathParts.length - 1];
-    const id = resolvedParams.id || idFromPath;
-
     const body = await req.json();
+    const id = resolvedParams.id || idFromPath || body?.id;
+
     const { startDate, endDate, equipmentId, status, notes } = body;
 
     // Retrieve previous state before update
