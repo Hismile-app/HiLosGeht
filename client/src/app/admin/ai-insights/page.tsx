@@ -112,7 +112,16 @@ export default function AIInsightsPage() {
       const res = await fetch(`${apiUrl}/ai/consultant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: customQuery.trim() }),
+        body: JSON.stringify({ 
+          query: customQuery.trim(),
+          role: 'ADMIN',
+          context: 'ADMIN_AI_INSIGHTS',
+          projectDetails: {
+            page: '/admin/ai-insights',
+            section: 'Fleet Intelligence & Anomaly Detection',
+            location: 'Meru Plant & Operations Base'
+          }
+        }),
       });
       const json = await res.json();
       if (json?.success) {
@@ -245,6 +254,28 @@ export default function AIInsightsPage() {
                   <Send className={`w-3.5 h-3.5 ${askingAI ? 'animate-pulse' : ''}`} />
                   <span>{askingAI ? 'Thinking...' : 'Consult AI'}</span>
                 </button>
+              </div>
+
+              {/* Quick Prompt Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-mono text-muted uppercase font-bold mr-1">Admin Prompts:</span>
+                {[
+                  'Summarize recent operator shift logs & fuel burn',
+                  'Which machines have fuel burn anomalies?',
+                  'What is the current fleet hourly cost breakdown?',
+                  'Check maintenance triggers and hydraulic service status'
+                ].map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setCustomQuery(prompt);
+                    }}
+                    className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-surface hover:bg-orange-50 border border-border hover:border-orange-300 text-zinc-700 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    {prompt}
+                  </button>
+                ))}
               </div>
             </form>
 

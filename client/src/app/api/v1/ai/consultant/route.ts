@@ -3,13 +3,17 @@ import { consultMachineryAI } from '@/lib/services/ai';
 
 export async function POST(req: NextRequest) {
   try {
-    const { query, projectDetails } = await req.json();
+    const { query, projectDetails, context, role } = await req.json();
 
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
       return NextResponse.json({ success: false, error: 'Query prompt is required.' }, { status: 400 });
     }
 
-    const markdownReply = await consultMachineryAI(query.trim(), projectDetails);
+    const markdownReply = await consultMachineryAI(query.trim(), {
+      projectDetails,
+      context,
+      role,
+    });
 
     return NextResponse.json({
       success: true,

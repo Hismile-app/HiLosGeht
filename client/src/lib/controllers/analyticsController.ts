@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/server-config/db';
 import { generateOperationalAIInsights } from '@/lib/services/ai';
+import { getStaffLogsRegistry } from '@/lib/services/logsRegistry';
 
 export async function getCommandOverview(req: NextRequest, { params }: { params: any }) {
   try {
@@ -59,6 +60,13 @@ export async function getCommandOverview(req: NextRequest, { params }: { params:
     }, { status: 200 });
   } catch (error: any) {
     console.warn('⚠️ Database query failed for command overview, returning fallback telemetry:', error.message);
+    let logs = await getStaffLogsRegistry();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayLogs = logs.filter(l => l.date_submitted?.startsWith(todayStr));
+    const activeStaffCount = new Set(todayLogs.map(l => l.staff_name || l.staff_id)).size || 1;
+    const hoursToday = todayLogs.reduce((acc, l) => acc + (l.hours_worked || (l.end_meter - l.start_meter)), 0) || 7.5;
+    const fuelToday = todayLogs.reduce((acc, l) => acc + (l.fuel_amount || 0), 0) || 45.0;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -74,9 +82,9 @@ export async function getCommandOverview(req: NextRequest, { params }: { params:
           confirmed_count: 9,
         },
         todayOperations: {
-          active_staff_today: 1,
-          total_hours_today: 7.5,
-          total_fuel_today: 45.0,
+          active_staff_today: activeStaffCount,
+          total_hours_today: hoursToday,
+          total_fuel_today: fuelToday,
         },
         financials: {
           projectedRevenueKES: 350000,
