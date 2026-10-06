@@ -57,14 +57,14 @@ export default function CommandOverviewPage() {
     fetchDashboard();
   }, []);
 
-  const totalFleet = overviewData?.fleet?.total_fleet ?? 8;
-  const availableCount = overviewData?.fleet?.available_count ?? 6;
-  const bookedCount = overviewData?.fleet?.booked_count ?? 2;
+  const totalFleet = overviewData?.fleet?.total_fleet ?? 0;
+  const availableCount = overviewData?.fleet?.available_count ?? 0;
+  const bookedCount = overviewData?.fleet?.booked_count ?? 0;
   const maintenanceCount = overviewData?.fleet?.maintenance_count ?? 0;
-  const pendingInquiries = overviewData?.inquiries?.pending_count ?? 1;
-  const activeStaff = overviewData?.todayOperations?.active_staff_today ?? 2;
-  const projectedRevenue = overviewData?.financials?.projectedRevenueKES ?? 185000;
-  const utilization = overviewData?.financials?.utilizationPercentage ?? 25.0;
+  const pendingInquiries = overviewData?.inquiries?.pending_count ?? 0;
+  const activeStaff = overviewData?.todayOperations?.active_staff_today ?? 0;
+  const projectedRevenue = overviewData?.financials?.projectedRevenueKES ?? 0;
+  const utilization = overviewData?.financials?.utilizationPercentage ?? 0.0;
   const anomalies = aiInsights?.anomaliesDetected ?? aiInsights?.anomalies ?? [];
 
   return (

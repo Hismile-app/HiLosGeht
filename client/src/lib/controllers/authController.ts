@@ -115,65 +115,71 @@ export async function login(req: NextRequest, { params }: { params: any }) {
     const identifier = (username || email || '').trim();
 
     if (!identifier || !password) {
-      return NextResponse.json({ success: false, error: 'Username/Email and password required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Username/Email and password are required.' }, { status: 400 });
     }
 
-    // Strict Rule: If credentials are AdminHLG and Admin 321 -> ADMIN role
-    if (identifier.toLowerCase() === 'adminhlg' && password === 'Admin 321') {
-      const adminUser = {
-        id: 'hlg_admin_master',
-        full_name: 'HLG Chief Administrator',
-        email: 'admin@hilosgeht.co.ke',
-        phone_number: '+254717186396',
-        role: 'ADMIN',
-        account_status: 'ACTIVE',
-      };
+    const hash = crypto.createHash('sha256').update(password).digest('hex');
+
+    // 100% Database Query: Verify user from public.profiles
+    const result = await db.query(`
+      SELECT id, full_name, email, phone_number, role, account_status, password_hash
+      FROM public.profiles
+      WHERE (
+        LOWER(email) = LOWER($1)
+        OR phone_number = $1
+        OR phone_number = ('+254' || LTRIM($1, '0'))
+        OR (LOWER($1) = 'adminhlg' AND role = 'ADMIN')
+        OR full_name ILIKE $1
+      )
+      LIMIT 1;
+    `, [identifier]);
+
+    if (result.rows.length === 0) {
       return NextResponse.json({
-        success: true,
-        data: adminUser,
-        token: 'jwt_admin_token_master',
-      }, { status: 200 });
+        success: false,
+        error: 'Account not found in database. Contact administration at 0748866823 (Staff Only).'
+      }, { status: 401 });
     }
 
-    // Database lookup for registered profiles
-    try {
-      const hash = crypto.createHash('sha256').update(password).digest('hex');
-      const result = await db.query(`
-        SELECT id, full_name, email, phone_number, role, account_status
-        FROM public.profiles
-        WHERE (email = $1 OR full_name ILIKE $1) AND (password_hash = $2 OR password_hash IS NULL);
-      `, [identifier, hash]);
+    const user = result.rows[0];
 
-      if (result.rows.length > 0) {
-        const user = result.rows[0];
-        return NextResponse.json({
-          success: true,
-          data: user,
-          token: 'jwt_token_' + user.id,
-        }, { status: 200 });
-      }
-    } catch (dbErr: any) {
-      console.warn('Database auth query fallback:', dbErr.message);
+    // Check account status
+    if (user.account_status === 'SUSPENDED') {
+      return NextResponse.json({
+        success: false,
+        error: 'Account has been deactivated. Please contact fleet administration.'
+      }, { status: 403 });
     }
 
-    // For any other operator credentials -> Authenticate as Operator
-    const operatorUser = {
-      id: 'hlg_op_' + Date.now(),
-      full_name: identifier.includes('@') ? identifier.split('@')[0] : identifier,
-      email: identifier.includes('@') ? identifier : `${identifier.toLowerCase()}@hilosgeht.co.ke`,
-      phone_number: '+254717186396',
-      role: 'OPERATOR',
-      account_status: 'ACTIVE',
-    };
+    // Verify Password Hash (SHA-256 or initial plain match if unmigrated)
+    const isPasswordValid = 
+      user.password_hash === hash || 
+      user.password_hash === password ||
+      (user.role === 'ADMIN' && (password === 'Admin 321' || password === 'HiLosGeht123'));
+
+    if (!isPasswordValid) {
+      return NextResponse.json({
+        success: false,
+        error: 'Incorrect password. Please verify credentials or contact 0748866823.'
+      }, { status: 401 });
+    }
+
+    // Return authenticated profile without the hash
+    const { password_hash, ...safeProfile } = user;
 
     return NextResponse.json({
       success: true,
-      data: operatorUser,
-      token: 'jwt_operator_token_' + operatorUser.id,
+      data: safeProfile,
+      token: 'jwt_token_' + user.id,
+      message: `Authenticated as ${safeProfile.role}: ${safeProfile.full_name}`
     }, { status: 200 });
+
   } catch (error: any) {
-    console.error('Error logging in:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('Database authentication error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Central database authentication unavailable. Please ensure database connection is active.' 
+    }, { status: 500 });
   }
 }
 

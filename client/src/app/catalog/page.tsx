@@ -19,9 +19,11 @@ import {
   MessageSquare,
   Sparkles,
   SlidersHorizontal,
-  X
+  X,
+  Bot
 } from 'lucide-react';
 import WhatsAppBookingModal from '@/components/booking/WhatsAppBookingModal';
+import AIMachineryAdvisorModal from '@/components/common/AIMachineryAdvisorModal';
 import { Equipment } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 
@@ -159,6 +161,7 @@ export default function CatalogPage() {
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [compareList, setCompareList] = useState<Equipment[]>([]);
+  const [aiAdvisorOpen, setAiAdvisorOpen] = useState(false);
 
   // Fetch live fleet from API
   useEffect(() => {
@@ -209,17 +212,26 @@ export default function CatalogPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 bg-white text-ink">
       
       {/* Page Header */}
-      <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary font-mono text-xs uppercase font-bold">
-          <Truck className="w-3.5 h-3.5" />
-          <span>HLG Fleet Catalog • Meru, Kenya</span>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary font-mono text-xs uppercase font-bold">
+            <Truck className="w-3.5 h-3.5" />
+            <span>HLG Fleet Catalog • Meru, Kenya</span>
+          </div>
+          <h1 className="font-heading font-black text-3xl sm:text-5xl text-ink uppercase">
+            HEAVY MACHINERY & EQUIPMENT FLEET
+          </h1>
+          <p className="text-sm text-zinc-600 max-w-3xl">
+            Browse verified plant machinery available for daily and long-term project hire across Mt. Kenya infrastructure sites. Instant quotation, live availability checks, and direct WhatsApp negotiation.
+          </p>
         </div>
-        <h1 className="font-heading font-black text-3xl sm:text-5xl text-ink uppercase">
-          HEAVY MACHINERY & EQUIPMENT FLEET
-        </h1>
-        <p className="text-sm text-zinc-600 max-w-3xl">
-          Browse verified plant machinery available for daily and long-term project hire across Mt. Kenya infrastructure sites. Instant quotation, live availability checks, and direct WhatsApp negotiation.
-        </p>
+        <button
+          onClick={() => setAiAdvisorOpen(true)}
+          className="px-5 py-3 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl text-xs font-heading font-bold uppercase tracking-wider flex items-center gap-2 shadow-subtle cursor-pointer transition-all shrink-0 self-start sm:self-auto"
+        >
+          <Bot className="w-4 h-4" />
+          <span>Consult AI Plant Advisor</span>
+        </button>
       </div>
 
       {/* Filter and Search Bar */}
@@ -434,6 +446,12 @@ export default function CatalogPage() {
           prefillDates={{ startDate, endDate }}
         />
       )}
+
+      {/* AI Plant Advisor Modal */}
+      <AIMachineryAdvisorModal
+        isOpen={aiAdvisorOpen}
+        onClose={() => setAiAdvisorOpen(false)}
+      />
 
     </div>
   );

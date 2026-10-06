@@ -21,61 +21,36 @@ export default function LoginPage() {
     const trimmedPass = password.trim();
 
     try {
-      // Strict Login Routing Logic:
-      // If username is exactly 'AdminHLG' and password is 'Admin 321' -> Admin Dashboard
-      if (trimmedUser === 'AdminHLG' && trimmedPass === 'Admin 321') {
-        const adminSession = {
-          id: 'admin_hlg_master',
-          full_name: 'HLG Chief Administrator',
-          username: 'AdminHLG',
-          email: 'admin@hilosgeht.co.ke',
-          role: 'ADMIN',
-        };
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const res = await fetch(`${apiUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: trimmedUser, password: trimmedPass }),
+      });
 
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('hlg_user', JSON.stringify(adminSession));
-          localStorage.setItem('hlg_role', 'ADMIN');
-        }
+      const json = await res.json();
 
-        // Attempt backend handshake asynchronously (non-blocking)
-        try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-          await fetch(`${apiUrl}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: trimmedUser, password: trimmedPass }),
-          });
-        } catch (e) {}
-
-        router.push('/admin');
-        return;
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Authentication failed. Please verify credentials.');
       }
 
-      // For ANY other credentials -> Operator Dashboard
-      const operatorSession = {
-        id: 'op_' + Date.now(),
-        full_name: trimmedUser.includes('@') ? trimmedUser.split('@')[0] : trimmedUser || 'Field Operator',
-        username: trimmedUser,
-        email: trimmedUser.includes('@') ? trimmedUser : `${trimmedUser.toLowerCase()}@hilosgeht.co.ke`,
-        role: 'OPERATOR',
-      };
+      const userProfile = json.data;
 
+      // Store authentic database user profile in browser storage
       if (typeof window !== 'undefined') {
-        localStorage.setItem('hlg_user', JSON.stringify(operatorSession));
-        localStorage.setItem('hlg_role', 'OPERATOR');
+        localStorage.setItem('hlg_user', JSON.stringify(userProfile));
+        localStorage.setItem('hlg_role', userProfile.role);
+        if (json.token) {
+          localStorage.setItem('hlg_token', json.token);
+        }
       }
 
-      // Attempt backend handshake asynchronously (non-blocking)
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-        await fetch(`${apiUrl}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: trimmedUser, password: trimmedPass }),
-        });
-      } catch (e) {}
-
-      router.push('/staff');
+      // Direct to corresponding authenticated workspace based on database role
+      if (userProfile.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/staff');
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please verify your credentials.');
     } finally {
@@ -158,40 +133,13 @@ export default function LoginPage() {
               <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
             </button>
           </form>
-
-          {/* Quick-Fill Helpers */}
-          <div className="pt-4 border-t border-border space-y-2">
-            <div className="text-[11px] font-mono text-muted text-center">Quick-Fill Credentials:</div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setUsername('AdminHLG');
-                  setPassword('Admin 321');
-                }}
-                className="py-1.5 px-2 bg-surface hover:bg-orange-50 border border-border rounded-lg text-[11px] font-mono text-primary font-bold transition-all text-center cursor-pointer"
-              >
-                Admin (AdminHLG)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setUsername('OperatorJohn');
-                  setPassword('OperatorPass123');
-                }}
-                className="py-1.5 px-2 bg-surface hover:bg-zinc-200 border border-border rounded-lg text-[11px] font-mono text-zinc-700 font-bold transition-all text-center cursor-pointer"
-              >
-                Operator (Field Staff)
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Dispatch Hotline */}
         <div className="text-center text-xs text-muted font-mono space-y-1">
-          <div>Need password reset or operator deployment assistance?</div>
+          <div>Need password reset or operator deployment assistance? (Staff Only)</div>
           <div className="text-zinc-700">
-            Meru Dispatch: <span className="text-primary font-bold">0717 186396</span>
+            Staff Helpline: <span className="text-primary font-bold">0748866823</span>
           </div>
         </div>
       </div>

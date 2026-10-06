@@ -123,7 +123,7 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Seed Default Admin and Operator Profiles
-INSERT INTO public.profiles (id, full_name, email, phone_number, role, account_status)
+INSERT INTO public.profiles (id, full_name, email, phone_number, role, account_status, password_hash)
 VALUES
 (
     '00000000-0000-0000-0000-000000000001',
@@ -131,7 +131,8 @@ VALUES
     'hilosgehtinfo@gmail.com',
     '+254717186396',
     'ADMIN',
-    'ACTIVE'
+    'ACTIVE',
+    '1a39ea17ac8b37f6fc158e8ecfa679dcb262a9857e042bb0700b8e83235e2775' -- SHA256 of 'Admin 321'
 ),
 (
     '00000000-0000-0000-0000-000000000002',
@@ -139,10 +140,12 @@ VALUES
     'kbrian1237@gmail.com',
     '+254748866823',
     'OPERATOR',
-    'ACTIVE'
+    'ACTIVE',
+    'afeb25bf07c9ea1803c3ea001b66f8fee3dbd412291110b0776fa57ee46d4ca4' -- SHA256 of 'OperatorPass123'
 )
 ON CONFLICT (email) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     phone_number = EXCLUDED.phone_number,
     role = EXCLUDED.role,
-    account_status = EXCLUDED.account_status;
+    account_status = EXCLUDED.account_status,
+    password_hash = EXCLUDED.password_hash;

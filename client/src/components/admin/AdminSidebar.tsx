@@ -82,30 +82,29 @@ export default function AdminSidebar() {
   return (
     <aside className="w-full lg:w-64 bg-surface border-r border-border shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto p-4 space-y-5 z-30">
       
-      {/* Role Banner */}
-      <div className="px-3.5 py-3 bg-white rounded-xl border border-border shadow-subtle">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-primary font-heading font-bold text-xs uppercase tracking-wider">
-            {role === 'ADMIN' ? (
-              <>
-                <ShieldAlert className="w-4 h-4 text-primary" />
-                <span>HLG Command Hub</span>
-              </>
-            ) : (
-              <>
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span className="text-emerald-800">Operator Field Hub</span>
-              </>
-            )}
+      {/* Sticky Role & Brand Header */}
+      <div className="sticky top-0 z-20 bg-surface pt-1 pb-2 -mt-1">
+        <div className="px-3.5 py-3 bg-white rounded-xl border border-border shadow-subtle">
+          <div className="flex items-center justify-between gap-2">
+            <Link href="/" className="flex items-center gap-2 group min-w-0" title="Return to Public Website">
+              <img
+                src="/logo.png"
+                alt="Hi Los Geht Logo"
+                className="w-6 h-6 object-contain shrink-0 group-hover:scale-105 transition-transform"
+              />
+              <span className="font-heading font-black text-xs uppercase tracking-wider text-primary truncate">
+                {role === 'ADMIN' ? 'HLG Command Hub' : 'Operator Field Hub'}
+              </span>
+            </Link>
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 ${
+              role === 'ADMIN' ? 'bg-orange-100 text-orange-900 border border-orange-200' : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+            }`}>
+              {role}
+            </span>
           </div>
-          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-            role === 'ADMIN' ? 'bg-orange-100 text-orange-900' : 'bg-emerald-100 text-emerald-900'
-          }`}>
-            {role}
-          </span>
-        </div>
-        <div className="text-[11px] text-muted font-mono mt-1">
-          {role === 'ADMIN' ? '12-Module Industrial Platform' : 'Field Operations & Daily Logging'}
+          <div className="text-[11px] text-muted font-mono mt-1 pl-8">
+            {role === 'ADMIN' ? '12-Module Industrial Platform' : 'Field Operations & Daily Logging'}
+          </div>
         </div>
       </div>
 

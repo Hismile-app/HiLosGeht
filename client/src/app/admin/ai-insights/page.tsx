@@ -12,8 +12,11 @@ import {
   CheckCircle2, 
   ShieldAlert,
   ArrowRight,
-  Zap
+  Zap,
+  Bot,
+  Send
 } from 'lucide-react';
+import MarkdownRenderer from '@/components/common/MarkdownRenderer';
 
 interface Anomaly {
   type: string;
@@ -45,6 +48,11 @@ export default function AIInsightsPage() {
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [taskCreatedMsg, setTaskCreatedMsg] = useState<string | null>(null);
+
+  // Interactive AI Advisory State
+  const [customQuery, setCustomQuery] = useState('');
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [askingAI, setAskingAI] = useState(false);
 
   const fetchAIInsights = async () => {
     setLoading(true);
@@ -91,6 +99,31 @@ export default function AIInsightsPage() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleAskAI = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customQuery.trim() || askingAI) return;
+    setAskingAI(true);
+    setAiResponse(null);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const res = await fetch(`${apiUrl}/ai/consultant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: customQuery.trim() }),
+      });
+      const json = await res.json();
+      if (json?.success) {
+        setAiResponse(json?.data?.replyMarkdown);
+      } else {
+        setAiResponse('Unable to query Groq AI. Error: ' + (json?.error || 'Unknown error'));
+      }
+    } catch (err: any) {
+      setAiResponse('Connection error querying Groq AI: ' + err.message);
+    } finally {
+      setAskingAI(false);
     }
   };
 
@@ -161,17 +194,74 @@ export default function AIInsightsPage() {
               Fleet Efficiency & Cost Analysis ({data.timeWindowDays} Day Window)
             </h2>
 
-            <p className="text-sm text-zinc-700 leading-relaxed max-w-4xl whitespace-pre-wrap font-sans">
-              {data.weeklyExecutiveSummary}
-            </p>
+            <div className="bg-white/90 border border-orange-200/80 rounded-xl p-5 shadow-sm mt-3">
+              <MarkdownRenderer content={data.weeklyExecutiveSummary} />
+            </div>
 
             <div className="mt-4 pt-4 border-t border-orange-200/60 flex flex-wrap gap-4 text-xs font-mono text-muted">
               <div>Total Logs Audited: <span className="text-foreground font-bold">{data.totalLogsAnalyzed}</span></div>
               <div>•</div>
               <div>Anomalies Detected: <span className="text-rose-700 font-bold">{anomalies.length}</span></div>
               <div>•</div>
-              <div>Status: <span className="text-emerald-700 font-bold">Heuristic Engine Active</span></div>
+              <div>AI Engine: <span className="text-emerald-700 font-bold">Groq 120B Active (Markdown Compiled)</span></div>
             </div>
+          </div>
+
+          {/* Interactive Groq AI Advisory Console */}
+          <div className="bg-white border border-border rounded-2xl p-6 shadow-subtle space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-orange-100 text-primary flex items-center justify-center font-bold">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-heading font-bold text-foreground">
+                    Interactive Groq AI Fleet & Operations Consultant
+                  </h3>
+                  <p className="text-xs text-muted font-mono">
+                    Powered by Groq 120B LLM • Instant industrial guidance for Kenyan quarry & plant operations
+                  </p>
+                </div>
+              </div>
+              <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-zinc-100 text-zinc-700 border border-border">
+                Markdown UI Compiler Active
+              </span>
+            </div>
+
+            <form onSubmit={handleAskAI} className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customQuery}
+                  onChange={(e) => setCustomQuery(e.target.value)}
+                  placeholder="e.g. 'Estimate fuel consumption for 5 days of Komatsu Excavator quarrying in Nkubu' or 'Recommend maintenance steps for hydraulic overheating'..."
+                  className="flex-1 bg-surface border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary focus:bg-white transition-all font-mono"
+                />
+                <button
+                  type="submit"
+                  disabled={askingAI || !customQuery.trim()}
+                  className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-heading font-bold uppercase transition-all shadow-subtle flex items-center gap-2 shrink-0 disabled:opacity-50 cursor-pointer"
+                >
+                  <Send className={`w-3.5 h-3.5 ${askingAI ? 'animate-pulse' : ''}`} />
+                  <span>{askingAI ? 'Thinking...' : 'Consult AI'}</span>
+                </button>
+              </div>
+            </form>
+
+            {aiResponse && (
+              <div className="p-5 bg-surface border border-border rounded-xl animate-in fade-in shadow-inner">
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-border text-xs font-mono text-muted">
+                  <span className="text-primary font-bold">🤖 Groq Operations Intelligence Response:</span>
+                  <button 
+                    onClick={() => setAiResponse(null)}
+                    className="text-zinc-500 hover:text-zinc-800 text-[11px]"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <MarkdownRenderer content={aiResponse} />
+              </div>
+            )}
           </div>
 
           {taskCreatedMsg && (

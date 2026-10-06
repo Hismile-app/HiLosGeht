@@ -255,8 +255,8 @@ export default function StaffManagementPage() {
               <div>
                 <label className="block text-zinc-700 font-mono mb-1 font-semibold">Portal Role *</label>
                 <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as any)}
+                  value={staffRole}
+                  onChange={(e) => setStaffRole(e.target.value as any)}
                   className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none cursor-pointer"
                 >
                   <option value="OPERATOR">OPERATOR (Field Logging)</option>

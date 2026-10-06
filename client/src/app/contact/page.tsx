@@ -16,8 +16,10 @@ import {
   ShieldCheck,
   Calendar,
   Building,
-  ArrowRight
+  ArrowRight,
+  Bot
 } from 'lucide-react';
+import AIMachineryAdvisorModal from '@/components/common/AIMachineryAdvisorModal';
 
 // Default initial options (immediately hydrated from PostgreSQL public.system_settings & physical_assets)
 const INITIAL_SERVICES = [
@@ -57,6 +59,7 @@ export default function ContactPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedWhatsAppLink, setGeneratedWhatsAppLink] = useState('');
+  const [aiModalOpen, setAiModalOpen] = useState(false);
 
   // Fetch dynamic machinery and operational settings from database
   React.useEffect(() => {
@@ -257,6 +260,30 @@ export default function ContactPage() {
                     <div className="text-primary font-mono text-[11px] font-bold">24/7 Emergency Mobilization Active</div>
                   </div>
                 </div>
+              </div>
+
+              {/* AI Project Advisory Box */}
+              <div className="p-5 bg-gradient-to-br from-orange-50 to-amber-50/40 border border-orange-200 rounded-2xl shadow-subtle space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-primary font-heading font-bold text-xs uppercase">
+                    <Bot className="w-4 h-4 text-primary" />
+                    <span>AI Heavy Machinery Consultant</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold bg-orange-100 text-primary px-2 py-0.5 rounded-full border border-orange-200">
+                    Groq 120B AI
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-700 leading-relaxed">
+                  Unsure which plant machinery suits your soil condition, trench depth, or ballast volume in Meru? Let our AI consultant analyze your jobsite specs instantly.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setAiModalOpen(true)}
+                  className="w-full py-2.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-heading font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-subtle transition-all cursor-pointer"
+                >
+                  <Bot className="w-3.5 h-3.5" />
+                  <span>Ask AI Machinery Advisor</span>
+                </button>
               </div>
 
               {/* M-Pesa Official Paybill Card */}
@@ -481,6 +508,12 @@ export default function ContactPage() {
 
         </div>
       </section>
+
+      {/* AI Plant Advisor Modal */}
+      <AIMachineryAdvisorModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+      />
 
     </div>
   );
