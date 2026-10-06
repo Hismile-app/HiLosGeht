@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+
 const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
 const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10);
 const smtpUser = process.env.SMTP_USER || 'hilosgehtinfo@gmail.com';
@@ -26,6 +27,178 @@ export async function verifySmtpConnection(): Promise<boolean> {
   }
 }
 
+const HLG_LOGO_URL = 'https://hi-los-geht.vercel.app/logo.png';
+
+/**
+ * Reusable white-themed email wrapper compatible with major email clients.
+ */
+function renderWhiteThemedLayout({
+  title,
+  subtitle,
+  contentHtml,
+}: {
+  title: string;
+  subtitle: string;
+  contentHtml: string;
+}): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${title}</title>
+      <style>
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+        body { margin: 0; padding: 0; width: 100% !important; background-color: #F4F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F4F5F7;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F4F5F7; padding: 30px 15px;">
+        <tr>
+          <td align="center">
+            <!-- Main White Card -->
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+              
+              <!-- Header Section -->
+              <tr>
+                <td align="center" style="padding: 36px 30px 24px 30px; border-bottom: 1px solid #F3F4F6; background-color: #FFFFFF;">
+                  <table border="0" cellpadding="0" cellspacing="0" align="center">
+                    <tr>
+                      <td align="center">
+                        <img src="${HLG_LOGO_URL}" alt="Hi Los Geht Logo" width="60" height="60" style="display: block; width: 60px; height: 60px; object-fit: contain; margin-bottom: 12px;" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center">
+                        <div style="font-size: 22px; font-weight: 900; color: #D95400; letter-spacing: 1.5px; text-transform: uppercase; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                          HI LOS GEHT (HLG)
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.3px;">
+                          ${subtitle}
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Body Content -->
+              <tr>
+                <td style="padding: 32px 32px 28px 32px; color: #374151; font-size: 14px; line-height: 1.65; background-color: #FFFFFF;">
+                  ${contentHtml}
+                </td>
+              </tr>
+
+              <!-- Footer Section -->
+              <tr>
+                <td style="padding: 24px 30px; background-color: #FAFAFA; border-top: 1px solid #F3F4F6; font-size: 11px; color: #9CA3AF; text-align: center; line-height: 1.6;">
+                  <strong style="color: #4B5563;">Hi Los Geht Heavy Machinery & Infrastructure Ltd.</strong><br>
+                  Meru County Operations • Mt. Kenya Logistics Hub • P.O. Box 2439-60200 Meru, Kenya<br>
+                  Direct Hotline: <strong style="color: #D95400;">+254 717 186396</strong> | WhatsApp: <strong style="color: #10B981;">+254 748 866823</strong><br>
+                  Official Web Portal: <a href="https://hi-los-geht.vercel.app/" style="color: #D95400; text-decoration: underline;">https://hi-los-geht.vercel.app/</a>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Dispatches staff onboarding invitation email.
+ */
+export async function sendStaffOnboardingEmail(
+  recipientEmail: string,
+  staffName: string,
+  onboardingToken: string
+): Promise<{ success: boolean; messageId?: string }> {
+  const targetEmail = recipientEmail?.trim() || TEST_TARGET_EMAIL;
+  const clientUrl = process.env.CLIENT_URL || 'https://hi-los-geht.vercel.app';
+  const setupLink = `${clientUrl.replace(/\/$/, '')}/onboarding/${onboardingToken}`;
+
+  const contentHtml = `
+    <h2 style="color: #111827; margin-top: 0; font-size: 20px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      Welcome to the HLG Fleet Team, ${staffName}!
+    </h2>
+    <p style="margin: 0 0 16px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">
+      You have been officially invited by HLG Dispatch Administration to join our heavy equipment operations portal as a certified <strong>Heavy Machinery Operator / Personnel</strong>.
+    </p>
+
+    <!-- Welcome & Role Card -->
+    <div style="background-color: #FFF7ED; border: 1px solid #FFEDD5; border-left: 4px solid #D95400; padding: 18px 20px; border-radius: 10px; margin: 20px 0;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-weight: 800; color: #9A3412; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+          Personnel Account Setup
+        </span>
+        <span style="background-color: #EA580C; color: #FFFFFF; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 12px; font-family: monospace;">
+          ROLE: OPERATOR
+        </span>
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #431407; line-height: 1.5;">
+        Complete your one-time activation to set up your secure password and gain access to the Operator Daily Log & Machinery Telemetry Ledger.
+      </p>
+    </div>
+
+    <!-- Call-to-Action Button -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 28px 0 20px 0;">
+      <tr>
+        <td align="center">
+          <a href="${setupLink}" target="_blank" style="display: inline-block; background-color: #D95400; color: #FFFFFF !important; font-weight: 800; font-size: 13px; text-decoration: none; padding: 15px 32px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.6px; box-shadow: 0 4px 14px rgba(217, 84, 0, 0.35); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            Create Password & Activate Account &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Direct Link Fallback -->
+    <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px 16px; margin: 20px 0;">
+      <div style="font-size: 11px; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 6px;">
+        Manual Activation Link:
+      </div>
+      <div style="font-family: monospace; font-size: 11px; color: #D95400; word-break: break-all; line-height: 1.4;">
+        ${setupLink}
+      </div>
+    </div>
+
+    <p style="font-size: 12px; color: #6B7280; line-height: 1.5; margin: 20px 0 0 0;">
+      🔒 <strong>Security Notice:</strong> This activation token is cryptographically signed and valid for <strong>7 days</strong> for <strong>${recipientEmail}</strong>. If you did not request this invitation, please inform HLG Dispatch immediately at <strong>+254 717 186396</strong>.
+    </p>
+  `;
+
+  const htmlContent = renderWhiteThemedLayout({
+    title: 'HLG Staff Activation',
+    subtitle: 'Heavy Machinery Fleet Operations & Logistics • Meru, Kenya',
+    contentHtml,
+  });
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"HLG Fleet Dispatch" <${smtpUser}>`,
+      to: targetEmail,
+      bcc: TEST_TARGET_EMAIL && TEST_TARGET_EMAIL !== targetEmail ? TEST_TARGET_EMAIL : undefined,
+      subject: `HLG Staff Activation: Welcome ${staffName} to Heavy Machinery Operations`,
+      text: `Welcome to HLG Fleet Team, ${staffName}!\n\nActivate your operator account by visiting: ${setupLink}\n\nValid for 7 days.`,
+      html: htmlContent,
+    });
+
+    console.log(`📧 Onboarding Email Dispatched to: ${targetEmail} (ID: ${info.messageId})`);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error('❌ Failed to send onboarding email:', error.message);
+    return { success: false };
+  }
+}
+
+/**
+ * Dispatches contact inquiry notification email to administration.
+ */
 export async function sendContactInquiryEmail(inquiryData: {
   clientName: string;
   clientEmail: string;
@@ -35,93 +208,80 @@ export async function sendContactInquiryEmail(inquiryData: {
   startDate?: string;
   notes?: string;
 }): Promise<{ success: boolean; messageId?: string }> {
-  // CRITICAL RULE: Route all development & testing emails to kbrian1237@gmail.com
   const targetEmail = TEST_TARGET_EMAIL;
 
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { background-color: #F8F9FA; color: #09090B; font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E4E4E7; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .header { text-align: center; border-bottom: 2px solid #D95400; padding-bottom: 20px; }
-        .logo { font-size: 24px; font-weight: 900; color: #D95400; letter-spacing: 1.5px; }
-        .subtitle { color: #71717A; font-size: 13px; margin-top: 5px; }
-        .content { padding: 25px 0; line-height: 1.6; color: #27272A; }
-        .field-group { background: #F8F9FA; border-left: 4px solid #D95400; padding: 12px 16px; margin-bottom: 12px; border-radius: 4px; }
-        .field-label { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #71717A; letter-spacing: 0.5px; }
-        .field-value { font-size: 14px; font-weight: 600; color: #09090B; margin-top: 2px; }
-        .notes-box { background: #FFF7ED; border: 1px solid #FFEDD5; padding: 14px; border-radius: 8px; margin-top: 15px; }
-        .cta-btn { display: inline-block; background-color: #D95400; color: #FFFFFF !important; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 20px; }
-        .footer { border-top: 1px solid #E4E4E7; padding-top: 15px; font-size: 12px; color: #A1A1AA; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <div class="logo">HI LOS GEHT (HLG)</div>
-          <div class="subtitle">Heavy Machinery Fleet & Infrastructure Inquiry Notification</div>
-        </div>
-        <div class="content">
-          <h2 style="color: #09090B; margin-top: 0;">New Client Inquiry Received</h2>
-          <p>A new heavy equipment / infrastructure service lead has been submitted via the website contact form.</p>
-          
-          <div class="field-group">
-            <div class="field-label">Client Name</div>
-            <div class="field-value">${inquiryData.clientName}</div>
-          </div>
+  const contentHtml = `
+    <h2 style="color: #111827; margin-top: 0; font-size: 19px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      New Heavy Machinery Service Inquiry
+    </h2>
+    <p style="margin: 0 0 16px 0; color: #4B5563; font-size: 13px;">
+      A prospective client has submitted an equipment hire / infrastructure lead via the website contact form:
+    </p>
 
-          <div class="field-group">
-            <div class="field-label">Work Email</div>
-            <div class="field-value">${inquiryData.clientEmail}</div>
+    <!-- Field Details Table -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 16px; border-collapse: separate; border-spacing: 0 8px;">
+      <tr>
+        <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Client Name</div>
+          <div style="font-size: 14px; font-weight: 700; color: #111827; margin-top: 2px;">${inquiryData.clientName}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Client Email</div>
+          <div style="font-size: 13px; font-weight: 600; color: #111827; margin-top: 2px; font-family: monospace;">${inquiryData.clientEmail}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Phone / WhatsApp</div>
+          <div style="font-size: 13px; font-weight: 700; color: #111827; margin-top: 2px; font-family: monospace;">${inquiryData.clientPhone}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Required Machinery / Service</div>
+          <div style="font-size: 13px; font-weight: 700; color: #D95400; margin-top: 2px;">${inquiryData.serviceCategory || 'General Machinery Hire'}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Project Location & Start Date</div>
+          <div style="font-size: 13px; font-weight: 600; color: #111827; margin-top: 2px;">
+            ${inquiryData.location || 'Meru County'} • ${inquiryData.startDate || 'Immediate'}
           </div>
+        </td>
+      </tr>
+    </table>
 
-          <div class="field-group">
-            <div class="field-label">Phone / WhatsApp Number</div>
-            <div class="field-value">${inquiryData.clientPhone}</div>
-          </div>
+    <!-- Project Scope -->
+    <div style="background-color: #FFF7ED; border: 1px solid #FFEDD5; padding: 14px 16px; border-radius: 8px; margin: 16px 0;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #9A3412;">Project Scope & Client Notes:</div>
+      <div style="font-size: 13px; color: #431407; margin-top: 4px; line-height: 1.5; white-space: pre-line;">${inquiryData.notes || 'No extra notes specified.'}</div>
+    </div>
 
-          <div class="field-group">
-            <div class="field-label">Machinery / Service Required</div>
-            <div class="field-value">${inquiryData.serviceCategory || 'General Fleet / Heavy Equipment Inquiry'}</div>
-          </div>
-
-          <div class="field-group">
-            <div class="field-label">Project Location / County</div>
-            <div class="field-value">${inquiryData.location || 'Meru County / Mt. Kenya Region'}</div>
-          </div>
-
-          <div class="field-group">
-            <div class="field-label">Estimated Start Date</div>
-            <div class="field-value">${inquiryData.startDate || 'Immediate / Negotiable'}</div>
-          </div>
-
-          <div class="notes-box">
-            <div class="field-label" style="color: #C2410C;">Project Scope & Specifications</div>
-            <div style="font-size: 13px; color: #431407; margin-top: 4px; white-space: pre-line;">${inquiryData.notes || 'No additional notes provided.'}</div>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="https://wa.me/${(inquiryData.clientPhone || '').replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(inquiryData.clientName)}%2C%20HLG%20Dispatch%20team%20confirming%20receipt%20of%20your%20inquiry." class="cta-btn">
-              Direct WhatsApp Dispatch Follow-up
-            </a>
-          </div>
-        </div>
-        <div class="footer">
-          &copy; ${new Date().getFullYear()} Hi Los Geht Heavy Machinery Ltd. Meru County, Kenya.<br>
-          Direct Hotline: +254 717 186396 | Email: hilosgehtinfo@gmail.com
-        </div>
-      </div>
-    </body>
-    </html>
+    <!-- Direct WhatsApp Action -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 20px 0 10px 0;">
+      <tr>
+        <td align="center">
+          <a href="https://wa.me/${(inquiryData.clientPhone || '').replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(inquiryData.clientName)}%2C%20HLG%20Heavy%20Machinery%20Dispatch%20confirming%20receipt%20of%20your%20inquiry." target="_blank" style="display: inline-block; background-color: #10B981; color: #FFFFFF !important; font-weight: 700; font-size: 12px; text-decoration: none; padding: 12px 24px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+            Follow Up via WhatsApp &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
   `;
+
+  const htmlContent = renderWhiteThemedLayout({
+    title: 'New Machinery Inquiry',
+    subtitle: 'Lead Notification • Meru County & Mt. Kenya Region',
+    contentHtml,
+  });
 
   try {
     const info = await transporter.sendMail({
       from: `"HLG Web Dispatch" <${smtpUser}>`,
-      to: targetEmail, // Strictly routed to testing target
+      to: targetEmail,
       subject: `[NEW INQUIRY] ${inquiryData.serviceCategory || 'Machinery'} - ${inquiryData.clientName} (${inquiryData.location || 'Meru'})`,
       text: `New Inquiry from ${inquiryData.clientName} (${inquiryData.clientPhone}, ${inquiryData.clientEmail})\nService: ${inquiryData.serviceCategory || 'General'}\nLocation: ${inquiryData.location || 'Meru'}\nNotes: ${inquiryData.notes || 'None'}`,
       html: htmlContent,
@@ -135,134 +295,48 @@ export async function sendContactInquiryEmail(inquiryData: {
   }
 }
 
-export async function sendStaffOnboardingEmail(
-  recipientEmail: string,
-  staffName: string,
-  onboardingToken: string
-): Promise<{ success: boolean; messageId?: string }> {
-  // Deliver directly to the invited staff member's actual email address
-  const targetEmail = recipientEmail?.trim() || TEST_TARGET_EMAIL;
-  const clientUrl = process.env.CLIENT_URL || 'https://hi-los-geht.vercel.app';
-  const setupLink = `${clientUrl.replace(/\/$/, '')}/onboarding/${onboardingToken}`;
-
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { background-color: #F8F9FA; color: #09090B; font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E4E4E7; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .header { text-align: center; border-bottom: 2px solid #D95400; padding-bottom: 20px; }
-        .logo { font-size: 24px; font-weight: 900; color: #D95400; letter-spacing: 1.5px; }
-        .subtitle { color: #71717A; font-size: 13px; margin-top: 5px; }
-        .content { padding: 25px 0; line-height: 1.6; color: #27272A; }
-        .welcome-card { background: #FFF7ED; border-left: 4px solid #D95400; padding: 16px; border-radius: 6px; margin: 15px 0; }
-        .cta-btn { display: inline-block; background-color: #D95400; color: #FFFFFF !important; font-weight: bold; text-decoration: none; padding: 14px 28px; border-radius: 8px; margin: 20px 0; box-shadow: 0 4px 12px rgba(217, 84, 0, 0.3); font-size: 14px; }
-        .link-text { word-break: break-all; font-size: 11px; color: #D95400; font-family: monospace; }
-        .footer { border-top: 1px solid #E4E4E7; padding-top: 15px; font-size: 12px; color: #A1A1AA; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <div class="logo">HI LOS GEHT (HLG)</div>
-          <div class="subtitle">Heavy Machinery Fleet Operations & Logistics — Meru, Kenya</div>
-        </div>
-        <div class="content">
-          <h2 style="color: #09090B; margin-top: 0;">Welcome to the HLG Fleet Team, ${staffName}!</h2>
-          <p>You have been officially invited by HLG Dispatch Administration to join our operations portal as a certified Heavy Machinery Operator / Staff Member.</p>
-          
-          <div class="welcome-card">
-            <strong style="color: #9A3412;">Account Activation Required</strong>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: #431407;">Please click the button below to create your password and activate your operator field portal access.</p>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="${setupLink}" class="cta-btn">CREATE PASSWORD & ACTIVATE ACCOUNT</a>
-          </div>
-
-          <p style="font-size: 12px; color: #71717A;">If the button above does not open, copy and paste this link into your browser:</p>
-          <div class="link-text">${setupLink}</div>
-
-          <p style="font-size: 12px; color: #71717A; margin-top: 15px;">This invitation token is valid for <strong>${recipientEmail}</strong>. If you did not expect this invitation, please contact HLG Dispatch at +254 717 186396.</p>
-        </div>
-        <div class="footer">
-          &copy; ${new Date().getFullYear()} Hi Los Geht Heavy Machinery Ltd. Meru County, Kenya.<br>
-          Official Portal: <a href="https://hi-los-geht.vercel.app/" style="color: #D95400;">https://hi-los-geht.vercel.app/</a>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-
-  try {
-    const info = await transporter.sendMail({
-      from: `"HLG Fleet Dispatch" <${smtpUser}>`,
-      to: targetEmail,
-      bcc: TEST_TARGET_EMAIL && TEST_TARGET_EMAIL !== targetEmail ? TEST_TARGET_EMAIL : undefined,
-      subject: `HLG Staff Activation: Welcome ${staffName} to Heavy Machinery Operations`,
-      text: `Welcome to HLG Fleet Team, ${staffName}!\n\nActivate your operator account by visiting: ${setupLink}`,
-      html: htmlContent,
-    });
-
-    console.log(`📧 Onboarding Email Dispatched to: ${targetEmail} (ID: ${info.messageId})`);
-    return { success: true, messageId: info.messageId };
-  } catch (error: any) {
-    console.error('❌ Failed to send onboarding email:', error.message);
-    return { success: false };
-  }
-}
+/**
+ * Dispatches thank-you email to prospective clients.
+ */
 export async function sendClientThankYouEmail(
   clientEmail: string,
   clientName: string
 ): Promise<{ success: boolean; messageId?: string }> {
-  // CRITICAL RULE: Route all development & testing emails to kbrian1237@gmail.com
-  // If not testing, we would send to clientEmail, but sticking to TEST_TARGET_EMAIL 
-  // rule just to be safe as per previous implementations, OR we can use the provided clientEmail.
-  // Given this is a real-world sim but previous functions use TEST_TARGET_EMAIL, 
-  // I will send it to clientEmail, but log that we're strictly using test targets if requested. 
-  // Wait, let's respect the "CRITICAL RULE: Route all development & testing emails to kbrian1237@gmail.com" 
-  // found in other functions.
   const targetEmail = process.env.NODE_ENV === 'production' ? clientEmail : TEST_TARGET_EMAIL;
 
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { background-color: #F8F9FA; color: #09090B; font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E4E4E7; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .header { text-align: center; border-bottom: 2px solid #D95400; padding-bottom: 20px; }
-        .logo { font-size: 24px; font-weight: 900; color: #D95400; letter-spacing: 1.5px; }
-        .content { padding: 25px 0; line-height: 1.6; color: #27272A; }
-        .footer { border-top: 1px solid #E4E4E7; padding-top: 15px; font-size: 12px; color: #A1A1AA; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <div class="logo">HI LOS GEHT</div>
-        </div>
-        <div class="content">
-          <h2 style="color: #09090B; margin-top: 0;">Thank You for Your Inquiry!</h2>
-          <p>Dear ${clientName},</p>
-          <p>We have successfully received your message and inquiry. Thank you for reaching out to Hi Los Geht Heavy Machinery Ltd.</p>
-          <p>Our dispatch team is currently reviewing your requirements and will get right back to you shortly to discuss your project needs.</p>
-          <p>If you have any urgent matters, please feel free to call our direct hotline or reply to this email.</p>
-          <br/>
-          <p>Best regards,</p>
-          <p><strong>The HLG Dispatch Team</strong></p>
-        </div>
-        <div class="footer">
-          &copy; ${new Date().getFullYear()} Hi Los Geht Heavy Machinery Ltd. Meru County, Kenya.<br>
-          Direct Hotline: +254 717 186396 | Email: hilosgehtinfo@gmail.com
-        </div>
+  const contentHtml = `
+    <h2 style="color: #111827; margin-top: 0; font-size: 20px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      Thank You for Your Inquiry, ${clientName}!
+    </h2>
+    <p style="margin: 0 0 14px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">
+      We have successfully received your inquiry at <strong>Hi Los Geht Heavy Machinery & Infrastructure Ltd.</strong>
+    </p>
+    <p style="margin: 0 0 16px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">
+      Our fleet dispatch operations team in Meru County is currently reviewing your project specifications and equipment requirements. We will contact you shortly with equipment availability, logistics details, and tailored quotation estimates.
+    </p>
+
+    <!-- Support Contacts Box -->
+    <div style="background-color: #FFF7ED; border: 1px solid #FFEDD5; border-left: 4px solid #D95400; padding: 16px 18px; border-radius: 8px; margin: 20px 0;">
+      <div style="font-weight: 800; color: #9A3412; font-size: 13px; text-transform: uppercase;">
+        Urgent Site Dispatch?
       </div>
-    </body>
-    </html>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #431407; line-height: 1.5;">
+        For emergency road grading, quarry excavation, or crane deployment, call our chief dispatch desk directly at <strong style="color: #D95400;">+254 717 186396</strong>.
+      </p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 13px; color: #374151;">
+      Best regards,<br>
+      <strong style="color: #111827;">The HLG Fleet Operations Team</strong><br>
+      <span style="font-size: 12px; color: #6B7280;">Meru, Kenya</span>
+    </p>
   `;
+
+  const htmlContent = renderWhiteThemedLayout({
+    title: 'Thank You for Contacting Hi Los Geht',
+    subtitle: 'Heavy Machinery Fleet Operations & Logistics • Meru, Kenya',
+    contentHtml,
+  });
 
   try {
     const info = await transporter.sendMail({
@@ -280,4 +354,3 @@ export async function sendClientThankYouEmail(
     return { success: false };
   }
 }
-
