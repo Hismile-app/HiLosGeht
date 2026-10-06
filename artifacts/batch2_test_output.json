@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-08T16:58:47.852Z",
+  "timestamp": "2026-10-06T10:56:16.814Z",
   "batch": 2,
   "tests": [
     {
@@ -14,7 +14,7 @@
     {
       "name": "Operator Own Log Insertion",
       "status": "PASSED",
-      "logId": "84a5b6fc-9171-4a73-86db-1eeccf785861"
+      "logId": "ecc975cd-c4d2-4891-a321-5ea75495d32a"
     },
     {
       "name": "RLS Asset Mutation Block for Operator",
@@ -23,7 +23,7 @@
     {
       "name": "Admin Global RBAC Access",
       "status": "PASSED",
-      "logsVisible": "3"
+      "logsVisible": "6"
     }
   ]
 }

@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   Fuel,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import GlassCard from '@/components/common/GlassCard';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -27,30 +28,32 @@ export default function CommandOverviewPage() {
   const [aiInsights, setAiInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-        const [ovRes, aiRes] = await Promise.all([
-          fetch(`${apiUrl}/analytics/overview`).catch(() => null),
-          fetch(`${apiUrl}/analytics/ai-insights`).catch(() => null)
-        ]);
+  const fetchDashboard = async () => {
+    setLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const [ovRes, aiRes] = await Promise.all([
+        fetch(`${apiUrl}/analytics/overview`).catch(() => null),
+        fetch(`${apiUrl}/analytics/ai-insights`).catch(() => null)
+      ]);
 
-        if (ovRes && ovRes.ok) {
-          const ovData = await ovRes.json();
-          setOverviewData(ovData?.data || null);
-        }
-
-        if (aiRes && aiRes.ok) {
-          const aData = await aiRes.json();
-          setAiInsights(aData?.data || null);
-        }
-      } catch (err) {
-        console.error('Error loading overview:', err);
-      } finally {
-        setLoading(false);
+      if (ovRes && ovRes.ok) {
+        const ovData = await ovRes.json();
+        setOverviewData(ovData?.data || null);
       }
+
+      if (aiRes && aiRes.ok) {
+        const aData = await aiRes.json();
+        setAiInsights(aData?.data || null);
+      }
+    } catch (err) {
+      console.error('Error loading overview:', err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchDashboard();
   }, []);
 
@@ -83,6 +86,15 @@ export default function CommandOverviewPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <NeonButton 
+            size="sm" 
+            variant="outline" 
+            onClick={fetchDashboard} 
+            disabled={loading}
+            icon={<RefreshCw className={`w-3.5 h-3.5 text-muted ${loading ? 'animate-spin' : ''}`} />}
+          >
+            {loading ? 'Syncing...' : 'Sync Live'}
+          </NeonButton>
           <Link href="/admin/inbox">
             <NeonButton size="sm" variant="secondary" icon={<Inbox className="w-4 h-4 text-primary" />}>
               Inquiries ({pendingInquiries})

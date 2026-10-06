@@ -44,7 +44,7 @@ export default function OperatorDailyLogPage() {
   const loadInquiries = async () => {
     setInquiriesLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/inquiries`);
       if (res.ok) {
         const data = await res.json();
@@ -59,7 +59,7 @@ export default function OperatorDailyLogPage() {
   useEffect(() => {
     async function loadFleet() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
         const res = await fetch(`${apiUrl}/equipment`);
         if (res.ok) {
           const data = await res.json();
@@ -117,7 +117,7 @@ export default function OperatorDailyLogPage() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

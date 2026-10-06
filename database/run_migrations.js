@@ -25,7 +25,9 @@ async function runMigrations() {
       '01_schema_and_extensions.sql',
       '02_rbac_and_jwt_claims.sql',
       '03_seed_fleet_and_users.sql',
-      '04_telematics_and_maintenance_triggers.sql'
+      '04_telematics_and_maintenance_triggers.sql',
+      '05_system_settings_and_constraints.sql',
+      '06_dynamic_categories_and_regions.sql'
     ];
 
     for (const file of migrationFiles) {

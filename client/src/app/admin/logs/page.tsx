@@ -13,7 +13,8 @@ import {
   CheckCircle, 
   AlertTriangle,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Download
 } from 'lucide-react';
 import GlassCard from '@/components/common/GlassCard';
 
@@ -45,7 +46,7 @@ export default function DailyLogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/logs`);
       const data = await res.json();
       if (data?.success) {
@@ -56,6 +57,31 @@ export default function DailyLogsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    if (!logs.length) return;
+    const headers = ['Date Submitted', 'Equipment', 'Model', 'Category', 'Operator', 'Start Meter', 'End Meter', 'Hours Worked', 'Fuel (L)', 'Work Description'];
+    const rows = logs.map(l => [
+      `"${new Date(l.date_submitted).toLocaleDateString()}"`,
+      `"${l.equipment_name || ''}"`,
+      `"${l.equipment_model || ''}"`,
+      `"${l.category || ''}"`,
+      `"${l.operator_name || ''}"`,
+      l.start_meter,
+      l.end_meter,
+      l.hours_worked,
+      l.fuel_amount,
+      `"${(l.yield_description || '').replace(/"/g, '""')}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `HLG_Daily_Shift_Logs_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   useEffect(() => {
@@ -95,14 +121,23 @@ export default function DailyLogsPage() {
           </p>
         </div>
 
-        <button 
-          onClick={fetchLogs}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-surface text-foreground rounded-lg border border-border text-sm font-semibold transition-all shadow-subtle cursor-pointer"
-        >
-          <RefreshCw className={`w-4 h-4 text-primary ${loading ? 'animate-spin' : ''}`} />
-          Refresh Ledger
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-surface text-foreground rounded-lg border border-border text-sm font-semibold transition-all shadow-subtle cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-primary" />
+            Export CSV
+          </button>
+          <button 
+            onClick={fetchLogs}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-sm font-semibold transition-all shadow-subtle cursor-pointer"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Ledger
+          </button>
+        </div>
       </div>
 
       {/* Summary Stat Badges */}

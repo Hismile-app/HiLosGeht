@@ -73,7 +73,7 @@ export default function WhatsAppBookingModal({
 
     try {
       // 1. Submit inquiry to API to register hold in DB
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/inquiries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

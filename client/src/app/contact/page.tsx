@@ -19,20 +19,15 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-const SERVICE_OPTIONS = [
-  'Komatsu Hydraulic Excavator (PC-200)',
-  'Komatsu Crawler Dozer (D155AX-8)',
-  'JCB Backhoe Loader (3DXPLUS)',
-  'Shantui Wheel Loader (SL60W-2)',
-  'Shantui Motor Grader (SG18-3)',
-  'Isuzu 15T Heavy Tipper Haulage (FVZ 34)',
+// Default initial options (immediately hydrated from PostgreSQL public.system_settings & physical_assets)
+const INITIAL_SERVICES = [
   'Quarry & Foundation Mass Excavation',
   'Road Grading & Sub-base Compaction',
   'Agricultural Water Dam Construction',
   'General Heavy Fleet Inquiry & Consultation'
 ];
 
-const LOCATION_OPTIONS = [
+const INITIAL_LOCATIONS = [
   'Meru Town & Municipal Hub',
   'Nkubu & Imenti South',
   'Maua & Nyambene / Igembe',
@@ -44,12 +39,16 @@ const LOCATION_OPTIONS = [
 ];
 
 export default function ContactPage() {
+  const [serviceOptions, setServiceOptions] = useState<string[]>(INITIAL_SERVICES);
+  const [locationOptions, setLocationOptions] = useState<string[]>(INITIAL_LOCATIONS);
+  const [dispatchPhone, setDispatchPhone] = useState('254717186396');
+
   const [formData, setFormData] = useState({
     clientName: '',
     clientEmail: '',
     clientPhone: '',
-    serviceCategory: SERVICE_OPTIONS[0],
-    location: LOCATION_OPTIONS[0],
+    serviceCategory: INITIAL_SERVICES[0],
+    location: INITIAL_LOCATIONS[0],
     startDate: '',
     notes: '',
   });
@@ -59,9 +58,60 @@ export default function ContactPage() {
   const [error, setError] = useState<string | null>(null);
   const [generatedWhatsAppLink, setGeneratedWhatsAppLink] = useState('');
 
+  // Fetch dynamic machinery and operational settings from database
+  React.useEffect(() => {
+    async function loadDynamicOptions() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        const [eqRes, setRes] = await Promise.all([
+          fetch(`${apiUrl}/equipment`).catch(() => null),
+          fetch(`${apiUrl}/settings`).catch(() => null)
+        ]);
+
+        let fleetOptions: string[] = [];
+        if (eqRes && eqRes.ok) {
+          const eqJson = await eqRes.json();
+          if (Array.isArray(eqJson?.data)) {
+            fleetOptions = eqJson.data.map((m: any) => `${m.name} (${m.model || m.category})`);
+          }
+        }
+
+        if (setRes && setRes.ok) {
+          const setJson = await setRes.json();
+          const data = setJson?.data;
+          if (data) {
+            // Dynamic service categories
+            const servicesFromDb = Array.isArray(data.service_categories) ? data.service_categories : [];
+            const combinedServices = [...fleetOptions, ...servicesFromDb];
+            if (combinedServices.length > 0) {
+              setServiceOptions(combinedServices);
+              setFormData(prev => ({ ...prev, serviceCategory: combinedServices[0] }));
+            }
+
+            // Dynamic regions
+            if (Array.isArray(data.operational_regions) && data.operational_regions.length > 0) {
+              setLocationOptions(data.operational_regions);
+              setFormData(prev => ({ ...prev, location: data.operational_regions[0] }));
+            }
+
+            // Dynamic hotline
+            if (data.dispatch_hotlines?.primary_phone) {
+              const cleanPhone = data.dispatch_hotlines.primary_phone.replace(/[^0-9]/g, '');
+              const intlPhone = cleanPhone.startsWith('0') ? `254${cleanPhone.slice(1)}` : cleanPhone;
+              setDispatchPhone(intlPhone);
+            }
+          }
+        } else if (fleetOptions.length > 0) {
+          setServiceOptions([...fleetOptions, ...INITIAL_SERVICES]);
+        }
+      } catch (err) {}
+    }
+    loadDynamicOptions();
+  }, []);
+
   const buildWhatsAppText = () => {
     const text = `Hello HLG Dispatch Team,\n\n*New Heavy Machinery Inquiry:*\n- *Client:* ${formData.clientName || 'Valued Client'}\n- *Phone:* ${formData.clientPhone || 'Not provided'}\n- *Email:* ${formData.clientEmail || 'Not provided'}\n- *Equipment / Service:* ${formData.serviceCategory}\n- *Location:* ${formData.location}\n- *Target Start Date:* ${formData.startDate || 'Immediate'}\n- *Project Scope:* ${formData.notes || 'Inquiry from website contact form'}\n\nPlease advise on machinery availability and quotation.`;
-    return `https://wa.me/254717186396?text=${encodeURIComponent(text)}`;
+    return `https://wa.me/${dispatchPhone}?text=${encodeURIComponent(text)}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,7 +123,7 @@ export default function ContactPage() {
     setGeneratedWhatsAppLink(waLink);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/inquiries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -284,8 +334,8 @@ export default function ContactPage() {
                           clientName: '',
                           clientEmail: '',
                           clientPhone: '',
-                          serviceCategory: SERVICE_OPTIONS[0],
-                          location: LOCATION_OPTIONS[0],
+                          serviceCategory: serviceOptions[0] || INITIAL_SERVICES[0],
+                          location: locationOptions[0] || INITIAL_LOCATIONS[0],
                           startDate: '',
                           notes: '',
                         });
@@ -355,7 +405,7 @@ export default function ContactPage() {
                         onChange={(e) => setFormData({ ...formData, serviceCategory: e.target.value })}
                         className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-xl text-sm text-ink focus:outline-none focus:border-primary focus:bg-white transition-all cursor-pointer font-sans"
                       >
-                        {SERVICE_OPTIONS.map((opt, i) => (
+                        {serviceOptions.map((opt, i) => (
                           <option key={i} value={opt}>{opt}</option>
                         ))}
                       </select>
@@ -373,7 +423,7 @@ export default function ContactPage() {
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-xl text-sm text-ink focus:outline-none focus:border-primary focus:bg-white transition-all cursor-pointer font-sans"
                       >
-                        {LOCATION_OPTIONS.map((loc, i) => (
+                        {locationOptions.map((loc, i) => (
                           <option key={i} value={loc}>{loc}</option>
                         ))}
                       </select>

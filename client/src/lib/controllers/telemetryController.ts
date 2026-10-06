@@ -95,3 +95,32 @@ export async function updateStaffTaskStatus(req: NextRequest, { params }: { para
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function createStaffTask(req: NextRequest, { params }: { params: any }) {
+  try {
+    const { equipmentId, taskType, priority, description, assignedTo } = await req.json();
+
+    if (!equipmentId || !description) {
+      return NextResponse.json({ success: false, error: 'Equipment ID and description are required' }, { status: 400 });
+    }
+
+    const result = await db.query(`
+      INSERT INTO public.staff_tasks (
+        equipment_id, task_type, priority, status, description, assigned_to
+      ) VALUES (
+        $1, $2, $3, 'PENDING', $4, $5
+      )
+      RETURNING *;
+    `, [equipmentId, taskType || 'SERVICE', priority || 'NORMAL', description, assignedTo || null]);
+
+    return NextResponse.json({
+      success: true,
+      data: result.rows[0],
+      message: 'Staff task / work order created successfully',
+    }, { status: 201 });
+  } catch (error: any) {
+    console.error('Error creating staff task:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+

@@ -44,11 +44,12 @@ export default function AIInsightsPage() {
   const [data, setData] = useState<AIInsightData | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
+  const [taskCreatedMsg, setTaskCreatedMsg] = useState<string | null>(null);
 
   const fetchAIInsights = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/analytics/ai-insights?days=${days}`);
       const json = await res.json();
       if (json?.success) {
@@ -58,6 +59,38 @@ export default function AIInsightsPage() {
       console.error('Failed to fetch AI Insights:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateWorkOrder = async (anom: any) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      // Fetch equipment list to map machine name to ID
+      const eqRes = await fetch(`${apiUrl}/equipment`);
+      const eqJson = await eqRes.json();
+      const match = (eqJson?.data || []).find((e: any) => 
+        e.name.toLowerCase().includes((anom.equipment || '').toLowerCase()) || 
+        e.model.toLowerCase().includes((anom.equipment || '').toLowerCase())
+      );
+      const equipmentId = match?.id || '11111111-1111-1111-1111-111111111101';
+
+      const taskRes = await fetch(`${apiUrl}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          equipmentId,
+          taskType: 'ANOMALY_INSPECTION',
+          priority: anom.severity || 'HIGH',
+          description: `Mechanical Inspection Order: ${anom.detail || anom.issue}. Action: ${anom.recommendation}`,
+        }),
+      });
+
+      if (taskRes.ok) {
+        setTaskCreatedMsg(`Work order dispatched to field mechanics for ${anom.equipment}!`);
+        setTimeout(() => setTaskCreatedMsg(null), 4000);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -141,6 +174,13 @@ export default function AIInsightsPage() {
             </div>
           </div>
 
+          {taskCreatedMsg && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs font-mono font-bold flex items-center gap-2 shadow-subtle animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{taskCreatedMsg}</span>
+            </div>
+          )}
+
           {/* Anomalies Detected Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -190,6 +230,15 @@ export default function AIInsightsPage() {
                       <div className="text-xs text-zinc-600 flex items-start gap-1.5 pt-1">
                         <ArrowRight className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                         <span><strong className="text-foreground">Recommended Action:</strong> {anom.recommendation}</span>
+                      </div>
+
+                      <div className="pt-2 border-t border-border/60 flex justify-end">
+                        <button
+                          onClick={() => handleCreateWorkOrder(anom)}
+                          className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-subtle cursor-pointer transition-colors"
+                        >
+                          <Zap className="w-3.5 h-3.5" /> Dispatch Work Order
+                        </button>
                       </div>
                     </div>
                   );

@@ -1,16 +1,29 @@
 import { Pool, QueryResult, QueryResultRow } from 'pg';
 
-const pool = new Pool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: parseInt(process.env.DB_PORT || '5433', 10),
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'HiLosGeht123',
-  database: process.env.DB_NAME || 'postgres',
-  max: parseInt(process.env.DB_POOL_MAX || '50', 10),
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-});
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
+const isRemote = Boolean(connectionString && !connectionString.includes('127.0.0.1') && !connectionString.includes('localhost'));
+
+const pool = new Pool(
+  connectionString
+    ? {
+        connectionString,
+        max: parseInt(process.env.DB_POOL_MAX || '20', 10),
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+        ssl: isRemote || process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      }
+    : {
+        host: process.env.DB_HOST || '127.0.0.1',
+        port: parseInt(process.env.DB_PORT || '5433', 10),
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'HiLosGeht123',
+        database: process.env.DB_NAME || 'postgres',
+        max: parseInt(process.env.DB_POOL_MAX || '50', 10),
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+        ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      }
+);
 
 pool.on('error', (err) => {
   console.error('⚠️ Unexpected error on idle PostgreSQL client:', err);

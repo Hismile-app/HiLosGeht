@@ -37,7 +37,7 @@ export default function DocumentVerificationPage() {
   const fetchAudits = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/analytics/documents`);
       const json = await res.json();
       if (json?.success) {
@@ -47,6 +47,20 @@ export default function DocumentVerificationPage() {
       console.error('Failed to fetch document audit gallery:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (logId: string, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      await fetch(`${apiUrl}/logs/${logId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verificationStatus: status }),
+      });
+      fetchAudits();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -206,11 +220,24 @@ export default function DocumentVerificationPage() {
                 </div>
               </div>
 
-              {/* Approval Stamp */}
+              {/* Approval Stamp & Actions */}
               <div className="p-3 bg-surface border-t border-border flex items-center justify-between text-xs">
-                <span className="text-emerald-700 font-mono font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Verified Valid
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleUpdateStatus(item.log_id, 'APPROVED')}
+                    className="px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 rounded font-mono font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Mark voucher as verified and audited"
+                  >
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Approve
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus(item.log_id, 'REJECTED')}
+                    className="px-2 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-300 rounded font-mono font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Flag blurry or incorrect voucher"
+                  >
+                    <XCircle className="w-3 h-3 text-rose-600" /> Reject
+                  </button>
+                </div>
                 <span className="text-muted font-mono text-[10px]">Log #{item.log_id.slice(0, 8)}</span>
               </div>
             </div>

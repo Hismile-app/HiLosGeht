@@ -65,23 +65,32 @@ export async function getCommandOverview(req: NextRequest, { params }: { params:
 
 export async function getFinancialAndFuelAnalytics(req: NextRequest, { params }: { params: any }) {
   try {
+    // 1. Fetch dynamic fuel price from system settings
+    let fuelPrice = 180.0;
+    try {
+      const settingsRes = await db.query(`SELECT value FROM public.system_settings WHERE key = 'operational_parameters';`);
+      if (settingsRes.rows.length > 0 && settingsRes.rows[0].value?.fuel_price_kes_per_liter) {
+        fuelPrice = parseFloat(settingsRes.rows[0].value.fuel_price_kes_per_liter) || 180.0;
+      }
+    } catch (e) {}
+
     const logsRes = await db.query(`
       SELECT 
         a.name as machine_name,
         a.category,
         COALESCE(SUM(l.end_meter - l.start_meter), 0) as total_hours,
         COALESCE(SUM(l.fuel_amount), 0) as total_fuel_litres,
-        COALESCE(SUM(l.fuel_amount * 180.0), 0) as total_fuel_cost_kes,
+        COALESCE(SUM(l.fuel_amount * $1), 0) as total_fuel_cost_kes,
         CASE 
           WHEN SUM(l.end_meter - l.start_meter) > 0 
-          THEN (SUM(l.fuel_amount * 180.0) / SUM(l.end_meter - l.start_meter))
+          THEN (SUM(l.fuel_amount * $1) / SUM(l.end_meter - l.start_meter))
           ELSE 0 
         END as cost_per_hour_kes
       FROM public.physical_assets a
       LEFT JOIN public.staff_logs l ON a.id = l.equipment_id
       GROUP BY a.id, a.name, a.category
       ORDER BY total_fuel_cost_kes DESC;
-    `);
+    `, [fuelPrice]);
 
     // Time-series data for Recharts area/bar charts (past 7 days)
     const timelineRes = await db.query(`
@@ -89,16 +98,17 @@ export async function getFinancialAndFuelAnalytics(req: NextRequest, { params }:
         to_char(date_trunc('day', date_submitted), 'Dy DD') as day_label,
         COALESCE(SUM(end_meter - start_meter), 0) as hours_yield,
         COALESCE(SUM(fuel_amount), 0) as fuel_litres,
-        COALESCE(SUM(fuel_amount * 180.0), 0) as fuel_cost_kes
+        COALESCE(SUM(fuel_amount * $1), 0) as fuel_cost_kes
       FROM public.staff_logs
       WHERE date_submitted >= (NOW() - INTERVAL '7 days')
       GROUP BY date_trunc('day', date_submitted)
       ORDER BY date_trunc('day', date_submitted) ASC;
-    `);
+    `, [fuelPrice]);
 
     return NextResponse.json({
       success: true,
       data: {
+        fuelPriceKES: fuelPrice,
         machineBreakdown: logsRes.rows,
         dailyTimeline: timelineRes.rows,
       },
@@ -130,7 +140,7 @@ export async function getClientCRM(req: NextRequest, { params }: { params: any }
         preferred_contact,
         count(*) as total_bookings,
         count(*) FILTER (WHERE status = 'CONFIRMED') as confirmed_bookings,
-        COALESCE(SUM(daily_rate), 0) as estimated_spend_kes,
+        COALESCE(SUM(COALESCE(total_amount, daily_rate * 3)), 0) as estimated_spend_kes,
         MAX(created_at) as last_booking_date
       FROM public.reservations
       GROUP BY client_email, client_name, client_phone, preferred_contact

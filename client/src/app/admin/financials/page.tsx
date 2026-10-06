@@ -39,7 +39,7 @@ export default function FinancialsPage() {
   const fetchFinancials = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/analytics/financials`);
       const json = await res.json();
       if (json?.success) {
@@ -50,6 +50,27 @@ export default function FinancialsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    if (!machineBreakdown.length) return;
+    const headers = ['Machine Asset', 'Category', 'Total Operating Hours', 'Diesel Litres', 'Fuel Cost (KES)', 'Cost Per Hour (KES)'];
+    const rows = machineBreakdown.map(m => [
+      `"${m.machine_name}"`,
+      `"${m.category}"`,
+      m.total_hours,
+      m.total_fuel_litres,
+      m.total_fuel_cost_kes,
+      parseFloat(m.cost_per_hour_kes as any || 0).toFixed(2)
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `HLG_Financial_Machinery_Breakdown_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   useEffect(() => {
@@ -79,18 +100,27 @@ export default function FinancialsPage() {
             Financial Ledger & Fuel Analytics
           </h1>
           <p className="text-sm text-muted mt-0.5">
-            Real-time tracking of diesel consumption, operational burn rates @ KES 180/L, and equipment revenue yield.
+            Real-time tracking of diesel consumption, operational burn rates @ KES {data && (data as any).fuelPriceKES ? (data as any).fuelPriceKES : 180}/L, and equipment revenue yield.
           </p>
         </div>
 
-        <button 
-          onClick={fetchFinancials}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-surface text-foreground rounded-lg border border-border text-sm font-semibold transition-all shadow-subtle cursor-pointer"
-        >
-          <RefreshCw className={`w-4 h-4 text-primary ${loading ? 'animate-spin' : ''}`} />
-          Refresh Financials
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-surface text-foreground rounded-lg border border-border text-sm font-semibold transition-all shadow-subtle cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-primary" />
+            Export CSV
+          </button>
+          <button 
+            onClick={fetchFinancials}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-sm font-semibold transition-all shadow-subtle cursor-pointer"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Financials
+          </button>
+        </div>
       </div>
 
       {/* Metric Cards */}

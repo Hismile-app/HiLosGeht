@@ -36,7 +36,7 @@ export default function FleetManagementPage() {
 
   const fetchFleet = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/equipment`);
       if (res.ok) {
         const data = await res.json();
@@ -53,7 +53,7 @@ export default function FleetManagementPage() {
 
   const handleStatusToggle = async (machine: Equipment, nextStatus: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       await fetch(`${apiUrl}/equipment/${machine.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -68,7 +68,7 @@ export default function FleetManagementPage() {
   const handleSaveEquipment = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const method = editingItem ? 'PUT' : 'POST';
       const endpoint = editingItem ? `${apiUrl}/equipment/${editingItem.id}` : `${apiUrl}/equipment`;
 
@@ -97,7 +97,7 @@ export default function FleetManagementPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this equipment profile?')) return;
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       await fetch(`${apiUrl}/equipment/${id}`, { method: 'DELETE' });
       fetchFleet();
     } catch (e) {

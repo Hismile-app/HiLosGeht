@@ -137,3 +137,37 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function updateLogVerification(req: NextRequest, { params }: { params: any }) {
+  try {
+    const { id } = await params;
+    const { verificationStatus, auditNotes } = await req.json();
+
+    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(verificationStatus)) {
+      return NextResponse.json({ success: false, error: 'Invalid verification status' }, { status: 400 });
+    }
+
+    const result = await db.query(`
+      UPDATE public.staff_logs
+      SET 
+        verification_status = $1,
+        audit_notes = COALESCE($2, audit_notes)
+      WHERE id = $3
+      RETURNING *;
+    `, [verificationStatus, auditNotes || null, id]);
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ success: false, error: 'Staff log not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: result.rows[0],
+      message: `Log voucher status updated to ${verificationStatus}`,
+    }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error updating log verification:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+

@@ -36,7 +36,7 @@ export default function StaffOnboardingPage() {
     async function verifyToken() {
       if (!token) return;
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
         const res = await fetch(`${apiUrl}/auth/verify-token/${token}`);
         const data = await res.json();
 
@@ -73,7 +73,7 @@ export default function StaffOnboardingPage() {
     setError(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/auth/onboard/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
