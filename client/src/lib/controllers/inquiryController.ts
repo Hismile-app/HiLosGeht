@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/server-config/db';
-import { sendContactInquiryEmail, sendClientThankYouEmail } from '@/lib/services/nodemailer';
+import { 
+  sendContactInquiryEmail, 
+  sendClientThankYouEmail, 
+  sendOrderChangeNotificationEmail 
+} from '@/lib/services/nodemailer';
 import { 
   getInquiriesRegistry, 
   saveInquiryRecord, 
   updateInquiryStatusRecord, 
+  updateInquiryDetailsRecord,
+  resolveEquipmentForInquiry,
   InquiryRecord 
 } from '@/lib/services/inquiriesRegistry';
 
@@ -31,29 +37,17 @@ export async function createInquiry(req: NextRequest, { params }: { params: any 
       }, { status: 400 });
     }
 
-    let assetId = equipmentId;
-    let dailyRate = 0;
-    let assetName = serviceCategory || 'General Heavy Machinery Inquiry';
+    // Resolve machine from equipmentId or text
+    const matchedFleet = resolveEquipmentForInquiry({
+      equipment_id: equipmentId,
+      physical_asset_id: equipmentId,
+      service_category: serviceCategory,
+      notes,
+    });
 
-    // If equipmentId provided, fetch its rate & name
-    try {
-      if (assetId) {
-        const assetRes = await db.query('SELECT id, daily_rate, name FROM public.physical_assets WHERE id = $1;', [assetId]);
-        if (assetRes.rows.length > 0) {
-          dailyRate = parseFloat(assetRes.rows[0].daily_rate) || 0;
-          assetName = assetRes.rows[0].name;
-        }
-      } else {
-        const fallbackRes = await db.query('SELECT id, daily_rate, name FROM public.physical_assets LIMIT 1;');
-        if (fallbackRes.rows.length > 0) {
-          assetId = fallbackRes.rows[0].id;
-          dailyRate = parseFloat(fallbackRes.rows[0].daily_rate) || 0;
-          assetName = fallbackRes.rows[0].name;
-        }
-      }
-    } catch (e: any) {
-      console.warn('Physical asset lookup fallback:', e.message);
-    }
+    const assetId = equipmentId || matchedFleet.id;
+    const dailyRate = matchedFleet.dailyRate || 45000;
+    const assetName = matchedFleet.name;
 
     const start = startDate ? new Date(startDate) : new Date();
     const end = endDate ? new Date(endDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -67,7 +61,8 @@ export async function createInquiry(req: NextRequest, { params }: { params: any 
     const inqId = 'inq_' + Date.now();
     let savedRecord: InquiryRecord = {
       id: inqId,
-      physical_asset_id: assetId || undefined,
+      physical_asset_id: assetId,
+      equipment_id: assetId,
       customer_id: customerId || null,
       client_name: clientName,
       client_email: clientEmail,
@@ -76,15 +71,16 @@ export async function createInquiry(req: NextRequest, { params }: { params: any 
       location: location || 'Meru County / Mt. Kenya Region',
       start_date: start.toISOString(),
       end_date: end.toISOString(),
-      daily_rate: dailyRate || 45000,
-      total_amount: (dailyRate || 45000) * 3,
+      daily_rate: dailyRate,
+      total_amount: dailyRate * 3,
       status: 'PENDING',
       preferred_contact: preferredContact || 'WHATSAPP',
       notes: compiledNotes || notes || '',
       created_at: new Date().toISOString(),
       equipment_name: assetName,
-      equipment_category: serviceCategory || 'Heavy Equipment',
-      equipment_model: assetName,
+      equipment_category: matchedFleet.category,
+      equipment_model: matchedFleet.model,
+      equipment_image: matchedFleet.image,
     };
 
     // 1. Always persist to Vercel Blob / memory store first so it's NEVER lost
@@ -176,6 +172,7 @@ export async function getAllInquiries(req: NextRequest, { params }: { params: an
         SELECT 
           r.id,
           r.physical_asset_id,
+          r.physical_asset_id as equipment_id,
           r.customer_id,
           r.client_name,
           r.client_email,
@@ -220,15 +217,21 @@ export async function getAllInquiries(req: NextRequest, { params }: { params: an
     for (const reg of registryInquiries) {
       mergedMap.set(reg.id, {
         ...reg,
+        equipment_id: reg.equipment_id || reg.physical_asset_id,
+        physical_asset_id: reg.physical_asset_id || reg.equipment_id,
         start_date: reg.start_date,
         end_date: reg.end_date,
       });
     }
 
-    // Add DB records (if not already mapped by client_email + start_date)
+    // Add DB records
     for (const dbItem of dbInquiries) {
       if (!mergedMap.has(dbItem.id)) {
-        mergedMap.set(dbItem.id, dbItem);
+        mergedMap.set(dbItem.id, {
+          ...dbItem,
+          equipment_id: dbItem.equipment_id || dbItem.physical_asset_id,
+          physical_asset_id: dbItem.physical_asset_id || dbItem.equipment_id,
+        });
       }
     }
 
@@ -255,12 +258,21 @@ export async function getAllInquiries(req: NextRequest, { params }: { params: an
 
 export async function updateInquiryStatus(req: NextRequest, { params }: { params: any }) {
   try {
-    const { id } = await params;
+    const resolvedParams = await Promise.resolve(params || {});
+    const pathParts = req.nextUrl.pathname.split('/').filter(Boolean);
+    const idFromPath = pathParts[pathParts.length - 2];
+    const id = resolvedParams.id || idFromPath;
+
     const { status } = await req.json();
 
     if (!['PENDING', 'CONFIRMED', 'CANCELLED'].includes(status)) {
       return NextResponse.json({ success: false, error: 'Invalid reservation status' }, { status: 400 });
     }
+
+    // Retrieve previous record before update
+    const currentRegistry = await getInquiriesRegistry();
+    const existing = currentRegistry.find((i) => i.id === id);
+    const previousStatus = existing?.status || 'PENDING';
 
     // 1. Update in Vercel Blob persistent store
     const updatedRecord = await updateInquiryStatusRecord(id, status);
@@ -276,6 +288,40 @@ export async function updateInquiryStatus(req: NextRequest, { params }: { params
       console.warn('Database status update warning:', dbErr.message);
     }
 
+    // 3. Dispatch Client Notification Email
+    const targetRecord = updatedRecord || existing;
+    if (targetRecord && targetRecord.client_email) {
+      const clientEmail = targetRecord.client_email;
+      const clientName = targetRecord.client_name || 'Valued Client';
+      const equipmentName = targetRecord.equipment_name || targetRecord.service_category || 'Heavy Machinery';
+
+      let changeDesc = `Booking status updated from ${previousStatus} to ${status}.`;
+      if (status === 'CONFIRMED') {
+        changeDesc = `Your heavy machinery reservation for ${equipmentName} has been officially approved and locked on the HLG Master Fleet Calendar.`;
+      } else if (status === 'CANCELLED') {
+        changeDesc = `Your reservation hold for ${equipmentName} has been released and marked as cancelled.`;
+      }
+
+      sendOrderChangeNotificationEmail({
+        clientName,
+        clientEmail,
+        clientPhone: targetRecord.client_phone,
+        orderId: targetRecord.id,
+        equipmentName,
+        equipmentModel: targetRecord.equipment_model,
+        equipmentCategory: targetRecord.equipment_category,
+        startDate: targetRecord.start_date,
+        endDate: targetRecord.end_date,
+        status,
+        previousStatus,
+        changeType: 'STATUS_CHANGE',
+        changeDescription: changeDesc,
+        location: targetRecord.location,
+        dailyRate: targetRecord.daily_rate,
+        notes: targetRecord.notes || undefined,
+      }).catch((emailErr) => console.error('Failed to dispatch status change email:', emailErr));
+    }
+
     return NextResponse.json({
       success: true,
       data: updatedRecord || { id, status },
@@ -283,5 +329,130 @@ export async function updateInquiryStatus(req: NextRequest, { params }: { params
   } catch (error: any) {
     console.error('Error updating inquiry status:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function updateInquiry(req: NextRequest, { params }: { params: any }) {
+  try {
+    const resolvedParams = await Promise.resolve(params || {});
+    const pathParts = req.nextUrl.pathname.split('/').filter(Boolean);
+    const idFromPath = pathParts[pathParts.length - 1];
+    const id = resolvedParams.id || idFromPath;
+
+    const body = await req.json();
+    const { startDate, endDate, equipmentId, status, notes } = body;
+
+    // Retrieve previous state before update
+    const currentRegistry = await getInquiriesRegistry();
+    const existing = currentRegistry.find((i) => i.id === id);
+    const prevStartDate = existing?.start_date;
+    const prevEndDate = existing?.end_date;
+    const prevStatus = existing?.status || 'PENDING';
+    const prevEquipmentName = existing?.equipment_name;
+
+    const result = await updateInquiryDetailsRecord(id, {
+      ...(startDate ? { start_date: new Date(startDate).toISOString() } : {}),
+      ...(endDate ? { end_date: new Date(endDate).toISOString() } : {}),
+      ...(equipmentId ? { physical_asset_id: equipmentId, equipment_id: equipmentId } : {}),
+      ...(status ? { status } : {}),
+      ...(notes !== undefined ? { notes } : {}),
+    });
+
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        error: result.error,
+        conflict: result.conflict,
+      }, { status: 409 });
+    }
+
+    // Also update in PostgreSQL
+    try {
+      if (startDate && endDate) {
+        await db.query(`
+          UPDATE public.reservations
+          SET booking_period = tstzrange($1::timestamptz, $2::timestamptz, '[)'),
+              ${status ? 'status = $3,' : ''}
+              ${equipmentId ? 'physical_asset_id = $4,' : ''}
+              updated_at = NOW()
+          WHERE id = $5;
+        `, [
+          new Date(startDate).toISOString(),
+          new Date(endDate).toISOString(),
+          ...(status ? [status] : []),
+          ...(equipmentId ? [equipmentId] : []),
+          id
+        ]);
+      }
+    } catch (dbErr: any) {
+      console.warn('Postgres reservation update fallback:', dbErr.message);
+    }
+
+    // Dispatch Client Notification Email for Date Change / Extension / Machinery Update
+    const updated = result.data;
+    if (updated && updated.client_email) {
+      const clientEmail = updated.client_email;
+      const clientName = updated.client_name || 'Valued Client';
+      const equipmentName = updated.equipment_name || updated.service_category || 'Heavy Machinery';
+
+      const isDateExtended = Boolean(
+        prevEndDate && updated.end_date &&
+        new Date(updated.end_date).getTime() > new Date(prevEndDate).getTime()
+      );
+      const isDateChanged = Boolean(
+        (prevStartDate && updated.start_date && new Date(updated.start_date).getTime() !== new Date(prevStartDate).getTime()) ||
+        (prevEndDate && updated.end_date && new Date(updated.end_date).getTime() !== new Date(prevEndDate).getTime())
+      );
+      const isStatusChanged = Boolean(prevStatus && updated.status && prevStatus !== updated.status);
+      const isEquipmentChanged = Boolean(prevEquipmentName && updated.equipment_name && prevEquipmentName !== updated.equipment_name);
+
+      let changeType: 'STATUS_CHANGE' | 'DATE_CHANGE' | 'EXTENSION' | 'EQUIPMENT_REALLOCATION' | 'ORDER_MODIFIED' = 'ORDER_MODIFIED';
+      let changeDesc = 'Project schedule and machinery allocation updated by HLG Fleet Dispatch.';
+
+      if (isDateExtended) {
+        changeType = 'EXTENSION';
+        const daysAdded = Math.round((new Date(updated.end_date).getTime() - new Date(prevEndDate!).getTime()) / (1000 * 60 * 60 * 24));
+        changeDesc = `Project duration extended by ${daysAdded} day${daysAdded > 1 ? 's' : ''}. New scheduled completion date: ${new Date(updated.end_date).toLocaleDateString('en-GB')}.`;
+      } else if (isDateChanged) {
+        changeType = 'DATE_CHANGE';
+        changeDesc = `Project schedule dates updated. Start: ${new Date(updated.start_date).toLocaleDateString('en-GB')}, End: ${new Date(updated.end_date).toLocaleDateString('en-GB')}.`;
+      } else if (isStatusChanged) {
+        changeType = 'STATUS_CHANGE';
+        changeDesc = `Booking status updated from ${prevStatus} to ${updated.status}.`;
+      } else if (isEquipmentChanged) {
+        changeType = 'EQUIPMENT_REALLOCATION';
+        changeDesc = `Assigned equipment reallocated to ${updated.equipment_name}.`;
+      }
+
+      sendOrderChangeNotificationEmail({
+        clientName,
+        clientEmail,
+        clientPhone: updated.client_phone,
+        orderId: updated.id,
+        equipmentName,
+        equipmentModel: updated.equipment_model,
+        equipmentCategory: updated.equipment_category,
+        startDate: updated.start_date,
+        endDate: updated.end_date,
+        previousStartDate: isDateChanged ? prevStartDate : undefined,
+        previousEndDate: isDateChanged ? prevEndDate : undefined,
+        status: updated.status,
+        previousStatus: prevStatus,
+        changeType,
+        changeDescription: changeDesc,
+        location: updated.location,
+        dailyRate: updated.daily_rate,
+        notes: updated.notes || undefined,
+      }).catch((emailErr) => console.error('Failed to dispatch order change email:', emailErr));
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      message: 'Project schedule and machinery allocation updated successfully.',
+    }, { status: 200 });
+  } catch (err: any) {
+    console.error('Error updating inquiry details:', err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

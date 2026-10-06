@@ -302,7 +302,7 @@ export async function sendClientThankYouEmail(
   clientEmail: string,
   clientName: string
 ): Promise<{ success: boolean; messageId?: string }> {
-  const targetEmail = process.env.NODE_ENV === 'production' ? clientEmail : TEST_TARGET_EMAIL;
+  const targetEmail = clientEmail?.trim() || TEST_TARGET_EMAIL;
 
   const contentHtml = `
     <h2 style="color: #111827; margin-top: 0; font-size: 20px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
@@ -342,6 +342,7 @@ export async function sendClientThankYouEmail(
     const info = await transporter.sendMail({
       from: `"HLG Dispatch" <${smtpUser}>`,
       to: targetEmail,
+      bcc: (TEST_TARGET_EMAIL && TEST_TARGET_EMAIL.toLowerCase() !== targetEmail.toLowerCase()) ? TEST_TARGET_EMAIL : undefined,
       subject: `Thank you for contacting Hi Los Geht, ${clientName}!`,
       text: `Dear ${clientName},\n\nThank you for reaching out to Hi Los Geht! We have received your inquiry and our dispatch team will get back to you shortly.\n\nBest regards,\nThe HLG Dispatch Team`,
       html: htmlContent,
@@ -354,3 +355,299 @@ export async function sendClientThankYouEmail(
     return { success: false };
   }
 }
+
+/**
+ * Parameters for order change / schedule update notification email.
+ */
+export interface OrderChangeNotificationParams {
+  clientName: string;
+  clientEmail: string;
+  clientPhone?: string;
+  orderId?: string;
+  equipmentName?: string;
+  equipmentModel?: string;
+  equipmentCategory?: string;
+  startDate?: string;
+  endDate?: string;
+  previousStartDate?: string;
+  previousEndDate?: string;
+  status: string;
+  previousStatus?: string;
+  changeType: 'STATUS_CHANGE' | 'DATE_CHANGE' | 'EXTENSION' | 'EQUIPMENT_REALLOCATION' | 'ORDER_MODIFIED';
+  changeDescription?: string;
+  location?: string;
+  dailyRate?: number;
+  totalAmount?: number;
+  notes?: string;
+}
+
+function formatEmailDate(dateStr?: string): string {
+  if (!dateStr) return 'TBD';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function getStatusBadgeHtml(status: string): string {
+  const norm = status?.toUpperCase();
+  if (norm === 'CONFIRMED') {
+    return `<span style="display: inline-block; background-color: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">✓ CONFIRMED & DISPATCH READY</span>`;
+  }
+  if (norm === 'CANCELLED') {
+    return `<span style="display: inline-block; background-color: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">✕ CANCELLED / RELEASED</span>`;
+  }
+  return `<span style="display: inline-block; background-color: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">⏳ PENDING DISPATCH REVIEW</span>`;
+}
+
+/**
+ * Dispatches an automated email to the client whenever ANY date change,
+ * status change, extension, machinery reallocation, or order edit occurs.
+ */
+export async function sendOrderChangeNotificationEmail(
+  params: OrderChangeNotificationParams
+): Promise<{ success: boolean; messageId?: string }> {
+  const targetEmail = params.clientEmail?.trim() || TEST_TARGET_EMAIL;
+  const isDateChanged = Boolean(
+    (params.previousStartDate && params.startDate && params.previousStartDate !== params.startDate) ||
+    (params.previousEndDate && params.endDate && params.previousEndDate !== params.endDate)
+  );
+
+  let dynamicHeadline = 'Order Details Updated';
+  if (params.changeType === 'EXTENSION') {
+    dynamicHeadline = 'Project Duration Extended';
+  } else if (params.changeType === 'DATE_CHANGE') {
+    dynamicHeadline = 'Project Schedule Rescheduled';
+  } else if (params.changeType === 'STATUS_CHANGE') {
+    if (params.status === 'CONFIRMED') {
+      dynamicHeadline = 'Booking Approved & Confirmed';
+    } else if (params.status === 'CANCELLED') {
+      dynamicHeadline = 'Booking Hold Released / Cancelled';
+    } else {
+      dynamicHeadline = 'Booking Status Updated';
+    }
+  } else if (params.changeType === 'EQUIPMENT_REALLOCATION') {
+    dynamicHeadline = 'Machinery Allocation Updated';
+  }
+
+  // Determine Subject
+  let subject = `[Order Update] Booking Ref #${params.orderId || 'HLG'} - ${params.equipmentName || 'Heavy Equipment'}`;
+  if (params.changeType === 'STATUS_CHANGE' && params.status === 'CONFIRMED') {
+    subject = `✅ Booking Confirmed: ${params.equipmentName || 'Heavy Equipment'} - HLG Fleet Dispatch`;
+  } else if (params.changeType === 'STATUS_CHANGE' && params.status === 'CANCELLED') {
+    subject = `⚠️ Booking Notice: Hold Released / Cancelled - ${params.equipmentName || 'Heavy Equipment'}`;
+  } else if (params.changeType === 'EXTENSION') {
+    subject = `📅 Project Extended: ${params.equipmentName || 'Heavy Equipment'} to ${formatEmailDate(params.endDate)}`;
+  } else if (params.changeType === 'DATE_CHANGE') {
+    subject = `📅 Schedule Updated: ${params.equipmentName || 'Heavy Equipment'} (${formatEmailDate(params.startDate)} - ${formatEmailDate(params.endDate)})`;
+  } else if (params.changeType === 'EQUIPMENT_REALLOCATION') {
+    subject = `🚜 Equipment Allocation Updated: ${params.equipmentName || 'Heavy Equipment'}`;
+  }
+
+  // Calculate added days if extended
+  let extensionSnippet = '';
+  if (params.changeType === 'EXTENSION' && params.previousEndDate && params.endDate) {
+    const prevTime = new Date(params.previousEndDate).getTime();
+    const newTime = new Date(params.endDate).getTime();
+    const diffDays = Math.round((newTime - prevTime) / (1000 * 60 * 60 * 24));
+    if (diffDays > 0) {
+      extensionSnippet = `
+        <div style="margin-top: 10px; display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 6px; font-family: monospace;">
+          +${diffDays} ADDITIONAL DAY${diffDays > 1 ? 'S' : ''} ADDED TO DISPATCH TIMELINE
+        </div>
+      `;
+    }
+  }
+
+  // WhatsApp support link
+  const waNumber = '254748866823';
+  const waText = encodeURIComponent(
+    `Hello HLG Dispatch, regarding Order #${params.orderId || ''} (${params.equipmentName || 'Equipment'}).`
+  );
+  const waLink = `https://wa.me/${waNumber}?text=${waText}`;
+
+  const contentHtml = `
+    <!-- Top Status Banner -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #F3F4F6; padding-bottom: 14px;">
+      <div>
+        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px;">Booking Reference:</span>
+        <div style="font-family: monospace; font-size: 14px; font-weight: 800; color: #111827; margin-top: 2px;">
+          #${params.orderId || 'HLG-BOOKING'}
+        </div>
+      </div>
+      <div>
+        ${getStatusBadgeHtml(params.status)}
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin-top: 0; font-size: 20px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      ${dynamicHeadline}
+    </h2>
+
+    <p style="margin: 0 0 16px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">
+      Dear <strong>${params.clientName}</strong>,<br>
+      This is an official schedule & dispatch notification from <strong>Hi Los Geht Heavy Machinery & Infrastructure Ltd.</strong> regarding your equipment booking.
+    </p>
+
+    <!-- Change Summary Alert Box -->
+    <div style="background-color: #FFF7ED; border: 1px solid #FFEDD5; border-left: 4px solid #D95400; padding: 16px 18px; border-radius: 8px; margin: 18px 0;">
+      <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #9A3412; letter-spacing: 0.5px; margin-bottom: 4px;">
+        Modification Summary:
+      </div>
+      <div style="font-size: 14px; font-weight: 600; color: #431407; line-height: 1.5;">
+        ${params.changeDescription || 'Your order schedule or status has been updated by HLG Dispatch Administration.'}
+      </div>
+    </div>
+
+    <!-- Date Comparison Box (if dates were changed or extended) -->
+    ${isDateChanged ? `
+      <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px 20px; margin: 18px 0;">
+        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px;">
+          📅 Schedule Timeline Modification
+        </div>
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td style="padding-bottom: 8px; width: 45%; vertical-align: top;">
+              <span style="font-size: 10px; color: #94A3B8; text-transform: uppercase; font-weight: 700;">Previous Dates:</span><br>
+              <span style="font-size: 13px; color: #64748B; text-decoration: line-through; font-family: monospace;">
+                ${formatEmailDate(params.previousStartDate)} → ${formatEmailDate(params.previousEndDate)}
+              </span>
+            </td>
+            <td style="padding-bottom: 8px; width: 10%; text-align: center; vertical-align: middle; color: #D95400; font-size: 18px; font-weight: bold;">
+              &rarr;
+            </td>
+            <td style="padding-bottom: 8px; width: 45%; vertical-align: top;">
+              <span style="font-size: 10px; color: #059669; text-transform: uppercase; font-weight: 700;">New Confirmed Schedule:</span><br>
+              <span style="font-size: 14px; color: #065F46; font-weight: 800; font-family: monospace;">
+                ${formatEmailDate(params.startDate)} → ${formatEmailDate(params.endDate)}
+              </span>
+            </td>
+          </tr>
+        </table>
+        ${extensionSnippet}
+      </div>
+    ` : ''}
+
+    <!-- Detailed Order Parameters Table -->
+    <div style="margin: 22px 0;">
+      <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; margin-bottom: 8px;">
+        Machinery & Deployment Specifications:
+      </div>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: separate; border-spacing: 0 6px;">
+        <tr>
+          <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px; width: 35%;">
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Assigned Machinery</div>
+          </td>
+          <td style="padding: 10px 14px; background-color: #F9FAFB; border-radius: 6px;">
+            <strong style="color: #111827; font-size: 13px;">${params.equipmentName || 'Heavy Equipment'}</strong>
+            ${params.equipmentModel ? `<span style="color: #6B7280; font-size: 11px; margin-left: 6px; font-family: monospace;">(${params.equipmentModel})</span>` : ''}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Active Project Schedule</div>
+          </td>
+          <td style="padding: 10px 14px; background-color: #F9FAFB; border-radius: 6px;">
+            <span style="color: #065F46; font-weight: 700; font-size: 13px; font-family: monospace;">
+              ${formatEmailDate(params.startDate)} → ${formatEmailDate(params.endDate)}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Project Site Location</div>
+          </td>
+          <td style="padding: 10px 14px; background-color: #F9FAFB; border-radius: 6px;">
+            <span style="color: #374151; font-size: 13px; font-weight: 600;">
+              ${params.location || 'Meru County / Mt. Kenya Region'}
+            </span>
+          </td>
+        </tr>
+        ${params.dailyRate ? `
+          <tr>
+            <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+              <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Daily Hire Rate</div>
+            </td>
+            <td style="padding: 10px 14px; background-color: #F9FAFB; border-radius: 6px;">
+              <span style="color: #111827; font-weight: 700; font-size: 13px; font-family: monospace;">
+                KES ${params.dailyRate.toLocaleString()} / day
+              </span>
+            </td>
+          </tr>
+        ` : ''}
+        ${params.notes ? `
+          <tr>
+            <td style="padding: 10px 14px; background-color: #F9FAFB; border-left: 3px solid #D95400; border-radius: 6px;">
+              <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Dispatch Notes</div>
+            </td>
+            <td style="padding: 10px 14px; background-color: #F9FAFB; border-radius: 6px;">
+              <span style="color: #4B5563; font-size: 12px; line-height: 1.4;">
+                ${params.notes}
+              </span>
+            </td>
+          </tr>
+        ` : ''}
+      </table>
+    </div>
+
+    <!-- Exclusive Deployment Assurance -->
+    <div style="background-color: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 8px; padding: 12px 16px; margin: 20px 0;">
+      <div style="font-size: 12px; color: #166534; font-weight: 600; line-height: 1.5;">
+        🔒 <strong>Exclusive Machine Allocation:</strong> HLG guarantees that during confirmed project dates, your assigned heavy machinery is dedicated solely to your site without double-booking or shared assignment.
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 26px 0 16px 0;">
+      <tr>
+        <td align="center">
+          <a href="${waLink}" target="_blank" style="display: inline-block; background-color: #10B981; color: #FFFFFF !important; font-weight: 800; font-size: 12px; text-decoration: none; padding: 13px 26px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-right: 10px;">
+            💬 Chat Dispatch on WhatsApp &rarr;
+          </a>
+          <a href="tel:+254717186396" style="display: inline-block; background-color: #D95400; color: #FFFFFF !important; font-weight: 800; font-size: 12px; text-decoration: none; padding: 13px 26px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(217, 84, 0, 0.3); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            📞 Call Desk: +254 717 186396
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 24px 0 0 0; font-size: 13px; color: #4B5563; line-height: 1.5;">
+      If you have questions regarding site access, low-bed transport logistics, fuel provisions, or wish to adjust your project dates, please reach out to our dispatch officers immediately.<br><br>
+      Warm regards,<br>
+      <strong style="color: #111827;">HLG Fleet Operations & Logistics Desk</strong><br>
+      <span style="font-size: 12px; color: #6B7280;">Hi Los Geht Heavy Machinery & Infrastructure Ltd. • Meru, Kenya</span>
+    </p>
+  `;
+
+  const htmlContent = renderWhiteThemedLayout({
+    title: dynamicHeadline,
+    subtitle: 'Heavy Machinery Fleet Operations & Logistics • Meru, Kenya',
+    contentHtml,
+  });
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"HLG Fleet Dispatch" <${smtpUser}>`,
+      to: targetEmail,
+      bcc: (TEST_TARGET_EMAIL && TEST_TARGET_EMAIL.toLowerCase() !== targetEmail.toLowerCase()) ? TEST_TARGET_EMAIL : undefined,
+      subject,
+      text: `${dynamicHeadline}\n\nClient: ${params.clientName}\nBooking Ref: #${params.orderId || 'HLG'}\nStatus: ${params.status}\nMachinery: ${params.equipmentName}\nDates: ${params.startDate} to ${params.endDate}\n${params.changeDescription || ''}\n\nDirect Hotline: +254 717 186396`,
+      html: htmlContent,
+    });
+
+    console.log(`📧 Order Change Email Dispatched to: ${targetEmail} (ID: ${info.messageId})`);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error('❌ Failed to send order change email:', error.message);
+    return { success: false };
+  }
+}
+
