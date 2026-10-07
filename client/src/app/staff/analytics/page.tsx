@@ -277,6 +277,24 @@ export default function StaffAnalyticsPage() {
 
   const currentOperator = data?.operatorProfile;
 
+  const directSpeechAssessment = useMemo(() => {
+    let text = data?.aiInsights?.assessmentMarkdown || '';
+    if (!text) {
+      return `**${currentOperator?.full_name || 'Operator'}**, you have logged **${summary.totalHours} engine hours** across **${summary.totalShifts} site shifts**. Your average diesel burn rate of **${summary.avgFuelBurnRate} L/hr** reflects steady throttle management. Continue attaching sharp meter gauge photos to ensure rapid shift voucher sign-off.`;
+    }
+    const opName = currentOperator?.full_name || '';
+    if (opName) {
+      text = text
+        .replace(new RegExp(`Operator ${opName} completed`, 'gi'), `You completed`)
+        .replace(new RegExp(`${opName} completed`, 'gi'), `You completed`)
+        .replace(new RegExp(`Operator ${opName} has`, 'gi'), `You have`)
+        .replace(new RegExp(`${opName} has`, 'gi'), `You have`)
+        .replace(new RegExp(`Operator ${opName} shows`, 'gi'), `You show`)
+        .replace(new RegExp(`${opName} shows`, 'gi'), `You show`);
+    }
+    return text;
+  }, [data?.aiInsights?.assessmentMarkdown, currentOperator?.full_name, summary]);
+
   return (
     <div className="space-y-6 pb-16 max-w-7xl mx-auto">
       {/* ======================================================== */}
@@ -424,10 +442,7 @@ export default function StaffAnalyticsPage() {
             <div
               className="prose prose-invert prose-xs max-w-none text-zinc-200"
               dangerouslySetInnerHTML={{
-                __html: marked.parse(
-                  data?.aiInsights?.assessmentMarkdown ||
-                    `**${currentOperator?.full_name}**, you have logged **${summary.totalHours} engine hours** across **${summary.totalShifts} site shifts**. Your average diesel burn rate of **${summary.avgFuelBurnRate} L/hr** reflects steady throttle management. Continue attaching sharp meter gauge photos to ensure rapid shift voucher sign-off.`
-                ),
+                __html: marked.parse(directSpeechAssessment),
               }}
             />
           )}

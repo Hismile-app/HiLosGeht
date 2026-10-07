@@ -418,50 +418,71 @@ export async function generateOperatorAIInsights(
   // If operator is new and has not submitted any shifts yet
   if (!summary || summary.totalShifts === 0) {
     return {
-      assessmentMarkdown: `Welcome to the Hi Los Geht Heavy Machinery Fleet Portal, **${operatorName}**! You are actively registered as a certified heavy equipment operator. As you complete site shifts, submit your daily start and end meter photos along with any fuel vouchers at [/staff](/staff) to activate your live telematics graphs and fuel burn analytics.`,
+      assessmentMarkdown: `Welcome to your personal telematics portal, **${operatorName}**! You don't have any logged shifts yet. Once you complete a shift and submit your start/end meter readings and photos at [/staff](/staff), I will analyze your fuel burn rate, engine hours, and field efficiency right here.`,
       burnRateRating: 'OPTIMAL',
       tips: [
-        'Always photograph both Start and End hour meters in clear daylight before commencing and finishing operations.',
-        'Record exact fuel added alongside clear photos of the pump or bowser receipt to guarantee 100% supervisor approval.',
-        'Engage low idle whenever waiting for haul trucks to optimize machine fuel efficiency on site.'
+        'Photograph both your start and end hour meter gauges in good lighting before commencing and finishing operations.',
+        'Snap a clear photo of your fuel receipt or bowser voucher so dispatch approves your shift immediately.',
+        'Keep your machine on low idle whenever waiting for haul trucks to optimize diesel yield.'
       ]
     };
   }
 
   const prompt = `You are the Lead Heavy Plant Equipment Operations Coach for Hi Los Geht in Meru, Kenya.
-Analyze the following personal telematics data for Operator: ${operatorName}.
 
-Data Summary:
-- Total Engine Hours: ${summary?.totalHours || 0} hrs across ${summary?.totalShifts || 0} logged shifts
-- Total Fuel Recorded: ${summary?.totalFuelLitres || 0} L
-- Average Burn Rate: ${summary?.avgFuelBurnRate || 0} L/hr
-- Verified Logs: ${summary?.approvedShifts || 0} approved, ${summary?.pendingShifts || 0} pending
-- Machinery: ${(machineBreakdown || []).map((m: any) => `${m.machine_name} (${m.total_hours} hrs, ${m.avg_burn_rate} L/hr)`).join(', ')}
+CRITICAL MANDATORY INSTRUCTION - DIRECT SECOND-PERSON SPEECH ONLY:
+You are speaking DIRECTLY to the operator (${operatorName}) in second-person ("you", "your", "you've").
+DO NOT talk in the third person. NEVER say "Operator ${operatorName} completed a shift..." or "The operator shows reliable timing...". That sounds like you are reporting to an admin or manager!
+Instead, talk straight to the operator as their supportive, expert master operator coach face-to-face:
+"Great work on your shift, ${operatorName}! You clocked 2.5 hours with consistent engine usage..." or "You have logged..." or "Your fuel economy is..."
+
+Data Summary of THEIR Shifts:
+- Operator Name: ${operatorName}
+- Total Engine Hours You Logged: ${summary?.totalHours || 0} hrs across ${summary?.totalShifts || 0} shifts
+- Total Diesel Fuel You Recorded: ${summary?.totalFuelLitres || 0} L
+- Your Average Diesel Burn Rate: ${summary?.avgFuelBurnRate || 0} L/hr
+- Verified Logs: ${summary?.approvedShifts || 0} approved, ${summary?.pendingShifts || 0} pending review
+- Machinery You Operated: ${(machineBreakdown || []).map((m: any) => `${m.machine_name} (${m.total_hours} hrs, ${m.avg_burn_rate} L/hr)`).join(', ')}
 
 Please provide:
-1. A brief 2-3 sentence personalized operational appraisal highlighting their shift consistency and efficiency.
-2. 3 concrete, high-impact field tips specifically for ${operatorName} (e.g., fuel management, hydraulic pump care, hour meter photo verification compliance).
+1. "assessment": 2-3 sentences of direct coaching feedback addressed straight to the operator using "you" and "your", highlighting their field consistency, engine hours, and fuel economy on their machinery.
+2. "burnRateRating": One of "OPTIMAL" | "EFFICIENT" | "MODERATE" | "HIGH"
+3. "tips": Exactly 3 direct, practical field coaching tips addressing the operator directly ("you should", "remember to", "keep your") regarding fuel management, hydraulic pump care, and taking clear meter gauge photos for quick voucher sign-off.
 
 Format the output strictly as JSON with keys:
-"assessment": string (markdown text),
+"assessment": string (markdown text in direct second-person speech to the operator),
 "burnRateRating": "OPTIMAL" | "EFFICIENT" | "MODERATE" | "HIGH",
-"tips": array of 3 strings (bullet tip text)`;
+"tips": array of 3 strings (each written in direct second-person speech addressing "you")`;
 
   try {
     const raw = await callGroqChat([
-      { role: 'system', content: 'You are an industrial telematics engine for heavy machinery operators. Respond with valid JSON only.' },
+      { 
+        role: 'system', 
+        content: 'You are an industrial telematics mentor speaking DIRECTLY to the heavy machinery operator in second-person ("you", "your"). NEVER talk about the operator in third-person or address management. Respond with valid JSON only.' 
+      },
       { role: 'user', content: prompt }
     ], 800);
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
+      let assessmentText = parsed.assessment || '';
+      
+      // Safety filter: If AI still generated 3rd person like "Operator X completed", rewrite to direct speech
+      if (assessmentText.toLowerCase().startsWith('operator ') || assessmentText.toLowerCase().includes(`${operatorName.toLowerCase()} completed`)) {
+        assessmentText = assessmentText
+          .replace(new RegExp(`Operator ${operatorName} completed`, 'gi'), `You completed`)
+          .replace(new RegExp(`${operatorName} completed`, 'gi'), `You completed`)
+          .replace(new RegExp(`Operator ${operatorName} has`, 'gi'), `You have`)
+          .replace(new RegExp(`${operatorName} has`, 'gi'), `You have`);
+      }
+
       return {
-        assessmentMarkdown: parsed.assessment || `${operatorName} has demonstrated solid operational discipline with ${summary?.totalHours || 0} hours clocked across ${summary?.totalShifts || 0} shifts.`,
+        assessmentMarkdown: assessmentText || `**${operatorName}**, you have demonstrated solid operational discipline with **${summary?.totalHours || 0} engine hours** clocked across your shifts. Your throttle control kept your burn rate optimal!`,
         burnRateRating: parsed.burnRateRating || ((summary?.avgFuelBurnRate || 0) < 15 ? 'OPTIMAL' : 'MODERATE'),
         tips: Array.isArray(parsed.tips) && parsed.tips.length > 0 ? parsed.tips : [
-          'Capture gauge photos in good natural lighting to speed up voucher verification.',
-          'Limit auxiliary engine idling to under 5 minutes during truck loading pauses.',
+          'Capture gauge photos in good natural lighting so dispatch verifies your vouchers immediately.',
+          'Limit auxiliary engine idling to under 5 minutes during truck loading pauses to save diesel.',
           'Maintain steady throttle in Eco-mode during standard trenching to maximize diesel yield.'
         ]
       };
@@ -477,12 +498,12 @@ Format the output strictly as JSON with keys:
     (summary?.avgFuelBurnRate || 0) <= 28 ? 'MODERATE' : 'HIGH';
 
   return {
-    assessmentMarkdown: `**${operatorName}**, you have logged **${summary?.totalHours || 0} verified engine hours** across **${summary?.totalShifts || 0} site shifts**. Your average diesel burn rate of **${summary?.avgFuelBurnRate || 0} L/hr** reflects steady throttle management on your assigned equipment. Continue attaching clear start and end meter gauge photos to ensure immediate voucher sign-off.`,
+    assessmentMarkdown: `**${operatorName}**, you have clocked **${summary?.totalHours || 0} engine hours** across **${summary?.totalShifts || 0} logged shifts**. Your diesel burn rate of **${summary?.avgFuelBurnRate || 0} L/hr** reflects steady throttle control on your machine. Keep capturing sharp start and end hour meter photos so dispatch can quickly approve your shift vouchers!`,
     burnRateRating: burnRating,
     tips: [
-      'Ensure hour meter gauge photos capture both the analog/digital dial and the machine serial plaque when possible.',
-      'Throttle down to low idle when waiting on tipper trucks to prevent unmetered diesel loss.',
-      'Conduct hydraulic pre-shift walkaround checks on Meru rocky soils to prevent hose stress.'
+      'Take clear, well-lit photos of your hour meter gauges at shift start and end so your vouchers are approved without delay.',
+      'Throttle down to low idle when waiting on haul tippers to reduce unnecessary diesel consumption on site.',
+      'Conduct hydraulic walkaround checks and allow 2-3 minutes of idle warm-up before working rocky Meru soils.'
     ]
   };
 }
@@ -528,8 +549,8 @@ ${(operatorLogs || []).slice(0, 6).map((l: any) =>
 ============================================================
 
 ROLE & OBJECTIVES:
-1. Speak respectfully and encouragingly directly to ${operatorName} as their experienced Master Operator & Telematics Coach.
-2. Analyze THEIR personal logs, fuel burn, engine meter intervals, and shift habits.
+1. Speak directly to ${operatorName} using second-person pronouns ("you", "your", "you've"). NEVER refer to ${operatorName} in third person (never say "Operator ${operatorName} has..." or "The operator should...").
+2. Analyze THEIR personal logs, fuel burn, engine meter intervals, and shift habits with encouraging, expert mentorship.
 3. Advise on heavy machinery operating efficiency in Meru terrains (e.g. volcanic bedrock trenching, quarry excavation, hydraulic breaker duty cycle, grader link-roads).
 4. Provide practical guidance on avoiding engine idling, smooth cycle times, diesel conservation, and ensuring daily hour meter photos are sharp and clear for 100% supervisor approval.
 5. Format answers in clean, readable GitHub Flavored Markdown with bullet points, short metrics, and field tips.`;
@@ -539,7 +560,7 @@ ROLE & OBJECTIVES:
       { role: 'user', content: userQuery }
     ], 1000);
 
-    return response || `Operator ${operatorName}, your shift records show active engine hours logged. Focus on smooth hydraulic cycle times and capturing clear hour meter gauge photos upon shift completion.`;
+    return response || `**${operatorName}**, you have logged steady engine hours on your shifts. Focus on smooth hydraulic cycle times and capturing clear hour meter gauge photos so dispatch can sign off your vouchers quickly.`;
   }
 
   const isAdminContext =
