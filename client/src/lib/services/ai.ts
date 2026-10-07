@@ -415,6 +415,19 @@ export async function generateOperatorAIInsights(
   burnRateRating: 'OPTIMAL' | 'EFFICIENT' | 'MODERATE' | 'HIGH';
   tips: string[];
 }> {
+  // If operator is new and has not submitted any shifts yet
+  if (!summary || summary.totalShifts === 0) {
+    return {
+      assessmentMarkdown: `Welcome to the Hi Los Geht Heavy Machinery Fleet Portal, **${operatorName}**! You are actively registered as a certified heavy equipment operator. As you complete site shifts, submit your daily start and end meter photos along with any fuel vouchers at [/staff](/staff) to activate your live telematics graphs and fuel burn analytics.`,
+      burnRateRating: 'OPTIMAL',
+      tips: [
+        'Always photograph both Start and End hour meters in clear daylight before commencing and finishing operations.',
+        'Record exact fuel added alongside clear photos of the pump or bowser receipt to guarantee 100% supervisor approval.',
+        'Engage low idle whenever waiting for haul trucks to optimize machine fuel efficiency on site.'
+      ]
+    };
+  }
+
   const prompt = `You are the Lead Heavy Plant Equipment Operations Coach for Hi Los Geht in Meru, Kenya.
 Analyze the following personal telematics data for Operator: ${operatorName}.
 

@@ -52,13 +52,21 @@ export function StaffYieldTimelineAreaChart({ data }: TimelineChartProps) {
     return <div className="w-full h-72 bg-surface/50 rounded-xl animate-pulse" />;
   }
 
-  const chartData = data && data.length > 0 ? data : [
-    { date: '2026-10-01', day_label: 'Oct 01', hours_yield: 6.5, fuel_litres: 45.0, log_count: 1 },
-    { date: '2026-10-02', day_label: 'Oct 02', hours_yield: 7.0, fuel_litres: 50.0, log_count: 1 },
-    { date: '2026-10-03', day_label: 'Oct 03', hours_yield: 8.5, fuel_litres: 60.0, log_count: 1 },
-    { date: '2026-10-04', day_label: 'Oct 04', hours_yield: 6.0, fuel_litres: 42.0, log_count: 1 },
-    { date: '2026-10-05', day_label: 'Oct 05', hours_yield: 7.5, fuel_litres: 55.4, log_count: 1 },
-  ];
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full h-72 sm:h-80 flex flex-col items-center justify-center border border-dashed border-border rounded-xl bg-surface/30 p-6 text-center">
+        <div className="w-10 h-10 rounded-xl bg-orange-50 text-primary flex items-center justify-center mb-2.5">
+          <span className="font-mono text-xs font-bold">0h</span>
+        </div>
+        <p className="text-xs font-bold text-ink">No Operating Shifts Logged Yet</p>
+        <p className="text-[11px] text-muted max-w-xs mt-1">
+          Your daily engine hours and diesel burn rate will plot on this chart once you submit your first shift log.
+        </p>
+      </div>
+    );
+  }
+
+  const chartData = data;
 
   return (
     <div className="w-full h-72 sm:h-80">
@@ -105,8 +113,8 @@ export function StaffYieldTimelineAreaChart({ data }: TimelineChartProps) {
             }}
           />
           <Legend 
-            verticalAlign="top"
-            height={36}
+            verticalAlign="top" 
+            height={36} 
             wrapperStyle={{ fontSize: '12px', paddingBottom: '8px' }} 
           />
           <Area
@@ -145,10 +153,18 @@ export function StaffEquipmentHoursBarChart({ data }: MachineBarChartProps) {
     return <div className="w-full h-72 bg-surface/50 rounded-xl animate-pulse" />;
   }
 
-  const chartData = data && data.length > 0 ? data.slice(0, 5) : [
-    { machine_name: 'Komatsu PC-200 Heavy Excavator', total_hours: 24.5, total_fuel_litres: 180, avg_burn_rate: 7.3 },
-    { machine_name: 'Isuzu FVZ 34 Heavy Tipper', total_hours: 14.0, total_fuel_litres: 150, avg_burn_rate: 10.7 },
-  ];
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full h-72 sm:h-80 flex flex-col items-center justify-center border border-dashed border-border rounded-xl bg-surface/30 p-6 text-center">
+        <p className="text-xs font-bold text-ink">No Machinery Hours Recorded</p>
+        <p className="text-[11px] text-muted max-w-xs mt-1">
+          When you operate excavators, graders, dozers, or tippers and submit logs, your equipment hours will appear here.
+        </p>
+      </div>
+    );
+  }
+
+  const chartData = data.slice(0, 5);
 
   return (
     <div className="w-full h-72 sm:h-80">
@@ -212,13 +228,20 @@ export function StaffVerificationDonutChart({ data }: VerificationDonutProps) {
     return <div className="w-full h-64 bg-surface/50 rounded-xl animate-pulse" />;
   }
 
-  const validData = data && data.length > 0 && data.some(d => d.value > 0)
-    ? data
-    : [
-        { name: 'Approved', value: 4, color: '#10B981' },
-        { name: 'Pending Review', value: 1, color: '#F59E0B' },
-      ];
+  const hasData = data && data.length > 0 && data.some(d => d.value > 0);
 
+  if (!hasData) {
+    return (
+      <div className="w-full h-64 flex flex-col items-center justify-center border border-dashed border-border rounded-xl bg-surface/30 p-6 text-center">
+        <p className="text-xs font-bold text-ink">No Vouchers In Review</p>
+        <p className="text-[11px] text-muted max-w-xs mt-1">
+          Supervisor sign-off status and approval ratios will populate here as your shift logs are verified.
+        </p>
+      </div>
+    );
+  }
+
+  const validData = data;
   const total = validData.reduce((acc, d) => acc + d.value, 0);
 
   return (
@@ -264,3 +287,4 @@ export function StaffVerificationDonutChart({ data }: VerificationDonutProps) {
     </div>
   );
 }
+

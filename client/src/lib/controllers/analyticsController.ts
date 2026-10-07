@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/server-config/db';
 import { generateOperationalAIInsights, generateOperatorAIInsights } from '@/lib/services/ai';
 import { getStaffLogsRegistry } from '@/lib/services/logsRegistry';
+import { getStaffRegistry } from '@/lib/services/userRegistry';
 
 export async function getCommandOverview(req: NextRequest, { params }: { params: any }) {
   try {
@@ -305,7 +306,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
     let operatorProfile: any = null;
     let availableOperators: any[] = [];
 
-    // 1. Fetch certified operators from DB to resolve current operator context
+    // 1. Fetch certified operators from DB and merge with persistent Vercel Blob registry
     try {
       const opsRes = await db.query(`
         SELECT id, full_name, email, role, phone_number
@@ -313,47 +314,80 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
         WHERE role = 'OPERATOR'
         ORDER BY created_at ASC;
       `);
-      availableOperators = opsRes.rows;
-
-      if (staffId) {
-        operatorProfile = availableOperators.find((o) => o.id === staffId);
-        if (!operatorProfile) {
-          const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE id = $1;`, [staffId]);
-          if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
-        }
-      } else if (email) {
-        const cleanEmail = email.toLowerCase().trim();
-        operatorProfile = availableOperators.find((o) => o.email?.toLowerCase() === cleanEmail);
-        if (!operatorProfile) {
-          const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE LOWER(email) = $1;`, [cleanEmail]);
-          if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
-        }
-      }
-
-      // Default to primary certified operator if none specified
-      if (!operatorProfile && availableOperators.length > 0) {
-        operatorProfile = availableOperators[0];
-      }
+      availableOperators = [...opsRes.rows];
     } catch (e: any) {
-      console.warn('Operator profile discovery warning:', e.message);
+      console.warn('Operator profile DB discovery warning:', e.message);
     }
 
-    // Default fallback profile if database has no profile
+    // Merge operators from Vercel Blob registry (ensures operators registered online are instantly available)
+    try {
+      const blobStaff = await getStaffRegistry();
+      for (const bs of blobStaff) {
+        if (bs.role === 'OPERATOR') {
+          const exists = availableOperators.some(
+            (o) => o.id === bs.id || (o.email && bs.email && o.email.toLowerCase() === bs.email.toLowerCase())
+          );
+          if (!exists) {
+            availableOperators.push({
+              id: bs.id,
+              full_name: bs.full_name,
+              email: bs.email,
+              role: bs.role,
+              phone_number: bs.phone_number,
+            });
+          }
+        }
+      }
+    } catch (e: any) {
+      console.warn('Blob staff merge warning:', e.message);
+    }
+
+    // Match requested operator identity
+    if (staffId) {
+      const cleanStaffId = staffId.trim();
+      operatorProfile = availableOperators.find(
+        (o) => o.id === cleanStaffId || (cleanStaffId.startsWith('jwt_token_') && cleanStaffId.endsWith(o.id))
+      );
+      if (!operatorProfile) {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanStaffId);
+        if (isUuid) {
+          try {
+            const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE id = $1;`, [cleanStaffId]);
+            if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
+          } catch (err: any) {}
+        }
+      }
+    }
+
+    if (!operatorProfile && email) {
+      const cleanEmail = email.toLowerCase().trim();
+      operatorProfile = availableOperators.find((o) => o.email?.toLowerCase() === cleanEmail);
+      if (!operatorProfile) {
+        try {
+          const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE LOWER(email) = $1;`, [cleanEmail]);
+          if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
+        } catch (err: any) {}
+      }
+    }
+
+    // If caller did NOT provide staffId or email, default to the first available operator
+    if (!operatorProfile && !staffId && !email && availableOperators.length > 0) {
+      operatorProfile = availableOperators[0];
+    }
+
+    // If caller provided an identity that is not in the system yet, synthesize their personal profile
     if (!operatorProfile) {
       operatorProfile = {
-        id: '00000000-0000-0000-0000-000000000002',
-        full_name: 'Brian K. (Lead Operator - Meru Quarry)',
-        email: 'kbrian1237@gmail.com',
+        id: staffId || 'usr_' + Date.now().toString(36),
+        full_name: 'Field Operator',
+        email: email || '',
         role: 'OPERATOR',
-        phone_number: '+254748866823',
       };
-      if (availableOperators.length === 0) {
-        availableOperators = [operatorProfile];
-      }
+      availableOperators.push(operatorProfile);
     }
 
     const targetStaffId = operatorProfile.id;
-    const targetEmail = operatorProfile.email?.toLowerCase();
+    const targetEmail = operatorProfile.email ? operatorProfile.email.toLowerCase().trim() : '';
 
     // 2. Query strictly logs belonging to this specific operator
     try {
@@ -384,7 +418,10 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
         FROM public.staff_logs l
         LEFT JOIN public.profiles p ON l.staff_id = p.id
         LEFT JOIN public.physical_assets a ON l.equipment_id = a.id
-        WHERE (l.staff_id = $2 OR LOWER(p.email) = $3)
+        WHERE (
+          (l.staff_id::text = $2)
+          OR (p.email IS NOT NULL AND LOWER(p.email) = $3)
+        )
       `;
       const queryParams: any[] = [operatorProfile.full_name, targetStaffId, targetEmail];
 
@@ -401,13 +438,12 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
       console.warn('⚠️ Operator analytics DB query fallback:', dbErr.message);
     }
 
-    // Fallback to Vercel Blob registry strictly filtered by this operator
+    // Fallback to Vercel Blob registry strictly filtered by this operator (NO FUZZY CROSS-MATCHING)
     if (logs.length === 0) {
       const allLogs = await getStaffLogsRegistry();
       logs = allLogs.filter((l) => {
-        if (targetStaffId && l.staff_id === targetStaffId) return true;
-        if (targetEmail && l.staff_email?.toLowerCase() === targetEmail) return true;
-        if (l.staff_name && operatorProfile.full_name && l.staff_name.toLowerCase().includes('brian') && operatorProfile.full_name.toLowerCase().includes('brian')) return true;
+        if (targetStaffId && String(l.staff_id) === String(targetStaffId)) return true;
+        if (targetEmail && l.staff_email && l.staff_email.toLowerCase().trim() === targetEmail) return true;
         return false;
       });
     }

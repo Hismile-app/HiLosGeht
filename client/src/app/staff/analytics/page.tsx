@@ -83,7 +83,9 @@ export default function StaffAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [days, setDays] = useState<'7' | '30' | '90' | 'all'>('30');
+  const [loggedUser, setLoggedUser] = useState<{ id?: string; email?: string; full_name?: string; role?: string } | null>(null);
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>('');
+  const [isClientInitialized, setIsClientInitialized] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -103,32 +105,38 @@ export default function StaffAnalyticsPage() {
   // Load initial operator identity from local storage if available
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('hlg_user');
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem('hlg_user');
+        if (stored) {
           const user = JSON.parse(stored);
-          if (user?.id && user?.role === 'OPERATOR') {
+          setLoggedUser(user);
+          if (user?.id) {
             setSelectedOperatorId(user.id);
           }
-        } catch (e) {}
-      }
+        }
+      } catch (e) {}
+      setIsClientInitialized(true);
     }
   }, []);
 
-  const fetchAnalytics = async (showRefreshSpinner = false) => {
+  const fetchAnalytics = async (showRefreshSpinner = false, operatorIdOverride?: string) => {
     if (showRefreshSpinner) setRefreshing(true);
     else setLoading(true);
 
     try {
+      const activeStaffId = operatorIdOverride !== undefined ? operatorIdOverride : (selectedOperatorId || loggedUser?.id || '');
+      const activeEmail = loggedUser?.email || '';
+
       const params = new URLSearchParams();
-      if (selectedOperatorId) params.append('staffId', selectedOperatorId);
+      if (activeStaffId) params.append('staffId', activeStaffId);
+      if (activeEmail && !activeStaffId) params.append('email', activeEmail);
       if (days !== 'all') params.append('days', days);
 
       const res = await fetch(`/api/v1/analytics/operator?${params.toString()}`);
       const json = await res.json();
       if (json?.success && json?.data) {
         setData(json.data);
-        if (!selectedOperatorId && json.data.operatorProfile?.id) {
+        if (json.data.operatorProfile?.id) {
           setSelectedOperatorId(json.data.operatorProfile.id);
         }
       }
@@ -141,8 +149,9 @@ export default function StaffAnalyticsPage() {
   };
 
   useEffect(() => {
+    if (!isClientInitialized) return;
     fetchAnalytics();
-  }, [days, selectedOperatorId]);
+  }, [isClientInitialized, days, selectedOperatorId]);
 
   // Handle asking the AI Operator Coach
   const handleAskAICoach = async (promptToAsk?: string) => {
@@ -360,13 +369,13 @@ export default function StaffAnalyticsPage() {
               </label>
               <select
                 id="operator-select"
-                value={selectedOperatorId}
+                value={selectedOperatorId || currentOperator?.id || ''}
                 onChange={(e) => setSelectedOperatorId(e.target.value)}
-                className="text-xs font-mono font-bold text-ink bg-transparent border-0 focus:outline-none cursor-pointer max-w-[200px] truncate"
+                className="text-xs font-mono font-bold text-ink bg-transparent border-0 focus:outline-none cursor-pointer max-w-[220px] truncate"
               >
                 {data.availableOperators.map((op) => (
                   <option key={op.id} value={op.id}>
-                    {op.full_name}
+                    {op.full_name} {op.email ? `(${op.email})` : ''}
                   </option>
                 ))}
               </select>
@@ -839,8 +848,27 @@ export default function StaffAnalyticsPage() {
                 </tr>
               ) : filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-muted font-mono">
-                    No shift logs found for {currentOperator?.full_name || 'this operator'}.
+                  <td colSpan={8} className="py-12 px-4 text-center">
+                    <div className="max-w-md mx-auto space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-orange-50 text-primary mx-auto flex items-center justify-center shadow-subtle">
+                        <ClipboardList className="w-6 h-6" />
+                      </div>
+                      <div className="font-heading font-black text-ink text-base">
+                        No Shift Logs Found for {currentOperator?.full_name || 'Your Account'}
+                      </div>
+                      <p className="text-xs text-muted leading-relaxed font-sans">
+                        You have not recorded any machine shift logs yet. Once you complete a shift and submit your hour meter proof photos, your personal telematics ledger and fuel burn graphs will appear here.
+                      </p>
+                      <div className="pt-2">
+                        <Link
+                          href="/staff"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-hover shadow-orange transition-all cursor-pointer"
+                        >
+                          <ClipboardList className="w-4 h-4" />
+                          <span>Submit My First Shift Log</span>
+                        </Link>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (
