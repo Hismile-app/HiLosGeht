@@ -15,6 +15,63 @@ export interface StoredProfile {
   avatar_url?: string | null;
 }
 
+export function normalizePhone(phone: string | null | undefined): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('254') && digits.length === 12) {
+    return '0' + digits.slice(3);
+  }
+  if (digits.length === 9) {
+    return '0' + digits;
+  }
+  if (digits.startsWith('0') && digits.length === 10) {
+    return digits;
+  }
+  return digits;
+}
+
+export function getPhoneVariants(phone: string | null | undefined): string[] {
+  if (!phone) return [];
+  const raw = phone.trim();
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return [raw];
+
+  const variants = new Set<string>();
+  variants.add(raw);
+  variants.add(digits);
+
+  const norm = normalizePhone(phone);
+  if (norm) {
+    variants.add(norm);
+    if (norm.startsWith('0')) {
+      const core = norm.slice(1);
+      variants.add(core);
+      variants.add('+254' + core);
+      variants.add('254' + core);
+    }
+  }
+
+  return Array.from(variants);
+}
+
+export function phonesMatch(phoneA: string | null | undefined, phoneB: string | null | undefined): boolean {
+  if (!phoneA || !phoneB) return false;
+  const normA = normalizePhone(phoneA);
+  const normB = normalizePhone(phoneB);
+  if (normA && normB && normA === normB) return true;
+
+  const rawA = phoneA.replace(/\D/g, '');
+  const rawB = phoneB.replace(/\D/g, '');
+  if (rawA && rawB) {
+    if (rawA === rawB) return true;
+    if (Math.min(rawA.length, rawB.length) >= 9) {
+      if (rawA.endsWith(rawB) || rawB.endsWith(rawA)) return true;
+    }
+  }
+  return false;
+}
+
 // Built-in seed profiles for high-availability fallback
 export const SEED_PROFILES: StoredProfile[] = [
   {
@@ -36,6 +93,16 @@ export const SEED_PROFILES: StoredProfile[] = [
     account_status: 'ACTIVE',
     password_hash: 'afeb25bf07c9ea1803c3ea001b66f8fee3dbd412291110b0776fa57ee46d4ca4', // SHA256 of 'OperatorPass123'
     created_at: '2026-09-02T00:00:00Z',
+  },
+  {
+    id: '90bb2eaa-fc49-4d08-bc01-bf401124ce74',
+    full_name: 'kb 1445 testor operator',
+    email: 'kbrian1445@gmail.com',
+    phone_number: '0788183496',
+    role: 'OPERATOR',
+    account_status: 'ACTIVE',
+    password_hash: '481a48e9647afdc33c07b964725d23ba6fcd57df0f3ecc921c8d0e49d0fb0bbf', // SHA256 of '0788183496'
+    created_at: '2026-10-07T12:00:00Z',
   },
 ];
 
@@ -193,8 +260,12 @@ export async function getStaffRegistry(): Promise<StoredProfile[]> {
           // Merge with seeds ensuring seed profiles always exist
           const merged = [...parsed];
           for (const seed of SEED_PROFILES) {
-            if (!merged.some((p) => p.email.toLowerCase() === seed.email.toLowerCase())) {
+            const seedIdx = merged.findIndex((p) => p.email.toLowerCase() === seed.email.toLowerCase());
+            if (seedIdx === -1) {
               merged.push(seed);
+            } else if (!merged[seedIdx].password_hash && seed.password_hash) {
+              // Auto-restore password hash from seed if empty
+              merged[seedIdx].password_hash = seed.password_hash;
             }
           }
           memoryCache = { timestamp: Date.now(), profiles: merged };
@@ -215,13 +286,18 @@ export async function getStaffRegistry(): Promise<StoredProfile[]> {
 export async function saveStaffProfile(profile: StoredProfile): Promise<StoredProfile> {
   const current = await getStaffRegistry();
   const existingIdx = current.findIndex(
-    (p) => p.email.toLowerCase() === profile.email.toLowerCase()
+    (p) => (profile.id && p.id === profile.id) || p.email.toLowerCase() === profile.email.toLowerCase()
   );
 
   const updatedProfile: StoredProfile = {
     ...profile,
     updated_at: new Date().toISOString(),
   };
+
+  // Ensure password_hash is never accidentally wiped out
+  if (!updatedProfile.password_hash && existingIdx >= 0 && current[existingIdx].password_hash) {
+    updatedProfile.password_hash = current[existingIdx].password_hash;
+  }
 
   if (existingIdx >= 0) {
     current[existingIdx] = {
@@ -258,7 +334,7 @@ export async function saveStaffProfile(profile: StoredProfile): Promise<StoredPr
 }
 
 /**
- * Finds a staff profile by email or username or phone number.
+ * Finds a staff profile by email or username or phone number (with robust normalization).
  */
 export async function findStaffByIdentifier(identifier: string): Promise<StoredProfile | null> {
   if (!identifier) return null;
@@ -267,11 +343,9 @@ export async function findStaffByIdentifier(identifier: string): Promise<StoredP
 
   const found = profiles.find((p) => {
     const emailMatch = p.email.toLowerCase() === clean;
-    const phoneMatch =
-      p.phone_number === identifier ||
-      p.phone_number === '+254' + identifier.replace(/^0+/, '');
-    const adminAlias = clean === 'adminhlg' && p.role === 'ADMIN';
-    const nameMatch = p.full_name.toLowerCase().includes(clean);
+    const phoneMatch = phonesMatch(p.phone_number, identifier);
+    const adminAlias = (clean === 'adminhlg' || clean === 'admin') && p.role === 'ADMIN';
+    const nameMatch = p.full_name.toLowerCase().trim() === clean || p.full_name.toLowerCase().includes(clean);
     return emailMatch || phoneMatch || adminAlias || nameMatch;
   });
 
