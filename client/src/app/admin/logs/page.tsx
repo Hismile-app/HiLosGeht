@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   RefreshCw,
   ExternalLink,
-  Download
+  Download,
+  Gauge
 } from 'lucide-react';
 import GlassCard from '@/components/common/GlassCard';
 
@@ -33,6 +34,9 @@ interface StaffLog {
   materials_received?: string;
   fuel_proof_image?: string;
   materials_proof_image?: string;
+  start_meter_proof_image?: string;
+  end_meter_proof_image?: string;
+  meter_proof_image?: string;
   date_submitted: string;
 }
 
@@ -277,7 +281,12 @@ export default function DailyLogsPage() {
                         <p className="text-xs text-zinc-700 truncate" title={log.yield_description}>
                           {log.yield_description || 'No work details provided.'}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          {(log.meter_proof_image || log.start_meter_proof_image || log.end_meter_proof_image) && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-amber-50 text-amber-800 border border-amber-200">
+                              <Gauge className="w-3 h-3 text-amber-600" /> Meter Photo
+                            </span>
+                          )}
                           {log.fuel_proof_image && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200">
                               <FileText className="w-3 h-3" /> Fuel Receipt
@@ -359,16 +368,50 @@ export default function DailyLogsPage() {
                 </div>
               )}
 
-              {(selectedLog.fuel_proof_image || selectedLog.materials_proof_image) && (
+              {(selectedLog.fuel_proof_image || selectedLog.materials_proof_image || selectedLog.meter_proof_image || selectedLog.start_meter_proof_image || selectedLog.end_meter_proof_image) && (
                 <div className="pt-2">
                   <span className="text-muted block mb-2 font-mono text-xs uppercase font-semibold">Attached Proof Documents</span>
                   <div className="grid grid-cols-2 gap-2">
+                    {selectedLog.start_meter_proof_image && (
+                      <div className="p-2 bg-surface border border-border rounded-lg text-center">
+                        <img 
+                          src={selectedLog.start_meter_proof_image} 
+                          alt="Start Meter Gauge" 
+                          className="h-28 w-full object-cover rounded mb-1 cursor-pointer hover:opacity-90" 
+                          onClick={() => window.open(selectedLog.start_meter_proof_image, '_blank')}
+                        />
+                        <span className="text-[10px] text-zinc-600 font-mono font-medium">Start Gauge ({selectedLog.start_meter}h)</span>
+                      </div>
+                    )}
+                    {selectedLog.end_meter_proof_image && (
+                      <div className="p-2 bg-surface border border-border rounded-lg text-center">
+                        <img 
+                          src={selectedLog.end_meter_proof_image} 
+                          alt="End Meter Gauge" 
+                          className="h-28 w-full object-cover rounded mb-1 cursor-pointer hover:opacity-90" 
+                          onClick={() => window.open(selectedLog.end_meter_proof_image, '_blank')}
+                        />
+                        <span className="text-[10px] text-zinc-600 font-mono font-medium">End Gauge ({selectedLog.end_meter}h)</span>
+                      </div>
+                    )}
+                    {selectedLog.meter_proof_image && !selectedLog.start_meter_proof_image && !selectedLog.end_meter_proof_image && (
+                      <div className="p-2 bg-surface border border-border rounded-lg text-center">
+                        <img 
+                          src={selectedLog.meter_proof_image} 
+                          alt="Machine Meter Gauge" 
+                          className="h-28 w-full object-cover rounded mb-1 cursor-pointer hover:opacity-90" 
+                          onClick={() => window.open(selectedLog.meter_proof_image, '_blank')}
+                        />
+                        <span className="text-[10px] text-zinc-600 font-mono font-medium">Meter Gauge Proof</span>
+                      </div>
+                    )}
                     {selectedLog.fuel_proof_image && (
                       <div className="p-2 bg-surface border border-border rounded-lg text-center">
                         <img 
                           src={selectedLog.fuel_proof_image} 
                           alt="Fuel Receipt" 
-                          className="h-28 w-full object-cover rounded mb-1" 
+                          className="h-28 w-full object-cover rounded mb-1 cursor-pointer hover:opacity-90" 
+                          onClick={() => window.open(selectedLog.fuel_proof_image, '_blank')}
                         />
                         <span className="text-[10px] text-zinc-500 font-mono">Fuel Receipt</span>
                       </div>
@@ -378,7 +421,8 @@ export default function DailyLogsPage() {
                         <img 
                           src={selectedLog.materials_proof_image} 
                           alt="Material Receipt" 
-                          className="h-28 w-full object-cover rounded mb-1" 
+                          className="h-28 w-full object-cover rounded mb-1 cursor-pointer hover:opacity-90" 
+                          onClick={() => window.open(selectedLog.materials_proof_image, '_blank')}
                         />
                         <span className="text-[10px] text-zinc-500 font-mono">Delivery Note</span>
                       </div>

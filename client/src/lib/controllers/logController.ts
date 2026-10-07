@@ -19,6 +19,9 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
       fuelProofImage,
       materialsReceived,
       materialsProofImage,
+      startMeterProofImage,
+      endMeterProofImage,
+      meterProofImage,
       staffName,
       equipmentName,
     } = await req.json();
@@ -38,6 +41,7 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
     }
 
     const hoursWorked = parseFloat(endMeter) - parseFloat(startMeter);
+    const resolvedMeterProof = meterProofImage || endMeterProofImage || startMeterProofImage || null;
     let createdLog: any = null;
 
     // 1. Attempt Database Insert
@@ -53,9 +57,12 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
           fuel_proof_image,
           materials_received,
           materials_proof_image,
+          start_meter_proof_image,
+          end_meter_proof_image,
+          meter_proof_image,
           date_submitted
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()
         ) RETURNING *;
       `, [
         staffId || null,
@@ -67,6 +74,9 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
         fuelProofImage || null,
         materialsReceived || null,
         materialsProofImage || null,
+        startMeterProofImage || null,
+        endMeterProofImage || null,
+        resolvedMeterProof,
       ]);
       createdLog = logRes.rows[0];
 
@@ -93,6 +103,9 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
       fuel_proof_image: fuelProofImage || null,
       materials_received: materialsReceived || null,
       materials_proof_image: materialsProofImage || null,
+      start_meter_proof_image: startMeterProofImage || null,
+      end_meter_proof_image: endMeterProofImage || null,
+      meter_proof_image: resolvedMeterProof,
       date_submitted: new Date().toISOString(),
       verification_status: 'PENDING',
       staff_name: staffName || 'Lead Operator',
@@ -136,17 +149,20 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
           l.fuel_proof_image,
           l.materials_received,
           l.materials_proof_image,
+          l.start_meter_proof_image,
+          l.end_meter_proof_image,
+          l.meter_proof_image,
           l.date_submitted,
           l.verification_status,
           l.audit_notes,
-          p.full_name as staff_name,
+          COALESCE(p.full_name, 'Operator') as staff_name,
           p.email as staff_email,
-          a.name as equipment_name,
-          a.model as equipment_model,
-          a.category as equipment_category
+          COALESCE(a.name, 'Equipment') as equipment_name,
+          COALESCE(a.model, 'Asset') as equipment_model,
+          COALESCE(a.category, 'Fleet') as equipment_category
         FROM public.staff_logs l
         LEFT JOIN public.profiles p ON l.staff_id = p.id
-        JOIN public.physical_assets a ON l.equipment_id = a.id
+        LEFT JOIN public.physical_assets a ON l.equipment_id = a.id
         WHERE 1=1
       `;
       const paramsList: any[] = [];

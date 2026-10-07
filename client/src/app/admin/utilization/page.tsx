@@ -45,6 +45,11 @@ interface StaffLog {
   hours_worked?: number;
   work_description: string;
   fuel_amount: number;
+  fuel_proof_image?: string;
+  materials_proof_image?: string;
+  start_meter_proof_image?: string;
+  end_meter_proof_image?: string;
+  meter_proof_image?: string;
   date_submitted: string;
   verification_status: 'PENDING' | 'APPROVED' | 'REJECTED';
   staff_name?: string;
@@ -108,6 +113,7 @@ export default function FleetUtilizationPage() {
       lastOperator: string;
       lastLogDate: string | null;
       lastJobsite: string;
+      hasGaugePhotoProof: boolean;
       recentLogs: StaffLog[];
     }> = {};
 
@@ -138,6 +144,7 @@ export default function FleetUtilizationPage() {
       let lastLogDate: string | null = null;
       let lastJobsite = machine.location || 'Meru Operations Yard';
 
+      let hasGaugePhotoProof = false;
       if (allMLogs.length > 0) {
         // Sort newest first
         const sorted = [...allMLogs].sort((a, b) => new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime());
@@ -150,6 +157,7 @@ export default function FleetUtilizationPage() {
         if (newest.work_description) {
           lastJobsite = newest.work_description.slice(0, 50) + (newest.work_description.length > 50 ? '...' : '');
         }
+        hasGaugePhotoProof = !!(newest.meter_proof_image || newest.end_meter_proof_image || newest.start_meter_proof_image);
       }
 
       map[machine.id] = {
@@ -160,6 +168,7 @@ export default function FleetUtilizationPage() {
         lastOperator,
         lastLogDate,
         lastJobsite,
+        hasGaugePhotoProof,
         recentLogs: mLogs,
       };
     }
@@ -448,6 +457,7 @@ export default function FleetUtilizationPage() {
             lastOperator: 'No recent shift',
             lastLogDate: null,
             lastJobsite: item.location || 'Meru Operations Yard',
+            hasGaugePhotoProof: false,
             recentLogs: [],
           };
 
@@ -516,9 +526,16 @@ export default function FleetUtilizationPage() {
 
                 {/* Latest Verified Hour Meter */}
                 <div className="mt-3 space-y-1.5 text-xs font-mono">
-                  <div className="flex justify-between text-muted">
+                  <div className="flex justify-between items-center text-muted">
                     <span>Current Verified Meter:</span>
-                    <span className="text-amber-800 font-bold">{telem.latestEndMeter.toFixed(1)} hrs</span>
+                    <span className="text-amber-800 font-bold flex items-center gap-1.5">
+                      {telem.latestEndMeter.toFixed(1)} hrs
+                      {telem.hasGaugePhotoProof && (
+                        <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-mono font-semibold" title="Physical gauge photo verified on record">
+                          📸 Gauge Photo
+                        </span>
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between text-muted">
                     <span>Last Operator:</span>

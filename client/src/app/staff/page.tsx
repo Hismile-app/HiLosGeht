@@ -15,7 +15,9 @@ import {
   Calendar,
   MessageSquare,
   MapPin,
-  Inbox
+  Inbox,
+  Camera,
+  Gauge
 } from 'lucide-react';
 import GlassCard from '@/components/common/GlassCard';
 import NeonButton from '@/components/common/NeonButton';
@@ -36,6 +38,8 @@ export default function OperatorDailyLogPage() {
   const [materialsReceived, setMaterialsReceived] = useState('');
   const [fuelImageFile, setFuelImageFile] = useState<string | null>(null);
   const [materialsImageFile, setMaterialsImageFile] = useState<string | null>(null);
+  const [startMeterImageFile, setStartMeterImageFile] = useState<string | null>(null);
+  const [endMeterImageFile, setEndMeterImageFile] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,8 +91,10 @@ export default function OperatorDailyLogPage() {
 
   const [uploadingFuel, setUploadingFuel] = useState(false);
   const [uploadingMat, setUploadingMat] = useState(false);
+  const [uploadingStartMeter, setUploadingStartMeter] = useState(false);
+  const [uploadingEndMeter, setUploadingEndMeter] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'fuel' | 'mat') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'fuel' | 'mat' | 'startMeter' | 'endMeter') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -96,14 +102,18 @@ export default function OperatorDailyLogPage() {
     const reader = new FileReader();
     reader.onload = () => {
       if (type === 'fuel') setFuelImageFile(reader.result as string);
-      else setMaterialsImageFile(reader.result as string);
+      else if (type === 'mat') setMaterialsImageFile(reader.result as string);
+      else if (type === 'startMeter') setStartMeterImageFile(reader.result as string);
+      else if (type === 'endMeter') setEndMeterImageFile(reader.result as string);
     };
     reader.readAsDataURL(file);
 
     // Upload to Vercel Blob Storage in background
     try {
       if (type === 'fuel') setUploadingFuel(true);
-      else setUploadingMat(true);
+      else if (type === 'mat') setUploadingMat(true);
+      else if (type === 'startMeter') setUploadingStartMeter(true);
+      else if (type === 'endMeter') setUploadingEndMeter(true);
 
       const formData = new FormData();
       formData.append('file', file);
@@ -116,14 +126,18 @@ export default function OperatorDailyLogPage() {
         const data = await res.json();
         if (data?.viewUrl) {
           if (type === 'fuel') setFuelImageFile(data.viewUrl);
-          else setMaterialsImageFile(data.viewUrl);
+          else if (type === 'mat') setMaterialsImageFile(data.viewUrl);
+          else if (type === 'startMeter') setStartMeterImageFile(data.viewUrl);
+          else if (type === 'endMeter') setEndMeterImageFile(data.viewUrl);
         }
       }
     } catch (err) {
       console.warn('Storage upload fallback:', err);
     } finally {
       if (type === 'fuel') setUploadingFuel(false);
-      else setUploadingMat(false);
+      else if (type === 'mat') setUploadingMat(false);
+      else if (type === 'startMeter') setUploadingStartMeter(false);
+      else if (type === 'endMeter') setUploadingEndMeter(false);
     }
   };
 
@@ -160,6 +174,9 @@ export default function OperatorDailyLogPage() {
           fuelProofImage: fuelImageFile,
           materialsReceived,
           materialsProofImage: materialsImageFile,
+          startMeterProofImage: startMeterImageFile,
+          endMeterProofImage: endMeterImageFile,
+          meterProofImage: endMeterImageFile || startMeterImageFile || null,
         }),
       });
 
@@ -327,6 +344,25 @@ export default function OperatorDailyLogPage() {
                 <span className="text-muted">Fuel Purchased:</span>
                 <span className="text-foreground font-semibold">{fuelAmount || '0'} Litres</span>
               </div>
+              {(startMeterImageFile || endMeterImageFile) && (
+                <div className="pt-2 border-t border-border mt-2">
+                  <span className="text-muted block text-[10px] mb-1 font-semibold uppercase">Machine Meter Proof Photos:</span>
+                  <div className="flex items-center gap-2">
+                    {startMeterImageFile && (
+                      <div className="text-center">
+                        <img src={startMeterImageFile} alt="Start meter gauge" className="w-14 h-14 object-cover rounded border border-border" />
+                        <span className="text-[9px] text-muted">Start Gauge</span>
+                      </div>
+                    )}
+                    {endMeterImageFile && (
+                      <div className="text-center">
+                        <img src={endMeterImageFile} alt="End meter gauge" className="w-14 h-14 object-cover rounded border border-border" />
+                        <span className="text-[9px] text-muted">End Gauge</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <NeonButton
@@ -339,6 +375,8 @@ export default function OperatorDailyLogPage() {
                 setMaterialsReceived('');
                 setFuelImageFile(null);
                 setMaterialsImageFile(null);
+                setStartMeterImageFile(null);
+                setEndMeterImageFile(null);
               }}
             >
               Submit Another Operational Log
@@ -367,38 +405,124 @@ export default function OperatorDailyLogPage() {
               </select>
             </div>
 
-            {/* Hour Meter Inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-zinc-700 font-mono mb-1.5 flex items-center gap-1.5 font-semibold">
-                  <Clock className="w-3.5 h-3.5 text-primary" />
-                  Start Hour Meter (hrs) *
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  placeholder="e.g. 41.0"
-                  value={startMeter}
-                  onChange={(e) => setStartMeter(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
-                />
+            {/* Hour Meter Inputs with Machine Meter Proof Photos */}
+            <div className="p-4 bg-orange-50/50 border border-orange-200/80 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-zinc-800 text-xs flex items-center gap-1.5">
+                  <Gauge className="w-4 h-4 text-primary" />
+                  Machine Hour Meter Readings & Gauge Photos *
+                </span>
+                <span className="text-[10px] font-mono text-primary font-semibold">
+                  Required for Billing & PM Audit
+                </span>
               </div>
 
-              <div>
-                <label className="block text-zinc-700 font-mono mb-1.5 flex items-center gap-1.5 font-semibold">
-                  <Clock className="w-3.5 h-3.5 text-primary" />
-                  End Hour Meter (hrs) *
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  placeholder="e.g. 48.0"
-                  value={endMeter}
-                  onChange={(e) => setEndMeter(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Start Hour Meter & Photo */}
+                <div className="p-3 bg-white border border-border rounded-lg space-y-2">
+                  <div>
+                    <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
+                      <Clock className="w-3.5 h-3.5 text-primary" />
+                      Start Hour Meter (hrs) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      placeholder="e.g. 41.0"
+                      value={startMeter}
+                      onChange={(e) => setStartMeter(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-muted text-[11px] font-mono mb-1 flex items-center gap-1">
+                      <Camera className="w-3 h-3 text-primary" />
+                      Start Gauge Meter Photo Proof
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'startMeter')}
+                      className="w-full text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
+                    />
+                    {uploadingStartMeter && (
+                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading start meter photo...</p>
+                    )}
+                    {startMeterImageFile && (
+                      <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-surface border border-border rounded-lg">
+                        <img src={startMeterImageFile} alt="Start meter proof" className="w-10 h-10 object-cover rounded" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Start Meter Photo
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setStartMeterImageFile(null)}
+                          className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
+                          title="Remove photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* End Hour Meter & Photo */}
+                <div className="p-3 bg-white border border-border rounded-lg space-y-2">
+                  <div>
+                    <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
+                      <Clock className="w-3.5 h-3.5 text-primary" />
+                      End Hour Meter (hrs) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      placeholder="e.g. 48.0"
+                      value={endMeter}
+                      onChange={(e) => setEndMeter(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-muted text-[11px] font-mono mb-1 flex items-center gap-1">
+                      <Camera className="w-3 h-3 text-primary" />
+                      End Gauge Meter Photo Proof
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'endMeter')}
+                      className="w-full text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
+                    />
+                    {uploadingEndMeter && (
+                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading end meter photo...</p>
+                    )}
+                    {endMeterImageFile && (
+                      <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-surface border border-border rounded-lg">
+                        <img src={endMeterImageFile} alt="End meter proof" className="w-10 h-10 object-cover rounded" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> End Meter Photo
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEndMeterImageFile(null)}
+                          className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
+                          title="Remove photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -457,6 +581,24 @@ export default function OperatorDailyLogPage() {
                   onChange={(e) => handleFileUpload(e, 'fuel')}
                   className="w-full text-xs text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
                 />
+                {uploadingFuel && (
+                  <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading fuel invoice...</p>
+                )}
+                {fuelImageFile && (
+                  <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-white border border-border rounded-lg">
+                    <img src={fuelImageFile} alt="Fuel proof" className="w-10 h-10 object-cover rounded" />
+                    <span className="text-[10px] text-emerald-700 font-mono font-bold flex-1 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Fuel Receipt Attached
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFuelImageFile(null)}
+                      className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -490,6 +632,24 @@ export default function OperatorDailyLogPage() {
                   onChange={(e) => handleFileUpload(e, 'mat')}
                   className="w-full text-xs text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
                 />
+                {uploadingMat && (
+                  <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading delivery note...</p>
+                )}
+                {materialsImageFile && (
+                  <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-white border border-border rounded-lg">
+                    <img src={materialsImageFile} alt="Materials delivery proof" className="w-10 h-10 object-cover rounded" />
+                    <span className="text-[10px] text-emerald-700 font-mono font-bold flex-1 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Delivery Note Attached
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setMaterialsImageFile(null)}
+                      className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

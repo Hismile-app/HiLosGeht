@@ -12,6 +12,9 @@ export interface OperationalStaffLog {
   fuel_proof_image: string | null;
   materials_received: string | null;
   materials_proof_image: string | null;
+  start_meter_proof_image?: string | null;
+  end_meter_proof_image?: string | null;
+  meter_proof_image?: string | null;
   date_submitted: string;
   verification_status: 'PENDING' | 'APPROVED' | 'REJECTED';
   audit_notes?: string | null;
@@ -36,6 +39,9 @@ export const SEED_FLEET_LOGS: OperationalStaffLog[] = [
     fuel_proof_image: '/images/equipment/excavator.jpg',
     materials_received: '5 trips quarry ballast received on site',
     materials_proof_image: null,
+    start_meter_proof_image: '/images/equipment/excavator.jpg',
+    end_meter_proof_image: '/images/equipment/excavator.jpg',
+    meter_proof_image: '/images/equipment/excavator.jpg',
     date_submitted: new Date(Date.now() - 1 * 86400000).toISOString(),
     verification_status: 'APPROVED',
     staff_name: 'Brian K. (Lead Operator)',
@@ -156,6 +162,9 @@ export const SEED_FLEET_LOGS: OperationalStaffLog[] = [
     fuel_proof_image: '/images/equipment/excavator.jpg',
     materials_received: 'Volcanic rock breakout',
     materials_proof_image: null,
+    start_meter_proof_image: '/images/equipment/excavator.jpg',
+    end_meter_proof_image: '/images/equipment/excavator.jpg',
+    meter_proof_image: '/images/equipment/excavator.jpg',
     date_submitted: new Date().toISOString(),
     verification_status: 'PENDING',
     staff_name: 'Brian K. (Lead Operator)',

@@ -13,7 +13,8 @@ import {
   ExternalLink,
   CheckCircle2,
   XCircle,
-  Eye
+  Eye,
+  Gauge
 } from 'lucide-react';
 
 interface AuditItem {
@@ -23,6 +24,11 @@ interface AuditItem {
   fuel_proof_image?: string;
   materials_received?: string;
   materials_proof_image?: string;
+  start_meter?: string | number;
+  end_meter?: string | number;
+  start_meter_proof_image?: string;
+  end_meter_proof_image?: string;
+  meter_proof_image?: string;
   operator_name: string;
   machine_name: string;
   machine_model: string;
@@ -31,7 +37,7 @@ interface AuditItem {
 export default function DocumentVerificationPage() {
   const [items, setItems] = useState<AuditItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState<'ALL' | 'FUEL' | 'MATERIALS'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'METERS' | 'FUEL' | 'MATERIALS'>('ALL');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const fetchAudits = async () => {
@@ -69,6 +75,7 @@ export default function DocumentVerificationPage() {
   }, []);
 
   const filteredItems = (items ?? []).filter(item => {
+    if (filterType === 'METERS') return !!(item.meter_proof_image || item.start_meter_proof_image || item.end_meter_proof_image);
     if (filterType === 'FUEL') return !!item.fuel_proof_image;
     if (filterType === 'MATERIALS') return !!item.materials_proof_image;
     return true;
@@ -102,6 +109,14 @@ export default function DocumentVerificationPage() {
               }`}
             >
               All Uploads
+            </button>
+            <button
+              onClick={() => setFilterType('METERS')}
+              className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all cursor-pointer ${
+                filterType === 'METERS' ? 'bg-primary text-white' : 'text-zinc-600 hover:text-foreground'
+              }`}
+            >
+              Meter Photos
             </button>
             <button
               onClick={() => setFilterType('FUEL')}
@@ -145,80 +160,97 @@ export default function DocumentVerificationPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <div key={item.log_id} className="bg-white border border-border rounded-xl overflow-hidden flex flex-col justify-between shadow-subtle hover:border-primary/40 transition-colors">
-              <div>
-                {/* Proof Media Preview */}
-                <div className="relative h-48 bg-surface border-b border-border group">
-                  {item.fuel_proof_image ? (
-                    <img 
-                      src={item.fuel_proof_image} 
-                      alt="Fuel Receipt" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : item.materials_proof_image ? (
-                    <img 
-                      src={item.materials_proof_image} 
-                      alt="Delivery Slip" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted font-mono text-xs">
-                      No Image File
-                    </div>
-                  )}
+          {filteredItems.map((item) => {
+            const hasMeterProof = !!(item.meter_proof_image || item.end_meter_proof_image || item.start_meter_proof_image);
+            const displayImage = item.meter_proof_image || item.end_meter_proof_image || item.start_meter_proof_image || item.fuel_proof_image || item.materials_proof_image;
 
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => setPreviewImage(item.fuel_proof_image || item.materials_proof_image || null)}
-                      className="p-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-subtle cursor-pointer"
-                    >
-                      <Eye className="w-4 h-4" /> Full View
-                    </button>
-                  </div>
-
-                  <div className="absolute top-2 left-2">
-                    {item.fuel_proof_image ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-600 text-white shadow-subtle">
-                        FUEL RECEIPT • {item.fuel_amount} L
-                      </span>
+            return (
+              <div key={item.log_id} className="bg-white border border-border rounded-xl overflow-hidden flex flex-col justify-between shadow-subtle hover:border-primary/40 transition-colors">
+                <div>
+                  {/* Proof Media Preview */}
+                  <div className="relative h-48 bg-surface border-b border-border group">
+                    {displayImage ? (
+                      <img 
+                        src={displayImage} 
+                        alt="Audit Proof Document" 
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-primary text-white shadow-subtle">
-                        DELIVERY SLIP
+                      <div className="w-full h-full flex items-center justify-center text-muted font-mono text-xs">
+                        No Image File
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => setPreviewImage(displayImage || null)}
+                        className="p-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-subtle cursor-pointer"
+                      >
+                        <Eye className="w-4 h-4" /> Full View
+                      </button>
+                      {item.start_meter_proof_image && item.end_meter_proof_image && item.start_meter_proof_image !== item.end_meter_proof_image && (
+                        <button
+                          onClick={() => setPreviewImage(item.start_meter_proof_image || null)}
+                          className="p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-subtle cursor-pointer"
+                          title="View Start Shift Gauge"
+                        >
+                          Start Gauge
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 flex-wrap">
+                      {hasMeterProof ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-600 text-white shadow-subtle flex items-center gap-1">
+                          <Gauge className="w-3 h-3" /> METER GAUGE • {item.end_meter ?? item.start_meter} hrs
+                        </span>
+                      ) : item.fuel_proof_image ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-600 text-white shadow-subtle">
+                          FUEL RECEIPT • {item.fuel_amount} L
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-primary text-white shadow-subtle">
+                          DELIVERY SLIP
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Metadata details */}
+                  <div className="p-4 space-y-2 text-xs">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-heading font-bold text-foreground text-sm flex items-center gap-1.5">
+                          <Truck className="w-3.5 h-3.5 text-primary" />
+                          {item.machine_name}
+                        </div>
+                        <div className="text-[11px] text-muted font-mono">{item.machine_model}</div>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-500">
+                        {new Date(item.date_submitted).toLocaleDateString()}
                       </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Metadata details */}
-                <div className="p-4 space-y-2 text-xs">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-heading font-bold text-foreground text-sm flex items-center gap-1.5">
-                        <Truck className="w-3.5 h-3.5 text-primary" />
-                        {item.machine_name}
-                      </div>
-                      <div className="text-[11px] text-muted font-mono">{item.machine_model}</div>
                     </div>
-                    <span className="text-[10px] font-mono text-zinc-500">
-                      {new Date(item.date_submitted).toLocaleDateString()}
-                    </span>
-                  </div>
 
-                  <div className="p-2.5 bg-surface border border-border rounded-lg space-y-1 font-mono text-[11px]">
-                    <div className="flex justify-between">
-                      <span className="text-muted">Operator:</span>
-                      <span className="text-foreground font-semibold">{item.operator_name || 'Site Crew'}</span>
-                    </div>
-                    {item.materials_received && (
+                    <div className="p-2.5 bg-surface border border-border rounded-lg space-y-1 font-mono text-[11px]">
                       <div className="flex justify-between">
-                        <span className="text-muted">Material Note:</span>
-                        <span className="text-primary font-semibold truncate max-w-[140px]">{item.materials_received}</span>
+                        <span className="text-muted">Operator:</span>
+                        <span className="text-foreground font-semibold">{item.operator_name || 'Site Crew'}</span>
                       </div>
-                    )}
+                      {(item.start_meter !== undefined || item.end_meter !== undefined) && (
+                        <div className="flex justify-between">
+                          <span className="text-muted">Meter Reading:</span>
+                          <span className="text-amber-800 font-bold">{item.start_meter} &rarr; {item.end_meter} hrs</span>
+                        </div>
+                      )}
+                      {item.materials_received && (
+                        <div className="flex justify-between">
+                          <span className="text-muted">Material Note:</span>
+                          <span className="text-primary font-semibold truncate max-w-[140px]">{item.materials_received}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
               {/* Approval Stamp & Actions */}
               <div className="p-3 bg-surface border-t border-border flex items-center justify-between text-xs">
@@ -241,7 +273,8 @@ export default function DocumentVerificationPage() {
                 <span className="text-muted font-mono text-[10px]">Log #{item.log_id.slice(0, 8)}</span>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
 

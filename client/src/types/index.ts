@@ -90,6 +90,9 @@ export interface StaffLog {
   fuel_proof_image?: string;
   materials_received?: string;
   materials_proof_image?: string;
+  start_meter_proof_image?: string;
+  end_meter_proof_image?: string;
+  meter_proof_image?: string;
   date_submitted: string;
   staff?: Profile;
   equipment?: Equipment;

@@ -245,17 +245,26 @@ export async function getDocumentAuditGallery(req: NextRequest, { params }: { pa
       SELECT 
         l.id as log_id,
         l.date_submitted,
+        l.start_meter,
+        l.end_meter,
         l.fuel_amount,
         l.fuel_proof_image,
         l.materials_received,
         l.materials_proof_image,
-        p.full_name as operator_name,
-        a.name as machine_name,
-        a.model as machine_model
+        l.start_meter_proof_image,
+        l.end_meter_proof_image,
+        l.meter_proof_image,
+        COALESCE(p.full_name, 'Operator') as operator_name,
+        COALESCE(a.name, 'Equipment') as machine_name,
+        COALESCE(a.model, 'Asset') as machine_model
       FROM public.staff_logs l
       LEFT JOIN public.profiles p ON l.staff_id = p.id
-      JOIN public.physical_assets a ON l.equipment_id = a.id
-      WHERE l.fuel_proof_image IS NOT NULL OR l.materials_proof_image IS NOT NULL
+      LEFT JOIN public.physical_assets a ON l.equipment_id = a.id
+      WHERE l.fuel_proof_image IS NOT NULL 
+         OR l.materials_proof_image IS NOT NULL 
+         OR l.meter_proof_image IS NOT NULL
+         OR l.start_meter_proof_image IS NOT NULL
+         OR l.end_meter_proof_image IS NOT NULL
       ORDER BY l.date_submitted DESC;
     `);
 
@@ -269,10 +278,15 @@ export async function getDocumentAuditGallery(req: NextRequest, { params }: { pa
         {
           log_id: 'log-001',
           date_submitted: new Date().toISOString(),
+          start_meter: 335.0,
+          end_meter: 342.5,
           fuel_amount: 45.0,
           fuel_proof_image: '/images/equipment/excavator.jpg',
           materials_received: '5 trips ballast',
           materials_proof_image: null,
+          start_meter_proof_image: '/images/equipment/excavator.jpg',
+          end_meter_proof_image: '/images/equipment/excavator.jpg',
+          meter_proof_image: '/images/equipment/excavator.jpg',
           operator_name: 'Brian K. (Lead Operator)',
           machine_name: 'Komatsu PC-200 Heavy Excavator',
           machine_model: 'Komatsu PC-200',
