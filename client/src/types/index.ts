@@ -11,6 +11,7 @@ export interface Profile {
   phone_number?: string;
   role: UserRole;
   account_status: AccountStatus;
+  avatar_url?: string | null;
   created_at: string;
 }
 
@@ -87,12 +88,18 @@ export interface StaffLog {
   end_meter: number;
   work_description: string;
   fuel_amount: number;
+  start_fuel_reading?: number | null;
+  end_fuel_reading?: number | null;
   fuel_proof_image?: string;
+  start_fuel_proof_image?: string | null;
+  end_fuel_proof_image?: string | null;
   materials_received?: string;
   materials_proof_image?: string;
   start_meter_proof_image?: string;
   end_meter_proof_image?: string;
   meter_proof_image?: string;
+  operator_avatar?: string | null;
+  staff_avatar?: string | null;
   date_submitted: string;
   staff?: Profile;
   equipment?: Equipment;

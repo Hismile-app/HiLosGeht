@@ -36,20 +36,29 @@ export default function LoginPage() {
 
       const userProfile = json.data;
 
-      // Store authentic database user profile in browser storage
       if (typeof window !== 'undefined') {
         localStorage.setItem('hlg_user', JSON.stringify(userProfile));
         localStorage.setItem('hlg_role', userProfile.role);
         if (json.token) {
           localStorage.setItem('hlg_token', json.token);
         }
+        document.cookie = `hlg_session=${encodeURIComponent(userProfile.id || userProfile.email)}; path=/; max-age=604800; SameSite=Lax`;
+        document.cookie = `hlg_role=${encodeURIComponent(userProfile.role)}; path=/; max-age=604800; SameSite=Lax`;
+        window.dispatchEvent(new Event('hlg_user_updated'));
+      }
+
+      // Respect intended redirect URL if authorized
+      const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+      if (redirectParam && (redirectParam.startsWith('/staff') || (redirectParam.startsWith('/admin') && userProfile.role === 'ADMIN'))) {
+        window.location.href = redirectParam;
+        return;
       }
 
       // Direct to corresponding authenticated workspace based on database role
       if (userProfile.role === 'ADMIN') {
-        router.push('/admin');
+        window.location.href = '/admin';
       } else {
-        router.push('/staff');
+        window.location.href = '/staff';
       }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please verify your credentials.');

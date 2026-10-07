@@ -186,9 +186,17 @@ export default function StaffManagementPage() {
             {(staffList ?? []).map((staff) => (
               <tr key={staff.id} className="hover:bg-surface transition-colors">
                 <td className="p-4 font-bold flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-orange-100 text-primary flex items-center justify-center font-heading font-bold text-xs">
-                    {staff.full_name?.charAt(0) || 'U'}
-                  </div>
+                  {staff.avatar_url ? (
+                    <img
+                      src={staff.avatar_url || undefined}
+                      alt={staff.full_name || 'Staff'}
+                      className="w-9 h-9 rounded-full object-cover border border-primary/20 shrink-0 bg-surface shadow-xs"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-amber-500 text-white flex items-center justify-center font-heading font-bold text-xs shrink-0 shadow-xs uppercase">
+                      {staff.full_name ? staff.full_name.slice(0, 2) : 'OP'}
+                    </div>
+                  )}
                   <span className="text-foreground">{staff.full_name}</span>
                 </td>
 

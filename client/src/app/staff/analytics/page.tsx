@@ -63,6 +63,7 @@ interface OperatorAnalyticsData {
     full_name: string;
     email: string;
     role: string;
+    avatar_url?: string | null;
     phone_number?: string;
   };
   availableOperators?: Array<{
@@ -70,6 +71,7 @@ interface OperatorAnalyticsData {
     full_name: string;
     email: string;
     role: string;
+    avatar_url?: string | null;
   }>;
   aiInsights?: {
     assessmentMarkdown: string;
@@ -83,7 +85,7 @@ export default function StaffAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [days, setDays] = useState<'7' | '30' | '90' | 'all'>('30');
-  const [loggedUser, setLoggedUser] = useState<{ id?: string; email?: string; full_name?: string; role?: string } | null>(null);
+  const [loggedUser, setLoggedUser] = useState<{ id?: string; email?: string; full_name?: string; role?: string; avatar_url?: string | null } | null>(null);
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>('');
   const [isClientInitialized, setIsClientInitialized] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<string>('ALL');
@@ -356,9 +358,17 @@ export default function StaffAnalyticsPage() {
       {/* ======================================================== */}
       <div className="bg-gradient-to-r from-orange-50/70 via-amber-50/40 to-white border border-orange-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-subtle">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center font-heading font-black text-lg shadow-md shrink-0">
-            {currentOperator?.full_name ? currentOperator.full_name.slice(0, 2).toUpperCase() : 'OP'}
-          </div>
+          {currentOperator?.avatar_url ? (
+            <img
+              src={currentOperator.avatar_url || undefined}
+              alt={currentOperator.full_name || 'Operator'}
+              className="w-12 h-12 rounded-xl object-cover border-2 border-primary/30 shadow-md shrink-0 bg-white"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center font-heading font-black text-lg shadow-md shrink-0">
+              {currentOperator?.full_name ? currentOperator.full_name.slice(0, 2).toUpperCase() : 'OP'}
+            </div>
+          )}
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-heading font-black text-ink text-base sm:text-lg">
@@ -879,6 +889,8 @@ export default function StaffAnalyticsPage() {
                   const isRejected = (log.verification_status || 'PENDING') === 'REJECTED';
                   const hasStartProof = Boolean(log.start_meter_proof_image);
                   const hasEndProof = Boolean(log.end_meter_proof_image || log.meter_proof_image);
+                  const hasStartFuelProof = Boolean(log.start_fuel_proof_image);
+                  const hasEndFuelProof = Boolean(log.end_fuel_proof_image);
                   const hasFuelProof = Boolean(log.fuel_proof_image);
 
                   return (
@@ -922,18 +934,63 @@ export default function StaffAnalyticsPage() {
                         +{hours} hrs
                       </td>
 
-                      {/* Fuel Added */}
+                      {/* Fuel Added & Gauge Readings */}
                       <td className="py-3 px-3.5 font-mono text-[11px] text-right whitespace-nowrap">
                         {log.fuel_amount > 0 ? (
-                          <span className="font-bold text-amber-700">{log.fuel_amount} L</span>
+                          <div className="font-bold text-amber-700">{log.fuel_amount} L refueled</div>
                         ) : (
-                          <span className="text-muted">—</span>
+                          <div className="text-muted">—</div>
+                        )}
+                        {(log.start_fuel_reading != null || log.end_fuel_reading != null) && (
+                          <div className="text-[10px] text-zinc-500 font-normal">
+                            Gauge: {log.start_fuel_reading != null ? log.start_fuel_reading : '-'}L → {log.end_fuel_reading != null ? log.end_fuel_reading : '-'}L
+                          </div>
                         )}
                       </td>
 
                       {/* Gauge Proofs */}
                       <td className="py-3 px-3.5 whitespace-nowrap text-center">
-                        <div className="inline-flex items-center gap-1.5">
+                        <div className="inline-flex items-center gap-1.5 flex-wrap justify-center">
+                          {hasStartFuelProof && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedProofModal({
+                                  url: log.start_fuel_proof_image!,
+                                  title: `Start Fuel Gauge: ${log.start_fuel_reading ?? ''} L`,
+                                  type: 'START_FUEL',
+                                  meter: log.start_fuel_reading,
+                                  shiftId: log.id,
+                                })
+                              }
+                              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer"
+                              title="View start fuel gauge photo"
+                            >
+                              <Fuel className="w-3 h-3 text-amber-600" />
+                              <span>Start Gauge</span>
+                            </button>
+                          )}
+
+                          {hasEndFuelProof && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedProofModal({
+                                  url: log.end_fuel_proof_image!,
+                                  title: `End Fuel Gauge: ${log.end_fuel_reading ?? ''} L`,
+                                  type: 'END_FUEL',
+                                  meter: log.end_fuel_reading,
+                                  shiftId: log.id,
+                                })
+                              }
+                              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer"
+                              title="View end fuel gauge photo"
+                            >
+                              <Fuel className="w-3 h-3 text-amber-600" />
+                              <span>End Gauge</span>
+                            </button>
+                          )}
+
                           {hasStartProof && (
                             <button
                               type="button"
@@ -946,11 +1003,11 @@ export default function StaffAnalyticsPage() {
                                   shiftId: log.id,
                                 })
                               }
-                              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-50 text-primary border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-1 cursor-pointer"
                               title="View start meter photo"
                             >
-                              <Gauge className="w-3 h-3 text-amber-600" />
-                              <span>Start</span>
+                              <Gauge className="w-3 h-3 text-primary" />
+                              <span>Start Meter</span>
                             </button>
                           )}
 
@@ -970,7 +1027,7 @@ export default function StaffAnalyticsPage() {
                               title="View end meter photo"
                             >
                               <Gauge className="w-3 h-3 text-primary" />
-                              <span>End</span>
+                              <span>End Meter</span>
                             </button>
                           )}
 
@@ -989,11 +1046,11 @@ export default function StaffAnalyticsPage() {
                               title="View fuel slip"
                             >
                               <Fuel className="w-3 h-3 text-zinc-600" />
-                              <span>Fuel</span>
+                              <span>Fuel Slip</span>
                             </button>
                           )}
 
-                          {!hasStartProof && !hasEndProof && !hasFuelProof && (
+                          {!hasStartProof && !hasEndProof && !hasStartFuelProof && !hasEndFuelProof && !hasFuelProof && (
                             <span className="text-[10px] font-mono text-muted">No photo</span>
                           )}
                         </div>

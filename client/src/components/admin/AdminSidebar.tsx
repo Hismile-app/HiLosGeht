@@ -129,8 +129,14 @@ export default function AdminSidebar() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('hlg_user');
       localStorage.removeItem('hlg_role');
+      localStorage.removeItem('hlg_token');
+      document.cookie = 'hlg_session=; path=/; max-age=0; SameSite=Lax';
+      document.cookie = 'hlg_role=; path=/; max-age=0; SameSite=Lax';
+      window.dispatchEvent(new Event('hlg_user_updated'));
+      window.location.href = '/login';
+    } else {
+      router.push('/login');
     }
-    router.push('/login');
   };
 
   const navItems = role === 'OPERATOR' ? OPERATOR_MODULES : ADMIN_MODULES;

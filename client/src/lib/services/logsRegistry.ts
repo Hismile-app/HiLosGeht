@@ -10,12 +10,18 @@ export interface OperationalStaffLog {
   work_description: string;
   yield_description?: string;
   fuel_amount: number;
+  start_fuel_reading?: number | null;
+  end_fuel_reading?: number | null;
   fuel_proof_image: string | null;
+  start_fuel_proof_image?: string | null;
+  end_fuel_proof_image?: string | null;
   materials_received: string | null;
   materials_proof_image: string | null;
   start_meter_proof_image?: string | null;
   end_meter_proof_image?: string | null;
   meter_proof_image?: string | null;
+  operator_avatar?: string | null;
+  staff_avatar?: string | null;
   date_submitted: string;
   verification_status: 'PENDING' | 'APPROVED' | 'REJECTED';
   audit_notes?: string | null;

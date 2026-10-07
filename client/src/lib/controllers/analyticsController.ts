@@ -249,13 +249,18 @@ export async function getDocumentAuditGallery(req: NextRequest, { params }: { pa
         l.start_meter,
         l.end_meter,
         l.fuel_amount,
+        l.start_fuel_reading,
+        l.end_fuel_reading,
         l.fuel_proof_image,
+        l.start_fuel_proof_image,
+        l.end_fuel_proof_image,
         l.materials_received,
         l.materials_proof_image,
         l.start_meter_proof_image,
         l.end_meter_proof_image,
         l.meter_proof_image,
         COALESCE(p.full_name, 'Operator') as operator_name,
+        p.avatar_url as operator_avatar,
         COALESCE(a.name, 'Equipment') as machine_name,
         COALESCE(a.model, 'Asset') as machine_model
       FROM public.staff_logs l
@@ -266,6 +271,8 @@ export async function getDocumentAuditGallery(req: NextRequest, { params }: { pa
          OR l.meter_proof_image IS NOT NULL
          OR l.start_meter_proof_image IS NOT NULL
          OR l.end_meter_proof_image IS NOT NULL
+         OR l.start_fuel_proof_image IS NOT NULL
+         OR l.end_fuel_proof_image IS NOT NULL
       ORDER BY l.date_submitted DESC;
     `);
 
@@ -309,7 +316,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
     // 1. Fetch certified operators from DB and merge with persistent Vercel Blob registry
     try {
       const opsRes = await db.query(`
-        SELECT id, full_name, email, role, phone_number
+        SELECT id, full_name, email, role, phone_number, avatar_url
         FROM public.profiles
         WHERE role = 'OPERATOR'
         ORDER BY created_at ASC;
@@ -334,6 +341,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
               email: bs.email,
               role: bs.role,
               phone_number: bs.phone_number,
+              avatar_url: bs.avatar_url || null,
             });
           }
         }
@@ -352,7 +360,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanStaffId);
         if (isUuid) {
           try {
-            const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE id = $1;`, [cleanStaffId]);
+            const directRes = await db.query(`SELECT id, full_name, email, role, phone_number, avatar_url FROM public.profiles WHERE id = $1;`, [cleanStaffId]);
             if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
           } catch (err: any) {}
         }
@@ -364,7 +372,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
       operatorProfile = availableOperators.find((o) => o.email?.toLowerCase() === cleanEmail);
       if (!operatorProfile) {
         try {
-          const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE LOWER(email) = $1;`, [cleanEmail]);
+          const directRes = await db.query(`SELECT id, full_name, email, role, phone_number, avatar_url FROM public.profiles WHERE LOWER(email) = $1;`, [cleanEmail]);
           if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
         } catch (err: any) {}
       }
@@ -401,7 +409,11 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
           (l.end_meter - l.start_meter) as hours_worked,
           l.work_description,
           l.fuel_amount,
+          l.start_fuel_reading,
+          l.end_fuel_reading,
           l.fuel_proof_image,
+          l.start_fuel_proof_image,
+          l.end_fuel_proof_image,
           l.materials_received,
           l.materials_proof_image,
           l.start_meter_proof_image,
@@ -412,6 +424,8 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
           l.audit_notes,
           COALESCE(p.full_name, $1) as staff_name,
           p.email as staff_email,
+          p.avatar_url as operator_avatar,
+          p.avatar_url as staff_avatar,
           COALESCE(a.name, 'Equipment') as equipment_name,
           COALESCE(a.model, 'Asset') as equipment_model,
           COALESCE(a.category, 'Heavy Equipment') as equipment_category

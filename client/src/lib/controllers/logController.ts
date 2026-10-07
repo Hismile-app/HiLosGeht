@@ -17,7 +17,11 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
       endMeter,
       workDescription,
       fuelAmount,
+      startFuelReading,
+      endFuelReading,
       fuelProofImage,
+      startFuelProofImage,
+      endFuelProofImage,
       materialsReceived,
       materialsProofImage,
       startMeterProofImage,
@@ -65,6 +69,9 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
       }
     }
 
+    const parsedStartFuel = startFuelReading !== undefined && startFuelReading !== '' ? parseFloat(startFuelReading) : null;
+    const parsedEndFuel = endFuelReading !== undefined && endFuelReading !== '' ? parseFloat(endFuelReading) : null;
+
     // 1. Attempt Database Insert
     try {
       const logRes = await db.query(`
@@ -75,7 +82,11 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
           end_meter,
           work_description,
           fuel_amount,
+          start_fuel_reading,
+          end_fuel_reading,
           fuel_proof_image,
+          start_fuel_proof_image,
+          end_fuel_proof_image,
           materials_received,
           materials_proof_image,
           start_meter_proof_image,
@@ -83,7 +94,7 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
           meter_proof_image,
           date_submitted
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW()
         ) RETURNING *;
       `, [
         resolvedStaffUuid,
@@ -92,7 +103,11 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
         endMeter,
         workDescription,
         fuelAmount || 0.0,
+        parsedStartFuel,
+        parsedEndFuel,
         fuelProofImage || null,
+        startFuelProofImage || null,
+        endFuelProofImage || null,
         materialsReceived || null,
         materialsProofImage || null,
         startMeterProofImage || null,
@@ -122,7 +137,11 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
       hours_worked: hoursWorked,
       work_description: workDescription,
       fuel_amount: parseFloat(fuelAmount || '0'),
+      start_fuel_reading: parsedStartFuel,
+      end_fuel_reading: parsedEndFuel,
       fuel_proof_image: fuelProofImage || null,
+      start_fuel_proof_image: startFuelProofImage || null,
+      end_fuel_proof_image: endFuelProofImage || null,
       materials_received: materialsReceived || null,
       materials_proof_image: materialsProofImage || null,
       start_meter_proof_image: startMeterProofImage || null,
@@ -168,7 +187,11 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
           (l.end_meter - l.start_meter) as hours_worked,
           l.work_description,
           l.fuel_amount,
+          l.start_fuel_reading,
+          l.end_fuel_reading,
           l.fuel_proof_image,
+          l.start_fuel_proof_image,
+          l.end_fuel_proof_image,
           l.materials_received,
           l.materials_proof_image,
           l.start_meter_proof_image,
@@ -181,6 +204,8 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
           COALESCE(p.full_name, 'Operator') as operator_name,
           COALESCE(p.email, 'operator@hilosgeht.co.ke') as staff_email,
           COALESCE(p.email, 'operator@hilosgeht.co.ke') as operator_email,
+          p.avatar_url as operator_avatar,
+          p.avatar_url as staff_avatar,
           l.work_description as yield_description,
           COALESCE(a.name, 'Equipment') as equipment_name,
           COALESCE(a.model, 'Asset') as equipment_model,
@@ -239,6 +264,12 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
       operator_name: l.operator_name || l.staff_name || 'Certified Operator',
       staff_email: l.staff_email || l.operator_email || 'operator@hilosgeht.co.ke',
       operator_email: l.operator_email || l.staff_email || 'operator@hilosgeht.co.ke',
+      operator_avatar: l.operator_avatar || l.staff_avatar || null,
+      staff_avatar: l.staff_avatar || l.operator_avatar || null,
+      start_fuel_reading: l.start_fuel_reading !== null && l.start_fuel_reading !== undefined ? parseFloat(l.start_fuel_reading) : null,
+      end_fuel_reading: l.end_fuel_reading !== null && l.end_fuel_reading !== undefined ? parseFloat(l.end_fuel_reading) : null,
+      start_fuel_proof_image: l.start_fuel_proof_image || null,
+      end_fuel_proof_image: l.end_fuel_proof_image || null,
       yield_description: l.yield_description || l.work_description || '',
       work_description: l.work_description || l.yield_description || '',
     }));

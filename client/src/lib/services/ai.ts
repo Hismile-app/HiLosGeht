@@ -114,6 +114,8 @@ export async function generateOperationalAIInsights(days: number = 7): Promise<A
         l.end_meter,
         (l.end_meter - l.start_meter) as hours_worked,
         l.fuel_amount,
+        l.start_fuel_reading,
+        l.end_fuel_reading,
         l.work_description,
         l.date_submitted,
         a.name as machine_name,

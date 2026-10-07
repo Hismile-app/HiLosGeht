@@ -319,12 +319,25 @@ export async function login(req: NextRequest, { params }: { params: any }) {
     // Return authenticated profile without the hash
     const { password_hash, ...safeProfile } = user;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: safeProfile,
       token: 'jwt_token_' + user.id,
       message: `Authenticated as ${safeProfile.role}: ${safeProfile.full_name}`
     }, { status: 200 });
+
+    response.cookies.set('hlg_session', user.id || user.email, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: 'lax',
+    });
+    response.cookies.set('hlg_role', safeProfile.role, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: 'lax',
+    });
+
+    return response;
 
   } catch (error: any) {
     console.error('Database authentication error:', error);

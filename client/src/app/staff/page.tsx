@@ -35,6 +35,8 @@ export default function OperatorDailyLogPage() {
   const [selectedEquipmentId, setSelectedEquipmentId] = useState('');
   const [startMeter, setStartMeter] = useState('');
   const [endMeter, setEndMeter] = useState('');
+  const [startFuelReading, setStartFuelReading] = useState('');
+  const [endFuelReading, setEndFuelReading] = useState('');
   const [workDescription, setWorkDescription] = useState('');
   const [fuelAmount, setFuelAmount] = useState('');
   const [materialsReceived, setMaterialsReceived] = useState('');
@@ -42,8 +44,10 @@ export default function OperatorDailyLogPage() {
   const [materialsImageFile, setMaterialsImageFile] = useState<string | null>(null);
   const [startMeterImageFile, setStartMeterImageFile] = useState<string | null>(null);
   const [endMeterImageFile, setEndMeterImageFile] = useState<string | null>(null);
+  const [startFuelProofImage, setStartFuelProofImage] = useState<string | null>(null);
+  const [endFuelProofImage, setEndFuelProofImage] = useState<string | null>(null);
 
-  const [currentUser, setCurrentUser] = useState<{ id?: string; full_name?: string; email?: string; role?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id?: string; full_name?: string; email?: string; role?: string; avatar_url?: string | null } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittedLog, setSubmittedLog] = useState<any | null>(null);
@@ -107,8 +111,10 @@ export default function OperatorDailyLogPage() {
   const [uploadingMat, setUploadingMat] = useState(false);
   const [uploadingStartMeter, setUploadingStartMeter] = useState(false);
   const [uploadingEndMeter, setUploadingEndMeter] = useState(false);
+  const [uploadingStartFuel, setUploadingStartFuel] = useState(false);
+  const [uploadingEndFuel, setUploadingEndFuel] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'fuel' | 'mat' | 'startMeter' | 'endMeter') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'fuel' | 'mat' | 'startMeter' | 'endMeter' | 'startFuel' | 'endFuel') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -119,6 +125,8 @@ export default function OperatorDailyLogPage() {
       else if (type === 'mat') setMaterialsImageFile(reader.result as string);
       else if (type === 'startMeter') setStartMeterImageFile(reader.result as string);
       else if (type === 'endMeter') setEndMeterImageFile(reader.result as string);
+      else if (type === 'startFuel') setStartFuelProofImage(reader.result as string);
+      else if (type === 'endFuel') setEndFuelProofImage(reader.result as string);
     };
     reader.readAsDataURL(file);
 
@@ -128,6 +136,8 @@ export default function OperatorDailyLogPage() {
       else if (type === 'mat') setUploadingMat(true);
       else if (type === 'startMeter') setUploadingStartMeter(true);
       else if (type === 'endMeter') setUploadingEndMeter(true);
+      else if (type === 'startFuel') setUploadingStartFuel(true);
+      else if (type === 'endFuel') setUploadingEndFuel(true);
 
       const formData = new FormData();
       formData.append('file', file);
@@ -143,6 +153,8 @@ export default function OperatorDailyLogPage() {
           else if (type === 'mat') setMaterialsImageFile(data.viewUrl);
           else if (type === 'startMeter') setStartMeterImageFile(data.viewUrl);
           else if (type === 'endMeter') setEndMeterImageFile(data.viewUrl);
+          else if (type === 'startFuel') setStartFuelProofImage(data.viewUrl);
+          else if (type === 'endFuel') setEndFuelProofImage(data.viewUrl);
         }
       }
     } catch (err) {
@@ -152,6 +164,8 @@ export default function OperatorDailyLogPage() {
       else if (type === 'mat') setUploadingMat(false);
       else if (type === 'startMeter') setUploadingStartMeter(false);
       else if (type === 'endMeter') setUploadingEndMeter(false);
+      else if (type === 'startFuel') setUploadingStartFuel(false);
+      else if (type === 'endFuel') setUploadingEndFuel(false);
     }
   };
 
@@ -191,7 +205,11 @@ export default function OperatorDailyLogPage() {
           endMeter: end,
           workDescription,
           fuelAmount: parseFloat(fuelAmount) || 0.0,
+          startFuelReading: startFuelReading !== '' ? parseFloat(startFuelReading) : null,
+          endFuelReading: endFuelReading !== '' ? parseFloat(endFuelReading) : null,
           fuelProofImage: fuelImageFile,
+          startFuelProofImage: startFuelProofImage,
+          endFuelProofImage: endFuelProofImage,
           materialsReceived,
           materialsProofImage: materialsImageFile,
           startMeterProofImage: startMeterImageFile,
@@ -365,27 +383,51 @@ export default function OperatorDailyLogPage() {
                 <span className="text-primary font-bold">{hoursWorked} hrs</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted">Meter Reading:</span>
+                <span className="text-muted">Hour Meter Reading:</span>
                 <span className="text-foreground font-semibold">{startMeter} → {endMeter}</span>
               </div>
+              {(startFuelReading || endFuelReading) && (
+                <div className="flex justify-between">
+                  <span className="text-muted">Fuel Gauge Reading:</span>
+                  <span className="text-foreground font-semibold">{startFuelReading || '-'} → {endFuelReading || '-'}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted">Fuel Purchased:</span>
                 <span className="text-foreground font-semibold">{fuelAmount || '0'} Litres</span>
               </div>
-              {(startMeterImageFile || endMeterImageFile) && (
+              {(startFuelProofImage || endFuelProofImage || fuelImageFile || startMeterImageFile || endMeterImageFile) && (
                 <div className="pt-2 border-t border-border mt-2">
-                  <span className="text-muted block text-[10px] mb-1 font-semibold uppercase">Machine Meter Proof Photos:</span>
-                  <div className="flex items-center gap-2">
+                  <span className="text-muted block text-[10px] mb-1.5 font-semibold uppercase">Attached Proof & Gauge Photos:</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {startFuelProofImage && (
+                      <div className="text-center">
+                        <img src={startFuelProofImage} alt="Start fuel gauge" className="w-14 h-14 object-cover rounded border border-border" />
+                        <span className="text-[9px] text-muted block mt-0.5">Start Fuel Gauge</span>
+                      </div>
+                    )}
+                    {endFuelProofImage && (
+                      <div className="text-center">
+                        <img src={endFuelProofImage} alt="End fuel gauge" className="w-14 h-14 object-cover rounded border border-border" />
+                        <span className="text-[9px] text-muted block mt-0.5">End Fuel Gauge</span>
+                      </div>
+                    )}
+                    {fuelImageFile && (
+                      <div className="text-center">
+                        <img src={fuelImageFile} alt="Fuel receipt" className="w-14 h-14 object-cover rounded border border-border" />
+                        <span className="text-[9px] text-muted block mt-0.5">Fuel Receipt</span>
+                      </div>
+                    )}
                     {startMeterImageFile && (
                       <div className="text-center">
-                        <img src={startMeterImageFile} alt="Start meter gauge" className="w-14 h-14 object-cover rounded border border-border" />
-                        <span className="text-[9px] text-muted">Start Gauge</span>
+                        <img src={startMeterImageFile} alt="Start hour meter" className="w-14 h-14 object-cover rounded border border-border" />
+                        <span className="text-[9px] text-muted block mt-0.5">Start Meter</span>
                       </div>
                     )}
                     {endMeterImageFile && (
                       <div className="text-center">
-                        <img src={endMeterImageFile} alt="End meter gauge" className="w-14 h-14 object-cover rounded border border-border" />
-                        <span className="text-[9px] text-muted">End Gauge</span>
+                        <img src={endMeterImageFile} alt="End hour meter" className="w-14 h-14 object-cover rounded border border-border" />
+                        <span className="text-[9px] text-muted block mt-0.5">End Meter</span>
                       </div>
                     )}
                   </div>
@@ -408,8 +450,12 @@ export default function OperatorDailyLogPage() {
                   setSubmittedLog(null);
                   setWorkDescription('');
                   setFuelAmount('');
+                  setStartFuelReading('');
+                  setEndFuelReading('');
                   setMaterialsReceived('');
                   setFuelImageFile(null);
+                  setStartFuelProofImage(null);
+                  setEndFuelProofImage(null);
                   setMaterialsImageFile(null);
                   setStartMeterImageFile(null);
                   setEndMeterImageFile(null);
@@ -423,13 +469,27 @@ export default function OperatorDailyLogPage() {
           <form onSubmit={handleSubmit} className="space-y-5 text-xs">
             {/* Operator Identity Indicator */}
             <div className="p-3 bg-orange-50/70 border border-orange-200 rounded-xl flex items-center justify-between text-xs font-mono">
-              <div className="flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-primary shrink-0" />
-                <span className="text-muted">Operator:</span>
-                <span className="font-bold text-ink">{currentUser?.full_name || 'Certified Operator'}</span>
-                {currentUser?.email && (
-                  <span className="text-muted text-[11px] hidden sm:inline">({currentUser.email})</span>
+              <div className="flex items-center gap-2.5">
+                {currentUser?.avatar_url ? (
+                  <img
+                    src={currentUser.avatar_url || undefined}
+                    alt={currentUser.full_name || 'Operator'}
+                    className="w-8 h-8 rounded-full object-cover border border-primary/30 shadow-subtle shrink-0"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                    {(currentUser?.full_name || 'OP').slice(0, 2).toUpperCase()}
+                  </div>
                 )}
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted text-[11px]">Operator:</span>
+                    <span className="font-bold text-ink">{currentUser?.full_name || 'Certified Operator'}</span>
+                  </div>
+                  {currentUser?.email && (
+                    <span className="text-muted text-[10px] block">{currentUser.email}</span>
+                  )}
+                </div>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                 LOGGED IN
@@ -456,12 +516,12 @@ export default function OperatorDailyLogPage() {
               </select>
             </div>
 
-            {/* Hour Meter Inputs with Machine Meter Proof Photos */}
+            {/* Hour Meter Inputs */}
             <div className="p-4 bg-orange-50/50 border border-orange-200/80 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-bold text-zinc-800 text-xs flex items-center gap-1.5">
-                  <Gauge className="w-4 h-4 text-primary" />
-                  Machine Hour Meter Readings & Gauge Photos *
+                  <Clock className="w-4 h-4 text-primary" />
+                  Machine Hour Meter Readings *
                 </span>
                 <span className="text-[10px] font-mono text-primary font-semibold">
                   Required for Billing & PM Audit
@@ -469,110 +529,38 @@ export default function OperatorDailyLogPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Start Hour Meter & Photo */}
+                {/* Start Hour Meter */}
                 <div className="p-3 bg-white border border-border rounded-lg space-y-2">
-                  <div>
-                    <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
-                      <Clock className="w-3.5 h-3.5 text-primary" />
-                      Start Hour Meter (hrs) *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      required
-                      placeholder="e.g. 41.0"
-                      value={startMeter}
-                      onChange={(e) => setStartMeter(e.target.value)}
-                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-muted text-[11px] font-mono mb-1 flex items-center gap-1">
-                      <Camera className="w-3 h-3 text-primary" />
-                      Start Gauge Meter Photo Proof
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'startMeter')}
-                      className="w-full text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
-                    />
-                    {uploadingStartMeter && (
-                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading start meter photo...</p>
-                    )}
-                    {startMeterImageFile && (
-                      <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-surface border border-border rounded-lg">
-                        <img src={startMeterImageFile} alt="Start meter proof" className="w-10 h-10 object-cover rounded" />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Start Meter Photo
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setStartMeterImageFile(null)}
-                          className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
-                          title="Remove photo"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
+                    <Clock className="w-3.5 h-3.5 text-primary" />
+                    Start Hour Meter (hrs) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    placeholder="e.g. 41.0"
+                    value={startMeter}
+                    onChange={(e) => setStartMeter(e.target.value)}
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
+                  />
                 </div>
 
-                {/* End Hour Meter & Photo */}
+                {/* End Hour Meter */}
                 <div className="p-3 bg-white border border-border rounded-lg space-y-2">
-                  <div>
-                    <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
-                      <Clock className="w-3.5 h-3.5 text-primary" />
-                      End Hour Meter (hrs) *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      required
-                      placeholder="e.g. 48.0"
-                      value={endMeter}
-                      onChange={(e) => setEndMeter(e.target.value)}
-                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-muted text-[11px] font-mono mb-1 flex items-center gap-1">
-                      <Camera className="w-3 h-3 text-primary" />
-                      End Gauge Meter Photo Proof
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'endMeter')}
-                      className="w-full text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
-                    />
-                    {uploadingEndMeter && (
-                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading end meter photo...</p>
-                    )}
-                    {endMeterImageFile && (
-                      <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-surface border border-border rounded-lg">
-                        <img src={endMeterImageFile} alt="End meter proof" className="w-10 h-10 object-cover rounded" />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> End Meter Photo
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setEndMeterImageFile(null)}
-                          className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
-                          title="Remove photo"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
+                    <Clock className="w-3.5 h-3.5 text-primary" />
+                    End Hour Meter (hrs) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    placeholder="e.g. 48.0"
+                    value={endMeter}
+                    onChange={(e) => setEndMeter(e.target.value)}
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
+                  />
                 </div>
               </div>
             </div>
@@ -601,55 +589,177 @@ export default function OperatorDailyLogPage() {
               />
             </div>
 
-            {/* Purchases / Fuel */}
-            <div className="p-4 bg-surface rounded-xl border border-border space-y-3">
-              <div className="flex items-center gap-2 font-mono text-foreground font-semibold">
-                <Fuel className="w-4 h-4 text-primary" />
-                <span>Fuel Purchase & Receipt</span>
-              </div>
-              
-              <div>
-                <label className="block text-muted text-[11px] font-mono mb-1">
-                  Fuel Volume Purchased (Litres)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="e.g. 92.12"
-                  value={fuelAmount}
-                  onChange={(e) => setFuelAmount(e.target.value)}
-                  className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                />
+            {/* Fuel Readings & Gauge Photos Proof Section */}
+            <div className="p-4 bg-surface rounded-xl border border-border space-y-4">
+              <div className="flex items-center justify-between border-b border-border/80 pb-2">
+                <span className="font-mono font-bold text-foreground text-xs flex items-center gap-1.5">
+                  <Gauge className="w-4 h-4 text-primary" />
+                  Fuel Gauge Readings & Gauge Photos Proof
+                </span>
+                <span className="text-[10px] font-mono text-primary font-semibold">
+                  Tank Level Diagnostics
+                </span>
               </div>
 
-              <div>
-                <label className="block text-muted text-[11px] font-mono mb-1">
-                  Upload M-Pesa Fuel Receipt / Physical Invoice
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, 'fuel')}
-                  className="w-full text-xs text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
-                />
-                {uploadingFuel && (
-                  <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading fuel invoice...</p>
-                )}
-                {fuelImageFile && (
-                  <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-white border border-border rounded-lg">
-                    <img src={fuelImageFile} alt="Fuel proof" className="w-10 h-10 object-cover rounded" />
-                    <span className="text-[10px] text-emerald-700 font-mono font-bold flex-1 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Fuel Receipt Attached
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setFuelImageFile(null)}
-                      className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
-                    >
-                      ✕
-                    </button>
+              {/* Start & End Fuel Gauge Readings + Gauge Photos Proof */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Start Fuel Gauge & Photo */}
+                <div className="p-3 bg-white border border-border rounded-lg space-y-2.5">
+                  <div>
+                    <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
+                      <Fuel className="w-3.5 h-3.5 text-primary" />
+                      Start Fuel Reading (Litres / Level)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="e.g. 120.0"
+                      value={startFuelReading}
+                      onChange={(e) => setStartFuelReading(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
+                    />
                   </div>
-                )}
+
+                  <div>
+                    <label className="block text-muted text-[11px] font-mono mb-1 flex items-center gap-1">
+                      <Camera className="w-3 h-3 text-primary" />
+                      Start Gauge Photo Proof
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'startFuel')}
+                      className="w-full text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
+                    />
+                    {uploadingStartFuel && (
+                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading start gauge photo...</p>
+                    )}
+                    {startFuelProofImage && (
+                      <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-surface border border-border rounded-lg">
+                        <img src={startFuelProofImage} alt="Start fuel gauge proof" className="w-10 h-10 object-cover rounded" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Start Gauge Photo
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setStartFuelProofImage(null)}
+                          className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
+                          title="Remove photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* End Fuel Gauge & Photo */}
+                <div className="p-3 bg-white border border-border rounded-lg space-y-2.5">
+                  <div>
+                    <label className="block text-zinc-700 font-mono mb-1 flex items-center gap-1.5 font-semibold">
+                      <Fuel className="w-3.5 h-3.5 text-primary" />
+                      End Fuel Reading (Litres / Level)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="e.g. 75.0"
+                      value={endFuelReading}
+                      onChange={(e) => setEndFuelReading(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-muted text-[11px] font-mono mb-1 flex items-center gap-1">
+                      <Camera className="w-3 h-3 text-primary" />
+                      End Gauge Photo Proof
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'endFuel')}
+                      className="w-full text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
+                    />
+                    {uploadingEndFuel && (
+                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading end gauge photo...</p>
+                    )}
+                    {endFuelProofImage && (
+                      <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-surface border border-border rounded-lg">
+                        <img src={endFuelProofImage} alt="End fuel gauge proof" className="w-10 h-10 object-cover rounded" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> End Gauge Photo
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEndFuelProofImage(null)}
+                          className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
+                          title="Remove photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Fuel Purchased & Receipt Upload */}
+              <div className="pt-2 border-t border-border space-y-3">
+                <div className="flex items-center gap-2 font-mono text-zinc-800 text-xs font-semibold">
+                  <Fuel className="w-3.5 h-3.5 text-primary" />
+                  <span>Diesel Refueling & Receipt Slip (If Refueled)</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-muted text-[11px] font-mono mb-1">
+                      Fuel Volume Purchased (Litres)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 50.0"
+                      value={fuelAmount}
+                      onChange={(e) => setFuelAmount(e.target.value)}
+                      className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-muted text-[11px] font-mono mb-1">
+                      Upload Fuel Receipt / Invoice Photo
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'fuel')}
+                      className="w-full text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-surface-hover file:text-foreground hover:file:bg-orange-50 hover:file:text-primary cursor-pointer"
+                    />
+                    {uploadingFuel && (
+                      <p className="text-[10px] text-primary font-mono mt-1 animate-pulse">Uploading fuel invoice...</p>
+                    )}
+                    {fuelImageFile && (
+                      <div className="mt-1.5 flex items-center gap-2 p-1.5 bg-white border border-border rounded-lg">
+                        <img src={fuelImageFile} alt="Fuel proof" className="w-10 h-10 object-cover rounded" />
+                        <span className="text-[10px] text-emerald-700 font-mono font-bold flex-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Fuel Receipt Attached
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setFuelImageFile(null)}
+                          className="text-zinc-400 hover:text-rose-600 p-1 text-xs"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
