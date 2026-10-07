@@ -81,18 +81,9 @@ export const SEED_PROFILES: StoredProfile[] = [
     phone_number: '+254717186396',
     role: 'ADMIN',
     account_status: 'ACTIVE',
-    password_hash: '1a39ea17ac8b37f6fc158e8ecfa679dcb262a9857e042bb0700b8e83235e2775', // SHA256 of 'Admin 321'
+    password_hash: '1a39ea17ac8b37f6fc158e8ecfa679dcb262a9857e042bb0700b8e83235e2775', // Admin 321
     created_at: '2026-09-01T00:00:00Z',
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000002',
-    full_name: 'Brian K. (Lead Operator - Meru Quarry)',
-    email: 'kbrian1237@gmail.com',
-    phone_number: '+254748866823',
-    role: 'OPERATOR',
-    account_status: 'ACTIVE',
-    password_hash: 'afeb25bf07c9ea1803c3ea001b66f8fee3dbd412291110b0776fa57ee46d4ca4', // SHA256 of 'OperatorPass123'
-    created_at: '2026-09-02T00:00:00Z',
+    avatar_url: '/avatars/avatar-4.svg',
   },
   {
     id: '90bb2eaa-fc49-4d08-bc01-bf401124ce74',
@@ -101,8 +92,42 @@ export const SEED_PROFILES: StoredProfile[] = [
     phone_number: '0788183496',
     role: 'OPERATOR',
     account_status: 'ACTIVE',
-    password_hash: '481a48e9647afdc33c07b964725d23ba6fcd57df0f3ecc921c8d0e49d0fb0bbf', // SHA256 of '0788183496'
+    password_hash: '481a48e9647afdc33c07b964725d23ba6fcd57df0f3ecc921c8d0e49d0fb0bbf', // 0788183496
     created_at: '2026-10-07T12:00:00Z',
+    avatar_url: '/avatars/avatar-5.svg',
+  },
+  {
+    id: '22222222-2222-2222-2222-222222222201',
+    full_name: 'Joseph Mbogo',
+    email: 'joseph.mbogo@hilosgeht.co.ke',
+    phone_number: '0728803790',
+    role: 'OPERATOR',
+    account_status: 'ACTIVE',
+    password_hash: 'c5f323bee5dea9f9a19dd89ade34963c44d21cb30304611f1d0e5515411b7b83', // 0728803790
+    created_at: '2026-09-05T00:00:00Z',
+    avatar_url: '/avatars/avatar-1.svg',
+  },
+  {
+    id: '22222222-2222-2222-2222-222222222202',
+    full_name: 'Fredrick Mutuma',
+    email: 'fredrick.mutuma@hilosgeht.co.ke',
+    phone_number: '0717186396',
+    role: 'OPERATOR',
+    account_status: 'ACTIVE',
+    password_hash: '0ce9b2b3900f36b34e08275be31cd3b5139bc1848df8084a6418d73a6201d80f', // 0717186396
+    created_at: '2026-08-19T00:00:00Z',
+    avatar_url: '/avatars/avatar-2.svg',
+  },
+  {
+    id: '22222222-2222-2222-2222-222222222203',
+    full_name: 'Felix Maore',
+    email: 'felix.maore@hilosgeht.co.ke',
+    phone_number: '0729139178',
+    role: 'OPERATOR',
+    account_status: 'ACTIVE',
+    password_hash: 'cc6b030eb004f629fd3041a4d27cc411c04ddf956095c48a6b8a93fe60f99bc6', // 0729139178
+    created_at: '2026-08-19T00:00:00Z',
+    avatar_url: '/avatars/avatar-3.svg',
   },
 ];
 

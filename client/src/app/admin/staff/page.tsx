@@ -285,7 +285,7 @@ export default function StaffManagementPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Peter Mwiti (Grader Specialist)"
+                    placeholder="e.g. Fredrick Mutuma (Backhoe Operator)"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground focus:border-primary focus:bg-white focus:outline-none"

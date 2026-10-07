@@ -32,15 +32,27 @@ VALUES
 ),
 (
     '11111111-1111-1111-1111-111111111103',
-    'JCB 3DXPLUS Backhoe Loader',
+    'JCB 3DX Backhoe Loader (Machine A)',
     'Backhoe',
-    'JCB 3DXPLUS',
+    'JCB 3DX - 3654401',
     0.00,
     'AVAILABLE',
-    '/images/equipment/jcb_3dxplus.png',
-    128.0,
-    'JCB-3DXP-KE-003',
-    '{"engine_power": "55 kW / 74 HP", "operating_weight": "7,460 kg", "loader_capacity": "1.1 m3", "backhoe_depth": "4.77 m", "telematics": "JCB LiveLink Ready"}'::jsonb
+    '/images/equipment/backhoe.jpg',
+    291.7,
+    'JCB-3654401',
+    '{"serial_number": "3654401", "engine_power": "55 kW / 74 HP", "operating_weight": "7,460 kg", "loader_capacity": "1.1 m3", "telematics": "JCB LiveLink Ready"}'::jsonb
+),
+(
+    '11111111-1111-1111-1111-111111111109',
+    'JCB 3DX Backhoe Loader (Machine B)',
+    'Backhoe',
+    'JCB 3DX - 3654406',
+    0.00,
+    'AVAILABLE',
+    '/images/equipment/backhoe.jpg',
+    201.0,
+    'JCB-3654406',
+    '{"serial_number": "3654406", "engine_power": "55 kW / 74 HP", "operating_weight": "7,460 kg", "loader_capacity": "1.1 m3", "telematics": "JCB LiveLink Ready"}'::jsonb
 ),
 (
     '11111111-1111-1111-1111-111111111104',
@@ -135,13 +147,40 @@ VALUES
     '1a39ea17ac8b37f6fc158e8ecfa679dcb262a9857e042bb0700b8e83235e2775' -- SHA256 of 'Admin 321'
 ),
 (
-    '00000000-0000-0000-0000-000000000002',
-    'Brian K. (Lead Operator - Meru Quarry)',
-    'kbrian1237@gmail.com',
-    '+254748866823',
+    '90bb2eaa-fc49-4d08-bc01-bf401124ce74',
+    'kb 1445 testor operator',
+    'kbrian1445@gmail.com',
+    '0788183496',
     'OPERATOR',
     'ACTIVE',
-    'afeb25bf07c9ea1803c3ea001b66f8fee3dbd412291110b0776fa57ee46d4ca4' -- SHA256 of 'OperatorPass123'
+    '481a48e9647afdc33c07b964725d23ba6fcd57df0f3ecc921c8d0e49d0fb0bbf' -- SHA256 of '0788183496'
+),
+(
+    '22222222-2222-2222-2222-222222222201',
+    'Joseph Mbogo',
+    'joseph.mbogo@hilosgeht.co.ke',
+    '0728803790',
+    'OPERATOR',
+    'ACTIVE',
+    'c5f323bee5dea9f9a19dd89ade34963c44d21cb30304611f1d0e5515411b7b83' -- SHA256 of '0728803790'
+),
+(
+    '22222222-2222-2222-2222-222222222202',
+    'Fredrick Mutuma',
+    'fredrick.mutuma@hilosgeht.co.ke',
+    '0717186396',
+    'OPERATOR',
+    'ACTIVE',
+    '0ce9b2b3900f36b34e08275be31cd3b5139bc1848df8084a6418d73a6201d80f' -- SHA256 of '0717186396'
+),
+(
+    '22222222-2222-2222-2222-222222222203',
+    'Felix Maore',
+    'felix.maore@hilosgeht.co.ke',
+    '0729139178',
+    'OPERATOR',
+    'ACTIVE',
+    'cc6b030eb004f629fd3041a4d27cc411c04ddf956095c48a6b8a93fe60f99bc6' -- SHA256 of '0729139178'
 )
 ON CONFLICT (email) DO UPDATE SET
     full_name = EXCLUDED.full_name,
