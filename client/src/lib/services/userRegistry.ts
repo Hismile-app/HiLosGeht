@@ -78,7 +78,7 @@ export const SEED_PROFILES: StoredProfile[] = [
     id: '00000000-0000-0000-0000-000000000001',
     full_name: 'HLG Admin Dispatcher',
     email: 'hilosgehtinfo@gmail.com',
-    phone_number: '+254717186396',
+    phone_number: '+254748866823',
     role: 'ADMIN',
     account_status: 'ACTIVE',
     password_hash: '1a39ea17ac8b37f6fc158e8ecfa679dcb262a9857e042bb0700b8e83235e2775', // Admin 321

@@ -265,9 +265,10 @@ export async function login(req: NextRequest, { params }: { params: any }) {
     const hash = crypto.createHash('sha256').update(cleanPassword).digest('hex');
     let user: any = null;
 
-    // 1. Primary Database Query: Verify user from public.profiles with phone normalization
+    // 1. Primary Database Query: Gather candidate users matching identifier
     const phoneVariants = getPhoneVariants(identifier);
     const phoneDigits = phoneVariants.map(v => v.replace(/\D/g, '')).filter(Boolean);
+    let candidateUsers: any[] = [];
 
     try {
       const result = await db.query(`
@@ -280,37 +281,77 @@ export async function login(req: NextRequest, { params }: { params: any }) {
           OR REGEXP_REPLACE(phone_number, '[^0-9]', '', 'g') = ANY($3::text[])
           OR (LOWER($1) IN ('adminhlg', 'admin') AND role = 'ADMIN')
           OR full_name ILIKE $1
-        )
-        LIMIT 1;
+        );
       `, [identifier, phoneVariants, phoneDigits]);
 
-      if (result.rows.length > 0) {
-        user = result.rows[0];
-      }
+      candidateUsers = result.rows;
     } catch (dbErr: any) {
       console.warn('⚠️ Database query failed for login, checking Vercel Blob registry:', dbErr.message);
     }
 
     // 2. High-availability fallback: Check Vercel Blob persistent registry
-    if (!user) {
-      user = await findStaffByIdentifier(identifier);
+    if (candidateUsers.length === 0) {
+      const blobUser = await findStaffByIdentifier(identifier);
+      if (blobUser) {
+        candidateUsers.push(blobUser);
+      }
     }
 
     // 3. Fallback: Check SEED_PROFILES directly
-    if (!user) {
+    if (candidateUsers.length === 0) {
       const cleanIdent = identifier.toLowerCase();
-      user = SEED_PROFILES.find(p => 
+      const seedMatches = SEED_PROFILES.filter(p => 
         p.email.toLowerCase() === cleanIdent ||
         phonesMatch(p.phone_number, identifier) ||
         (cleanIdent === 'adminhlg' && p.role === 'ADMIN') ||
         p.full_name.toLowerCase().includes(cleanIdent)
-      ) || null;
+      );
+      candidateUsers.push(...seedMatches);
     }
+
+    if (candidateUsers.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Account not found in registry. Contact administration at 0748866823 (Staff Only).'
+      }, { status: 401 });
+    }
+
+    // Password validator function
+    const validateUserPassword = (u: any) => {
+      const userPhoneNorm = u.phone_number ? normalizePhone(u.phone_number) : '';
+      const passNorm = normalizePhone(cleanPassword);
+
+      const phoneHashes: string[] = [];
+      if (u.phone_number) {
+        const userVariants = getPhoneVariants(u.phone_number);
+        for (const v of userVariants) {
+          phoneHashes.push(crypto.createHash('sha256').update(v).digest('hex'));
+        }
+      }
+
+      return (
+        u.password_hash === hash ||
+        u.password_hash === cleanPassword ||
+        (phoneHashes.length > 0 && phoneHashes.includes(u.password_hash)) ||
+        (u.role === 'OPERATOR' && (
+          (userPhoneNorm && passNorm && userPhoneNorm === passNorm) ||
+          cleanPassword === 'OperatorPass123' ||
+          (userPhoneNorm && cleanPassword === userPhoneNorm)
+        )) ||
+        (u.role === 'ADMIN' && (
+          cleanPassword === 'Admin 321' ||
+          cleanPassword === 'HiLosGeht123'
+        ))
+      );
+    };
+
+    // Find the candidate whose password matches
+    user = candidateUsers.find(validateUserPassword);
 
     if (!user) {
       return NextResponse.json({
         success: false,
-        error: 'Account not found in registry. Contact administration at 0748866823 (Staff Only).'
+        error: 'Incorrect password. Please verify credentials or contact 0748866823.'
       }, { status: 401 });
     }
 
@@ -320,34 +361,6 @@ export async function login(req: NextRequest, { params }: { params: any }) {
         success: false,
         error: 'Account has been deactivated. Please contact fleet administration.'
       }, { status: 403 });
-    }
-
-    // Verify Password Hash (SHA-256 or initial plain match if unmigrated)
-    const userPhoneNorm = user.phone_number ? normalizePhone(user.phone_number) : '';
-    const passNorm = normalizePhone(cleanPassword);
-
-    // Compute hashes for all possible phone representations if account used phone as password
-    const phoneHashes: string[] = [];
-    if (user.phone_number) {
-      const userVariants = getPhoneVariants(user.phone_number);
-      for (const v of userVariants) {
-        phoneHashes.push(crypto.createHash('sha256').update(v).digest('hex'));
-      }
-    }
-
-    const isPasswordValid = 
-      user.password_hash === hash || 
-      user.password_hash === cleanPassword ||
-      (phoneHashes.length > 0 && phoneHashes.includes(user.password_hash)) ||
-      (userPhoneNorm && passNorm && userPhoneNorm === passNorm) ||
-      (user.role === 'ADMIN' && (cleanPassword === 'Admin 321' || cleanPassword === 'HiLosGeht123')) ||
-      (user.role === 'OPERATOR' && (cleanPassword === 'OperatorPass123' || (userPhoneNorm && cleanPassword === userPhoneNorm)));
-
-    if (!isPasswordValid) {
-      return NextResponse.json({
-        success: false,
-        error: 'Incorrect password. Please verify credentials or contact 0748866823.'
-      }, { status: 401 });
     }
 
     // Auto-heal password_hash in Blob registry or DB if it was missing/empty

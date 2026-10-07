@@ -141,7 +141,7 @@ VALUES
     '00000000-0000-0000-0000-000000000001',
     'HLG Admin Dispatcher',
     'hilosgehtinfo@gmail.com',
-    '+254717186396',
+    '+254748866823',
     'ADMIN',
     'ACTIVE',
     '1a39ea17ac8b37f6fc158e8ecfa679dcb262a9857e042bb0700b8e83235e2775' -- SHA256 of 'Admin 321'
