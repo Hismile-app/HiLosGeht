@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bg6" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#78350F"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </linearGradient>
+    <linearGradient id="hat6" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB923C"/>
+      <stop offset="100%" stop-color="#EA580C"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg6)" stroke="#FB923C" stroke-width="3"/>
+  <path d="M26 108 C26 88 42 78 60 78 C78 78 94 88 94 108 Z" fill="#1F2937"/>
+  <path d="M38 88 L46 108 L74 108 L82 88 L72 85 L60 96 L48 85 Z" fill="#F59E0B"/>
+  <rect x="52" y="68" width="16" height="15" rx="4" fill="#C68B59"/>
+  <circle cx="60" cy="54" r="20" fill="#D49A6A"/>
+  <!-- Communication Headset -->
+  <path d="M38 46 C34 46 34 60 38 60" stroke="#0F172A" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M38 58 Q42 66 52 65" stroke="#0F172A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="53" cy="65" r="2.5" fill="#EF4444"/>
+  <circle cx="53" cy="53" r="2.5" fill="#1F2937"/>
+  <circle cx="67" cy="53" r="2.5" fill="#1F2937"/>
+  <path d="M54 64 Q60 68 66 64" stroke="#1F2937" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Orange Hard Hat -->
+  <path d="M38 42 C38 24 50 18 60 18 C70 18 82 24 82 42 Z" fill="url(#hat6)"/>
+  <path d="M32 42 L88 42 C88 42 86 46 60 46 C34 46 32 42 32 42 Z" fill="#C2410C"/>
+</svg>

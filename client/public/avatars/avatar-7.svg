@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bg7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14532D"/>
+      <stop offset="100%" stop-color="#052E16"/>
+    </linearGradient>
+    <linearGradient id="hat7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#16A34A"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg7)" stroke="#4ADE80" stroke-width="3"/>
+  <path d="M26 108 C26 88 42 78 60 78 C78 78 94 88 94 108 Z" fill="#0F172A"/>
+  <path d="M38 88 L46 108 L74 108 L82 88 L72 85 L60 96 L48 85 Z" fill="#F97316"/>
+  <rect x="52" y="68" width="16" height="15" rx="4" fill="#BB7E5D"/>
+  <circle cx="60" cy="54" r="20" fill="#CE9372"/>
+  <circle cx="53" cy="53" r="2.5" fill="#1C1917"/>
+  <circle cx="67" cy="53" r="2.5" fill="#1C1917"/>
+  <!-- Trim mustache -->
+  <path d="M52 61 Q60 59 68 61 Q60 65 52 61 Z" fill="#292524"/>
+  <path d="M55 66 Q60 69 65 66" stroke="#292524" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Green Fleet Master Hard Hat -->
+  <path d="M38 42 C38 24 50 18 60 18 C70 18 82 24 82 42 Z" fill="url(#hat7)"/>
+  <path d="M32 42 L88 42 C88 42 86 46 60 46 C34 46 32 42 32 42 Z" fill="#15803D"/>
+  <circle cx="60" cy="30" r="4" fill="#FEF08A"/>
+</svg>

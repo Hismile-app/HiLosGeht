@@ -73,6 +73,26 @@ export default function AdminSidebar() {
     }
   }, [pathname]);
 
+  // Sync profile changes in real time across components
+  useEffect(() => {
+    const handleUserSync = () => {
+      if (typeof window !== 'undefined') {
+        const storedUser = localStorage.getItem('hlg_user');
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch (e) {}
+        }
+      }
+    };
+    window.addEventListener('hlg_user_updated', handleUserSync);
+    window.addEventListener('storage', handleUserSync);
+    return () => {
+      window.removeEventListener('hlg_user_updated', handleUserSync);
+      window.removeEventListener('storage', handleUserSync);
+    };
+  }, []);
+
   // Close drawer on route change
   useEffect(() => {
     setIsOpen(false);
@@ -149,8 +169,25 @@ export default function AdminSidebar() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full ${
+        <div className="flex items-center gap-2.5 shrink-0">
+          <Link 
+            href="/staff/profile" 
+            className="flex items-center gap-1.5 group" 
+            title="My Profile"
+          >
+            {user?.avatar_url ? (
+              <img 
+                src={user.avatar_url} 
+                alt="" 
+                className="w-7 h-7 rounded-full object-cover border-2 border-primary/40 group-hover:border-primary transition-colors" 
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center uppercase">
+                {user?.full_name ? user.full_name.slice(0, 2) : 'OP'}
+              </div>
+            )}
+          </Link>
+          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
             role === 'ADMIN' ? 'bg-orange-100 text-orange-900 border border-orange-200' : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
           }`}>
             {role}
@@ -174,152 +211,174 @@ export default function AdminSidebar() {
       {/* ======================================================== */}
       <aside
         className={`
-          bg-surface border-r border-border shrink-0 p-4 space-y-5
+          bg-surface border-r border-border shrink-0 p-4 flex flex-col min-h-screen
           lg:static lg:translate-x-0 lg:w-64 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:z-30
           fixed inset-y-0 left-0 z-50 w-72 sm:w-80 h-full overflow-y-auto transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        {/* Sticky Role & Brand Header */}
-        <div className="sticky top-0 z-20 bg-surface pt-1 pb-2 -mt-1">
-          <div className="px-3.5 py-3 bg-white rounded-xl border border-border shadow-subtle">
-            <div className="flex items-center justify-between gap-2">
-              <Link 
-                href="/" 
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2 group min-w-0" 
-                title="Return to Public Website"
-              >
-                <img
-                  src="/logo.png"
-                  alt="Hi Los Geht Logo"
-                  className="w-6 h-6 object-contain shrink-0 group-hover:scale-105 transition-transform"
-                />
-                <span className="font-heading font-black text-xs uppercase tracking-wider text-primary truncate">
-                  {role === 'ADMIN' ? 'HLG Command Hub' : 'Operator Field Hub'}
-                </span>
-              </Link>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                  role === 'ADMIN' ? 'bg-orange-100 text-orange-900 border border-orange-200' : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-                }`}>
-                  {role}
-                </span>
-                {/* Close Button on Mobile */}
-                <button
-                  type="button"
+        <div className="space-y-5 flex-1">
+          {/* Sticky Role & Brand Header */}
+          <div className="sticky top-0 z-20 bg-surface pt-1 pb-2 -mt-1">
+            <div className="px-3.5 py-3 bg-white rounded-xl border border-border shadow-subtle">
+              <div className="flex items-center justify-between gap-2">
+                <Link 
+                  href="/" 
                   onClick={() => setIsOpen(false)}
-                  className="lg:hidden p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
-                  title="Close sidebar"
-                  aria-label="Close sidebar"
+                  className="flex items-center gap-2 group min-w-0" 
+                  title="Return to Public Website"
                 >
-                  <X className="w-4 h-4" />
-                </button>
+                  <img
+                    src="/logo.png"
+                    alt="Hi Los Geht Logo"
+                    className="w-6 h-6 object-contain shrink-0 group-hover:scale-105 transition-transform"
+                  />
+                  <span className="font-heading font-black text-xs uppercase tracking-wider text-primary truncate">
+                    {role === 'ADMIN' ? 'HLG Command Hub' : 'Operator Field Hub'}
+                  </span>
+                </Link>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                    role === 'ADMIN' ? 'bg-orange-100 text-orange-900 border border-orange-200' : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                  }`}>
+                    {role}
+                  </span>
+                  {/* Close Button on Mobile */}
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="lg:hidden p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    title="Close sidebar"
+                    aria-label="Close sidebar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="text-[11px] text-muted font-mono mt-1 pl-8">
-              {role === 'ADMIN' ? '12-Module Industrial Platform' : 'Field Operations & Daily Logging'}
+              <div className="text-[11px] text-muted font-mono mt-1 pl-8">
+                {role === 'ADMIN' ? '12-Module Industrial Platform' : 'Field Operations & Daily Logging'}
+              </div>
             </div>
           </div>
+
+          {/* Nav Module Links */}
+          <nav className="space-y-1">
+            {/* Home Item leading to Public Site */}
+            <a
+              href="https://hi-los-geht.vercel.app/"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all text-zinc-800 hover:text-primary hover:bg-orange-50/80 border border-border/60 bg-white mb-2 shadow-subtle group"
+            >
+              <div className="flex items-center gap-2.5">
+                <Home className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                <span>Home (Public Site)</span>
+              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary transition-colors" />
+            </a>
+
+            {navItems.map((mod) => {
+              const Icon = mod.icon;
+              const isActive = pathname === mod.path;
+              return (
+                <Link
+                  key={mod.path}
+                  href={mod.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-primary text-white font-bold shadow-orange'
+                      : 'text-foreground hover:text-primary hover:bg-surface-hover'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-primary'}`} />
+                    <span>{mod.name}</span>
+                  </div>
+                  {isActive && <ChevronRight className="w-3.5 h-3.5 text-white" />}
+                </Link>
+              );
+            })}
+
+            {/* Admin extra links to Operator view */}
+            {role === 'ADMIN' && (
+              <div className="pt-2 mt-2 border-t border-border space-y-1">
+                <div className="px-3 py-1 text-[10px] font-mono text-muted uppercase font-bold">
+                  Field Operations Quick-Link
+                </div>
+                <Link
+                  href="/staff"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                    pathname === '/staff' ? 'bg-orange-50 text-primary font-bold' : 'text-zinc-600 hover:text-primary hover:bg-surface-hover'
+                  }`}
+                >
+                  <ClipboardList className="w-4 h-4 text-primary" />
+                  <span>Operator Daily Log View</span>
+                </Link>
+                <Link
+                  href="/staff/analytics"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                    pathname === '/staff/analytics' ? 'bg-orange-50 text-primary font-bold' : 'text-zinc-600 hover:text-primary hover:bg-surface-hover'
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <span>Operator Analytics View</span>
+                </Link>
+              </div>
+            )}
+          </nav>
         </div>
 
-        {/* Nav Module Links */}
-        <nav className="space-y-1">
-          {/* Home Item leading to Public Site */}
-          <a
-            href="https://hi-los-geht.vercel.app/"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all text-zinc-800 hover:text-primary hover:bg-orange-50/80 border border-border/60 bg-white mb-2 shadow-subtle group"
-          >
-            <div className="flex items-center gap-2.5">
-              <Home className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-              <span>Home (Public Site)</span>
-            </div>
-            <ExternalLink className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary transition-colors" />
-          </a>
-
-          {navItems.map((mod) => {
-            const Icon = mod.icon;
-            const isActive = pathname === mod.path;
-            return (
-              <Link
-                key={mod.path}
-                href={mod.path}
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
-                  isActive
-                    ? 'bg-primary text-white font-bold shadow-orange'
-                    : 'text-foreground hover:text-primary hover:bg-surface-hover'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-primary'}`} />
-                  <span>{mod.name}</span>
+        {/* Bottom Section - Sticks to End of Sidenav */}
+        <div className="mt-auto pt-4 space-y-3 shrink-0">
+          {/* User Session Pill with Round Profile Picture */}
+          <div className="p-2.5 bg-white rounded-xl border border-border shadow-subtle flex items-center justify-between gap-2.5 hover:border-primary/40 transition-colors">
+            <Link
+              href="/staff/profile"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 min-w-0 flex-1 group"
+              title="View & Edit Profile"
+            >
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user?.full_name || 'User'}
+                  className="w-9 h-9 rounded-full object-cover border-2 border-primary/30 group-hover:border-primary shrink-0 transition-colors bg-surface"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-amber-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-primary/20 shadow-xs uppercase">
+                  {user?.full_name ? user.full_name.slice(0, 2) : (role === 'ADMIN' ? 'AD' : 'OP')}
                 </div>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-white" />}
-              </Link>
-            );
-          })}
-
-          {/* Admin extra links to Operator view */}
-          {role === 'ADMIN' && (
-            <div className="pt-2 mt-2 border-t border-border space-y-1">
-              <div className="px-3 py-1 text-[10px] font-mono text-muted uppercase font-bold">
-                Field Operations Quick-Link
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-ink text-xs truncate group-hover:text-primary transition-colors">
+                  {user?.full_name || (role === 'ADMIN' ? 'Admin Master' : 'Field Operator')}
+                </div>
+                <div className="text-[10px] font-mono text-muted truncate">
+                  {user?.email || (role === 'ADMIN' ? 'admin@hilosgeht.co.ke' : 'operator@hilosgeht.co.ke')}
+                </div>
               </div>
-              <Link
-                href="/staff"
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  pathname === '/staff' ? 'bg-orange-50 text-primary font-bold' : 'text-zinc-600 hover:text-primary hover:bg-surface-hover'
-                }`}
-              >
-                <ClipboardList className="w-4 h-4 text-primary" />
-                <span>Operator Daily Log View</span>
-              </Link>
-              <Link
-                href="/staff/analytics"
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  pathname === '/staff/analytics' ? 'bg-orange-50 text-primary font-bold' : 'text-zinc-600 hover:text-primary hover:bg-surface-hover'
-                }`}
-              >
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <span>Operator Analytics View</span>
-              </Link>
-            </div>
-          )}
-        </nav>
-
-        {/* User Session & Logout */}
-        <div className="p-3 bg-white rounded-xl border border-border shadow-subtle space-y-2 text-xs">
-          <div className="flex items-center justify-between">
-            <div className="font-bold text-ink truncate max-w-[140px]">
-              {user?.full_name || (role === 'ADMIN' ? 'Admin Master' : 'Field Operator')}
-            </div>
+            </Link>
             <button
               onClick={handleLogout}
               title="Sign out"
-              className="text-muted hover:text-rose-600 p-1 transition-colors cursor-pointer"
+              className="text-muted hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
-          <div className="text-[10px] font-mono text-muted truncate">
-            {user?.email || (role === 'ADMIN' ? 'admin@hilosgeht.co.ke' : 'operator@hilosgeht.co.ke')}
+
+          {/* Meru Dispatch Hotline Box */}
+          <div className="p-3 bg-white rounded-xl border border-border shadow-subtle text-[11px] text-muted space-y-1 font-mono">
+            <div className="flex items-center gap-1.5 text-foreground font-semibold">
+              <PhoneCall className="w-3.5 h-3.5 text-primary" />
+              <span>Meru Dispatch Lines:</span>
+            </div>
+            <div>Primary: <span className="text-primary font-bold">0717 186396</span></div>
+            <div>Backup: <span className="text-foreground font-bold">0748866823</span></div>
           </div>
         </div>
-
-        {/* Meru Dispatch Hotline Box */}
-        <div className="p-3.5 bg-white rounded-xl border border-border shadow-subtle text-[11px] text-muted space-y-1.5 font-mono">
-          <div className="flex items-center gap-1.5 text-foreground font-semibold">
-            <PhoneCall className="w-3.5 h-3.5 text-primary" />
-            <span>Meru Dispatch Lines:</span>
-          </div>
-          <div>Primary: <span className="text-primary font-bold">0717 186396</span></div>
-          <div>Backup: <span className="text-foreground font-bold">0748866823</span></div>
-        </div>
-
       </aside>
     </>
   );

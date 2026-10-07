@@ -12,6 +12,7 @@ export interface StoredProfile {
   onboarding_token?: string | null;
   created_at: string;
   updated_at?: string;
+  avatar_url?: string | null;
 }
 
 // Built-in seed profiles for high-availability fallback

@@ -263,7 +263,7 @@ export async function login(req: NextRequest, { params }: { params: any }) {
     // 1. Primary Database Query: Verify user from public.profiles
     try {
       const result = await db.query(`
-        SELECT id, full_name, email, phone_number, role, account_status, password_hash
+        SELECT id, full_name, email, phone_number, role, account_status, password_hash, avatar_url
         FROM public.profiles
         WHERE (
           LOWER(email) = LOWER($1)
@@ -338,7 +338,7 @@ export async function login(req: NextRequest, { params }: { params: any }) {
 export async function getAllStaff(req: NextRequest, { params }: { params: any }) {
   try {
     const result = await db.query(`
-      SELECT id, full_name, email, phone_number, role, account_status, created_at
+      SELECT id, full_name, email, phone_number, role, account_status, avatar_url, created_at
       FROM public.profiles
       WHERE role IN ('ADMIN', 'OPERATOR')
       ORDER BY created_at DESC;
@@ -349,5 +349,178 @@ export async function getAllStaff(req: NextRequest, { params }: { params: any })
     const registry = await getStaffRegistry();
     const safeProfiles = registry.map(({ password_hash, ...rest }) => rest);
     return NextResponse.json({ success: true, count: safeProfiles.length, data: safeProfiles }, { status: 200 });
+  }
+}
+
+export async function updateStaffProfile(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, currentEmail, fullName, email, phoneNumber, avatarUrl, newPassword, confirmPassword } = body;
+
+    if (!id && !currentEmail) {
+      return NextResponse.json({ success: false, error: 'User identifier or email is required.' }, { status: 400 });
+    }
+
+    if (!fullName || !fullName.trim()) {
+      return NextResponse.json({ success: false, error: 'Full name cannot be empty.' }, { status: 400 });
+    }
+
+    if (!email || !email.trim()) {
+      return NextResponse.json({ success: false, error: 'Email cannot be empty.' }, { status: 400 });
+    }
+
+    // Password validation if changing password
+    let passwordHash: string | null = null;
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        return NextResponse.json({ success: false, error: 'Password must be at least 6 characters long.' }, { status: 400 });
+      }
+      if (newPassword !== confirmPassword) {
+        return NextResponse.json({ success: false, error: 'New password and confirm password do not match.' }, { status: 400 });
+      }
+      passwordHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = fullName.trim();
+    const cleanPhone = phoneNumber ? phoneNumber.trim() : null;
+    const cleanAvatar = avatarUrl ? avatarUrl.trim() : null;
+
+    let updatedUser: any = null;
+
+    // 1. Update in PostgreSQL
+    try {
+      if (cleanEmail !== (currentEmail || '').toLowerCase()) {
+        const conflict = await db.query(
+          `SELECT id FROM public.profiles WHERE LOWER(email) = $1 AND id::text != $2;`,
+          [cleanEmail, id || '']
+        );
+        if (conflict.rows.length > 0) {
+          return NextResponse.json({ success: false, error: 'That email is already registered to another account.' }, { status: 409 });
+        }
+      }
+
+      let query = `
+        UPDATE public.profiles
+        SET 
+          full_name = $1,
+          email = $2,
+          phone_number = $3,
+          avatar_url = $4,
+          updated_at = NOW()
+      `;
+      const paramsList: any[] = [cleanName, cleanEmail, cleanPhone, cleanAvatar];
+
+      if (passwordHash) {
+        paramsList.push(passwordHash);
+        query += `, password_hash = $${paramsList.length}`;
+      }
+
+      paramsList.push(id || '');
+      paramsList.push((currentEmail || '').toLowerCase());
+      query += ` WHERE id::text = $${paramsList.length - 1} OR LOWER(email) = $${paramsList.length} RETURNING id, full_name, email, phone_number, role, account_status, avatar_url, updated_at;`;
+
+      const result = await db.query(query, paramsList);
+      if (result.rows.length > 0) {
+        updatedUser = result.rows[0];
+      }
+    } catch (dbErr: any) {
+      console.warn('⚠️ Database profile update warning:', dbErr.message);
+    }
+
+    // 2. Update in Vercel Blob persistent store
+    const registry = await getStaffRegistry();
+    let targetIdx = registry.findIndex(
+      (p) => (id && p.id === id) || (currentEmail && p.email.toLowerCase() === currentEmail.toLowerCase())
+    );
+
+    if (targetIdx >= 0) {
+      registry[targetIdx].full_name = cleanName;
+      registry[targetIdx].email = cleanEmail;
+      registry[targetIdx].phone_number = cleanPhone;
+      registry[targetIdx].avatar_url = cleanAvatar;
+      if (passwordHash) {
+        registry[targetIdx].password_hash = passwordHash;
+      }
+      registry[targetIdx].updated_at = new Date().toISOString();
+      await saveStaffProfile(registry[targetIdx]);
+      if (!updatedUser) {
+        const { password_hash, ...safe } = registry[targetIdx];
+        updatedUser = safe;
+      }
+    } else {
+      const newProf: StoredProfile = {
+        id: id || 'usr_' + Date.now().toString(36),
+        full_name: cleanName,
+        email: cleanEmail,
+        phone_number: cleanPhone,
+        role: updatedUser?.role || 'OPERATOR',
+        account_status: 'ACTIVE',
+        password_hash: passwordHash || '',
+        avatar_url: cleanAvatar,
+        created_at: new Date().toISOString(),
+      };
+      await saveStaffProfile(newProf);
+      if (!updatedUser) {
+        const { password_hash, ...safe } = newProf;
+        updatedUser = safe;
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updatedUser,
+      message: 'Profile updated successfully!',
+    }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error updating profile:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function getStaffProfile(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id') || '';
+    const email = searchParams.get('email') || '';
+
+    if (!id && !email) {
+      return NextResponse.json({ success: false, error: 'User identifier or email required.' }, { status: 400 });
+    }
+
+    let user: any = null;
+
+    // 1. Primary DB query
+    try {
+      const res = await db.query(`
+        SELECT id, full_name, email, phone_number, role, account_status, avatar_url, created_at, updated_at
+        FROM public.profiles
+        WHERE (id::text = $1 AND $1 != '') OR (LOWER(email) = LOWER($2) AND $2 != '')
+        LIMIT 1;
+      `, [id, email]);
+      if (res.rows.length > 0) {
+        user = res.rows[0];
+      }
+    } catch (dbErr: any) {
+      console.warn('⚠️ DB query error in getStaffProfile:', dbErr.message);
+    }
+
+    // 2. Fallback: Check persistent Vercel Blob registry
+    if (!user) {
+      const stored = await findStaffByIdentifier(email || id);
+      if (stored) {
+        const { password_hash, ...safe } = stored;
+        user = safe;
+      }
+    }
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Profile not found.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, data: user }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error fetching staff profile:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

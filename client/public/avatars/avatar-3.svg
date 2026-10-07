@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#312E81"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <linearGradient id="cap3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg3)" stroke="#F97316" stroke-width="3"/>
+  <path d="M26 108 C26 88 42 78 60 78 C78 78 94 88 94 108 Z" fill="#1E293B"/>
+  <path d="M36 85 L50 108 L70 108 L84 85 Z" fill="#F97316"/>
+  <!-- High-Vis Cross Stripes -->
+  <path d="M38 96 L82 96" stroke="#FEF08A" stroke-width="3"/>
+  <rect x="52" y="68" width="16" height="15" rx="4" fill="#E0A96D"/>
+  <circle cx="60" cy="54" r="20" fill="#ECC599"/>
+  <!-- Beard & features -->
+  <path d="M44 58 C44 72 52 76 60 76 C68 76 76 72 76 58 Z" fill="#44403C" opacity="0.85"/>
+  <circle cx="53" cy="51" r="2.5" fill="#1C1917"/>
+  <circle cx="67" cy="51" r="2.5" fill="#1C1917"/>
+  <path d="M55 65 Q60 67 65 65" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- HLG Trucker Cap -->
+  <path d="M38 42 C38 28 48 22 60 22 C72 22 82 28 82 42 Z" fill="url(#cap3)"/>
+  <path d="M36 42 L92 38 C94 38 94 44 88 45 L36 45 Z" fill="#9A3412"/>
+  <circle cx="60" cy="32" r="5" fill="#FFFFFF"/>
+</svg>
