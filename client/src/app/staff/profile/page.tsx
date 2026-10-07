@@ -393,8 +393,8 @@ export default function StaffProfilePage() {
             <div className="text-xs font-bold text-emerald-700 mt-0.5">Heavy Plant Class G (Verified)</div>
           </div>
           <div className="p-3 bg-surface border border-border rounded-xl">
-            <div className="text-[10px] font-mono text-muted uppercase font-semibold">STORAGE BACKEND</div>
-            <div className="text-xs font-bold text-primary mt-0.5">Vercel Blob & PostgreSQL</div>
+            <div className="text-[10px] font-mono text-muted uppercase font-semibold">SAFETY CLEARANCE</div>
+            <div className="text-xs font-bold text-emerald-700 mt-0.5">OSHA & NTSA Certified</div>
           </div>
         </div>
       </div>
@@ -410,7 +410,7 @@ export default function StaffProfilePage() {
                 Profile Picture & Avatar
               </h3>
               <p className="text-xs text-muted font-mono mt-0.5">
-                Upload your own photo to Vercel Blob storage, or choose one of the official operator avatars.
+                Upload your own photo, or choose one of the official operator avatars.
               </p>
             </div>
             {avatarUrl && (
@@ -444,7 +444,7 @@ export default function StaffProfilePage() {
             <div className="flex-1 text-center sm:text-left space-y-1">
               <div className="font-bold text-ink text-sm">Upload Custom Profile Photo</div>
               <div className="text-xs text-muted font-mono">
-                Stored permanently on Vercel Blob storage. PNG, JPG, or WEBP up to 5MB.
+                PNG, JPG, or WEBP photo up to 5MB.
               </div>
             </div>
 
@@ -466,7 +466,7 @@ export default function StaffProfilePage() {
                 {isUploading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    Uploading to Blob...
+                    Uploading Photo...
                   </>
                 ) : (
                   <>
@@ -668,7 +668,7 @@ export default function StaffProfilePage() {
         {/* Action Button Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-border rounded-2xl shadow-card">
           <div className="text-xs font-mono text-muted">
-            All updates sync immediately to PostgreSQL & Vercel storage.
+            All updates are applied immediately across your operator profile.
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
