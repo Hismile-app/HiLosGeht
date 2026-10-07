@@ -13,7 +13,8 @@ import {
   ArrowLeft,
   CheckCircle2,
   Award,
-  AlertCircle
+  AlertCircle,
+  TrendingUp
 } from 'lucide-react';
 
 export default function StaffProfilePage() {
@@ -42,7 +43,17 @@ export default function StaffProfilePage() {
             <ArrowLeft className="w-4 h-4 text-primary" />
             Back to Operator Log Form
           </Link>
-          <span className="text-xs font-mono text-primary font-bold">OPERATOR PROFILE</span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/staff/analytics"
+              className="flex items-center gap-1.5 text-xs font-mono text-primary hover:underline font-bold"
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>View Analytics</span>
+            </Link>
+            <span className="text-xs font-mono text-muted">•</span>
+            <span className="text-xs font-mono text-zinc-600 font-bold">OPERATOR PROFILE</span>
+          </div>
         </div>
       </header>
 

@@ -45,6 +45,7 @@ const ADMIN_MODULES = [
 
 const OPERATOR_MODULES = [
   { name: 'Daily Log Submission', path: '/staff', icon: ClipboardList },
+  { name: 'My Operational Analytics', path: '/staff/analytics', icon: TrendingUp },
   { name: 'Staff Profile & Permits', path: '/staff/profile', icon: User },
 ];
 
@@ -274,7 +275,17 @@ export default function AdminSidebar() {
                 }`}
               >
                 <ClipboardList className="w-4 h-4 text-primary" />
-                <span>Operator Field View</span>
+                <span>Operator Daily Log View</span>
+              </Link>
+              <Link
+                href="/staff/analytics"
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  pathname === '/staff/analytics' ? 'bg-orange-50 text-primary font-bold' : 'text-zinc-600 hover:text-primary hover:bg-surface-hover'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <span>Operator Analytics View</span>
               </Link>
             </div>
           )}

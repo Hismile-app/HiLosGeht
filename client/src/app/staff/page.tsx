@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   ClipboardList, 
   Truck, 
@@ -17,7 +18,8 @@ import {
   MapPin,
   Inbox,
   Camera,
-  Gauge
+  Gauge,
+  TrendingUp
 } from 'lucide-react';
 import GlassCard from '@/components/common/GlassCard';
 import NeonButton from '@/components/common/NeonButton';
@@ -215,32 +217,40 @@ export default function OperatorDailyLogPage() {
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex items-center justify-center gap-2 p-1.5 bg-surface border border-border rounded-xl max-w-md mx-auto">
+      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-surface border border-border rounded-xl max-w-lg mx-auto">
         <button
           type="button"
           onClick={() => setActiveTab('LOG')}
-          className={`flex-1 py-2 px-3 rounded-lg text-xs font-heading font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+          className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-heading font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'LOG'
               ? 'bg-primary text-white shadow-subtle'
               : 'text-zinc-600 hover:text-ink'
           }`}
         >
           <ClipboardList className="w-3.5 h-3.5" />
-          <span>Daily Log Form</span>
+          <span>Daily Log</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('INQUIRIES')}
-          className={`flex-1 py-2 px-3 rounded-lg text-xs font-heading font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+          className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-heading font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'INQUIRIES'
               ? 'bg-primary text-white shadow-subtle'
               : 'text-zinc-600 hover:text-ink'
           }`}
         >
           <Inbox className="w-3.5 h-3.5" />
-          <span>Inquiries Feed ({inquiries.length})</span>
+          <span>Inquiries ({inquiries.length})</span>
         </button>
+
+        <Link
+          href="/staff/analytics"
+          className="flex-1 py-2 px-2.5 rounded-lg text-xs font-heading font-bold uppercase transition-all flex items-center justify-center gap-1.5 text-zinc-600 hover:text-primary hover:bg-orange-50 cursor-pointer"
+        >
+          <TrendingUp className="w-3.5 h-3.5 text-primary" />
+          <span>My Analytics</span>
+        </Link>
       </div>
 
       {activeTab === 'INQUIRIES' ? (

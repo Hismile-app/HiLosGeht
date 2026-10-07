@@ -295,3 +295,179 @@ export async function getDocumentAuditGallery(req: NextRequest, { params }: { pa
     }, { status: 200 });
   }
 }
+
+export async function getOperatorAnalytics(req: NextRequest, { params }: { params: any }) {
+  try {
+    const { staffId, email, days } = Object.fromEntries(req.nextUrl.searchParams.entries());
+    const daysLimit = parseInt(days || '30', 10);
+
+    let logs: any[] = [];
+    let operatorProfile: any = null;
+
+    try {
+      let query = `
+        SELECT 
+          l.id,
+          l.staff_id,
+          l.equipment_id,
+          l.start_meter,
+          l.end_meter,
+          (l.end_meter - l.start_meter) as hours_worked,
+          l.work_description,
+          l.fuel_amount,
+          l.fuel_proof_image,
+          l.materials_received,
+          l.materials_proof_image,
+          l.start_meter_proof_image,
+          l.end_meter_proof_image,
+          l.meter_proof_image,
+          l.date_submitted,
+          l.verification_status,
+          l.audit_notes,
+          COALESCE(p.full_name, 'Lead Operator') as staff_name,
+          p.email as staff_email,
+          COALESCE(a.name, 'Equipment') as equipment_name,
+          COALESCE(a.model, 'Asset') as equipment_model,
+          COALESCE(a.category, 'Heavy Equipment') as equipment_category
+        FROM public.staff_logs l
+        LEFT JOIN public.profiles p ON l.staff_id = p.id
+        LEFT JOIN public.physical_assets a ON l.equipment_id = a.id
+        WHERE 1=1
+      `;
+      const queryParams: any[] = [];
+
+      if (staffId) {
+        queryParams.push(staffId);
+        query += ` AND (l.staff_id = $${queryParams.length} OR p.id = $${queryParams.length})`;
+      } else if (email) {
+        queryParams.push(email.toLowerCase().trim());
+        query += ` AND LOWER(p.email) = $${queryParams.length}`;
+      }
+
+      if (daysLimit && daysLimit > 0) {
+        queryParams.push(daysLimit);
+        query += ` AND l.date_submitted >= (NOW() - ($${queryParams.length} || ' days')::interval)`;
+      }
+
+      query += ` ORDER BY l.date_submitted DESC;`;
+
+      const result = await db.query(query, queryParams);
+      logs = result.rows;
+
+      if (staffId || email) {
+        const pQuery = staffId 
+          ? `SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE id = $1`
+          : `SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE LOWER(email) = $1`;
+        const pRes = await db.query(pQuery, [staffId || email?.toLowerCase().trim()]);
+        if (pRes.rows.length > 0) {
+          operatorProfile = pRes.rows[0];
+        }
+      }
+    } catch (dbErr: any) {
+      console.warn('⚠️ Operator analytics DB query fallback:', dbErr.message);
+    }
+
+    if (logs.length === 0) {
+      const allLogs = await getStaffLogsRegistry();
+      logs = allLogs.filter((l) => {
+        if (staffId && l.staff_id !== staffId) return false;
+        if (email && l.staff_email?.toLowerCase() !== email.toLowerCase()) return false;
+        return true;
+      });
+      if (logs.length === 0 && allLogs.length > 0) {
+        logs = allLogs;
+      }
+    }
+
+    const totalShifts = logs.length;
+    let totalHours = 0;
+    let totalFuel = 0;
+    let approvedCount = 0;
+    let pendingCount = 0;
+    let rejectedCount = 0;
+    const machinesMap: { [key: string]: { name: string; category: string; hours: number; fuel: number; shifts: number } } = {};
+    const dailyMap: { [key: string]: { date: string; day_label: string; hours: number; fuel: number; count: number } } = {};
+
+    for (const log of logs) {
+      const hours = Math.max(0, parseFloat(log.hours_worked || (log.end_meter - log.start_meter) || '0'));
+      const fuel = Math.max(0, parseFloat(log.fuel_amount || '0'));
+      totalHours += hours;
+      totalFuel += fuel;
+
+      const status = (log.verification_status || 'PENDING').toUpperCase();
+      if (status === 'APPROVED') approvedCount++;
+      else if (status === 'REJECTED') rejectedCount++;
+      else pendingCount++;
+
+      const mName = log.equipment_name || 'Heavy Equipment';
+      const mCategory = log.equipment_category || 'Industrial Machine';
+      if (!machinesMap[mName]) {
+        machinesMap[mName] = { name: mName, category: mCategory, hours: 0, fuel: 0, shifts: 0 };
+      }
+      machinesMap[mName].hours += hours;
+      machinesMap[mName].fuel += fuel;
+      machinesMap[mName].shifts += 1;
+
+      const rawDate = log.date_submitted ? new Date(log.date_submitted) : new Date();
+      const dateKey = rawDate.toISOString().slice(0, 10);
+      const dayLabel = rawDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (!dailyMap[dateKey]) {
+        dailyMap[dateKey] = { date: dateKey, day_label: dayLabel, hours: 0, fuel: 0, count: 0 };
+      }
+      dailyMap[dateKey].hours += hours;
+      dailyMap[dateKey].fuel += fuel;
+      dailyMap[dateKey].count += 1;
+    }
+
+    const avgBurnRate = totalHours > 0 ? (totalFuel / totalHours) : 0;
+    const approvalRate = totalShifts > 0 ? Math.round((approvedCount / totalShifts) * 100) : 0;
+
+    const timeline = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date)).map(d => ({
+      date: d.date,
+      day_label: d.day_label,
+      hours_yield: parseFloat(d.hours.toFixed(1)),
+      fuel_litres: parseFloat(d.fuel.toFixed(1)),
+      log_count: d.count,
+    }));
+
+    const machineBreakdown = Object.values(machinesMap).map(m => ({
+      machine_name: m.name,
+      category: m.category,
+      total_hours: parseFloat(m.hours.toFixed(1)),
+      total_fuel_litres: parseFloat(m.fuel.toFixed(1)),
+      shift_count: m.shifts,
+      avg_burn_rate: m.hours > 0 ? parseFloat((m.fuel / m.hours).toFixed(2)) : 0,
+    })).sort((a, b) => b.total_hours - a.total_hours);
+
+    const verificationStats = [
+      { name: 'Approved', value: approvedCount, color: '#10B981' },
+      { name: 'Pending Review', value: pendingCount, color: '#F59E0B' },
+      { name: 'Rejected/Flagged', value: rejectedCount, color: '#EF4444' },
+    ];
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        summary: {
+          totalShifts,
+          totalHours: parseFloat(totalHours.toFixed(1)),
+          totalFuelLitres: parseFloat(totalFuel.toFixed(1)),
+          avgFuelBurnRate: parseFloat(avgBurnRate.toFixed(2)),
+          approvedShifts: approvedCount,
+          pendingShifts: pendingCount,
+          rejectedShifts: rejectedCount,
+          approvalRate,
+          machinesOperatedCount: Object.keys(machinesMap).length,
+        },
+        timeline,
+        machineBreakdown,
+        verificationStats,
+        recentLogs: logs.slice(0, 15),
+        operatorProfile,
+      },
+    }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error in getOperatorAnalytics:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
