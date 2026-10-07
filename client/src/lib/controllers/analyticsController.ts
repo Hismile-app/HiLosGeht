@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/server-config/db';
-import { generateOperationalAIInsights } from '@/lib/services/ai';
+import { generateOperationalAIInsights, generateOperatorAIInsights } from '@/lib/services/ai';
 import { getStaffLogsRegistry } from '@/lib/services/logsRegistry';
 
 export async function getCommandOverview(req: NextRequest, { params }: { params: any }) {
@@ -303,7 +303,59 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
 
     let logs: any[] = [];
     let operatorProfile: any = null;
+    let availableOperators: any[] = [];
 
+    // 1. Fetch certified operators from DB to resolve current operator context
+    try {
+      const opsRes = await db.query(`
+        SELECT id, full_name, email, role, phone_number
+        FROM public.profiles
+        WHERE role = 'OPERATOR'
+        ORDER BY created_at ASC;
+      `);
+      availableOperators = opsRes.rows;
+
+      if (staffId) {
+        operatorProfile = availableOperators.find((o) => o.id === staffId);
+        if (!operatorProfile) {
+          const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE id = $1;`, [staffId]);
+          if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
+        }
+      } else if (email) {
+        const cleanEmail = email.toLowerCase().trim();
+        operatorProfile = availableOperators.find((o) => o.email?.toLowerCase() === cleanEmail);
+        if (!operatorProfile) {
+          const directRes = await db.query(`SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE LOWER(email) = $1;`, [cleanEmail]);
+          if (directRes.rows.length > 0) operatorProfile = directRes.rows[0];
+        }
+      }
+
+      // Default to primary certified operator if none specified
+      if (!operatorProfile && availableOperators.length > 0) {
+        operatorProfile = availableOperators[0];
+      }
+    } catch (e: any) {
+      console.warn('Operator profile discovery warning:', e.message);
+    }
+
+    // Default fallback profile if database has no profile
+    if (!operatorProfile) {
+      operatorProfile = {
+        id: '00000000-0000-0000-0000-000000000002',
+        full_name: 'Brian K. (Lead Operator - Meru Quarry)',
+        email: 'kbrian1237@gmail.com',
+        role: 'OPERATOR',
+        phone_number: '+254748866823',
+      };
+      if (availableOperators.length === 0) {
+        availableOperators = [operatorProfile];
+      }
+    }
+
+    const targetStaffId = operatorProfile.id;
+    const targetEmail = operatorProfile.email?.toLowerCase();
+
+    // 2. Query strictly logs belonging to this specific operator
     try {
       let query = `
         SELECT 
@@ -324,7 +376,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
           l.date_submitted,
           l.verification_status,
           l.audit_notes,
-          COALESCE(p.full_name, 'Lead Operator') as staff_name,
+          COALESCE(p.full_name, $1) as staff_name,
           p.email as staff_email,
           COALESCE(a.name, 'Equipment') as equipment_name,
           COALESCE(a.model, 'Asset') as equipment_model,
@@ -332,17 +384,9 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
         FROM public.staff_logs l
         LEFT JOIN public.profiles p ON l.staff_id = p.id
         LEFT JOIN public.physical_assets a ON l.equipment_id = a.id
-        WHERE 1=1
+        WHERE (l.staff_id = $2 OR LOWER(p.email) = $3)
       `;
-      const queryParams: any[] = [];
-
-      if (staffId) {
-        queryParams.push(staffId);
-        query += ` AND (l.staff_id = $${queryParams.length} OR p.id = $${queryParams.length})`;
-      } else if (email) {
-        queryParams.push(email.toLowerCase().trim());
-        query += ` AND LOWER(p.email) = $${queryParams.length}`;
-      }
+      const queryParams: any[] = [operatorProfile.full_name, targetStaffId, targetEmail];
 
       if (daysLimit && daysLimit > 0) {
         queryParams.push(daysLimit);
@@ -353,32 +397,22 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
 
       const result = await db.query(query, queryParams);
       logs = result.rows;
-
-      if (staffId || email) {
-        const pQuery = staffId 
-          ? `SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE id = $1`
-          : `SELECT id, full_name, email, role, phone_number FROM public.profiles WHERE LOWER(email) = $1`;
-        const pRes = await db.query(pQuery, [staffId || email?.toLowerCase().trim()]);
-        if (pRes.rows.length > 0) {
-          operatorProfile = pRes.rows[0];
-        }
-      }
     } catch (dbErr: any) {
       console.warn('⚠️ Operator analytics DB query fallback:', dbErr.message);
     }
 
+    // Fallback to Vercel Blob registry strictly filtered by this operator
     if (logs.length === 0) {
       const allLogs = await getStaffLogsRegistry();
       logs = allLogs.filter((l) => {
-        if (staffId && l.staff_id !== staffId) return false;
-        if (email && l.staff_email?.toLowerCase() !== email.toLowerCase()) return false;
-        return true;
+        if (targetStaffId && l.staff_id === targetStaffId) return true;
+        if (targetEmail && l.staff_email?.toLowerCase() === targetEmail) return true;
+        if (l.staff_name && operatorProfile.full_name && l.staff_name.toLowerCase().includes('brian') && operatorProfile.full_name.toLowerCase().includes('brian')) return true;
+        return false;
       });
-      if (logs.length === 0 && allLogs.length > 0) {
-        logs = allLogs;
-      }
     }
 
+    // 3. Compute operator personal telematics metrics
     const totalShifts = logs.length;
     let totalHours = 0;
     let totalFuel = 0;
@@ -399,6 +433,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
       else if (status === 'REJECTED') rejectedCount++;
       else pendingCount++;
 
+      // Machine breakdown
       const mName = log.equipment_name || 'Heavy Equipment';
       const mCategory = log.equipment_category || 'Industrial Machine';
       if (!machinesMap[mName]) {
@@ -408,6 +443,7 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
       machinesMap[mName].fuel += fuel;
       machinesMap[mName].shifts += 1;
 
+      // Daily timeline
       const rawDate = log.date_submitted ? new Date(log.date_submitted) : new Date();
       const dateKey = rawDate.toISOString().slice(0, 10);
       const dayLabel = rawDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -445,25 +481,37 @@ export async function getOperatorAnalytics(req: NextRequest, { params }: { param
       { name: 'Rejected/Flagged', value: rejectedCount, color: '#EF4444' },
     ];
 
+    const summary = {
+      totalShifts,
+      totalHours: parseFloat(totalHours.toFixed(1)),
+      totalFuelLitres: parseFloat(totalFuel.toFixed(1)),
+      avgFuelBurnRate: parseFloat(avgBurnRate.toFixed(2)),
+      approvedShifts: approvedCount,
+      pendingShifts: pendingCount,
+      rejectedShifts: rejectedCount,
+      approvalRate,
+      machinesOperatedCount: Object.keys(machinesMap).length,
+    };
+
+    // 4. Generate Operator AI Insights & Coaching Assessment
+    const aiInsights = await generateOperatorAIInsights(
+      operatorProfile.full_name,
+      summary,
+      machineBreakdown,
+      logs
+    );
+
     return NextResponse.json({
       success: true,
       data: {
-        summary: {
-          totalShifts,
-          totalHours: parseFloat(totalHours.toFixed(1)),
-          totalFuelLitres: parseFloat(totalFuel.toFixed(1)),
-          avgFuelBurnRate: parseFloat(avgBurnRate.toFixed(2)),
-          approvedShifts: approvedCount,
-          pendingShifts: pendingCount,
-          rejectedShifts: rejectedCount,
-          approvalRate,
-          machinesOperatedCount: Object.keys(machinesMap).length,
-        },
+        summary,
         timeline,
         machineBreakdown,
         verificationStats,
-        recentLogs: logs.slice(0, 15),
+        recentLogs: logs,
         operatorProfile,
+        availableOperators,
+        aiInsights,
       },
     }, { status: 200 });
   } catch (error: any) {

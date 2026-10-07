@@ -23,7 +23,14 @@ import {
   X,
   Eye,
   ArrowUpRight,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles,
+  Send,
+  HelpCircle,
+  Lightbulb,
+  CheckCircle,
+  Zap,
+  Info
 } from 'lucide-react';
 import {
   StaffYieldTimelineAreaChart,
@@ -33,6 +40,7 @@ import {
   MachineBreakdownItem,
   VerificationStatItem,
 } from '@/components/staff/StaffAnalyticsCharts';
+import { marked } from 'marked';
 
 interface OperatorAnalyticsData {
   summary: {
@@ -50,7 +58,24 @@ interface OperatorAnalyticsData {
   machineBreakdown: MachineBreakdownItem[];
   verificationStats: VerificationStatItem[];
   recentLogs: any[];
-  operatorProfile?: any;
+  operatorProfile?: {
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+    phone_number?: string;
+  };
+  availableOperators?: Array<{
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+  }>;
+  aiInsights?: {
+    assessmentMarkdown: string;
+    burnRateRating: 'OPTIMAL' | 'EFFICIENT' | 'MODERATE' | 'HIGH';
+    tips: string[];
+  };
 }
 
 export default function StaffAnalyticsPage() {
@@ -58,9 +83,15 @@ export default function StaffAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [days, setDays] = useState<'7' | '30' | '90' | 'all'>('30');
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string>('');
   const [selectedMachine, setSelectedMachine] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Interactive Operator AI Chat state
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+
   const [selectedProofModal, setSelectedProofModal] = useState<{
     url: string;
     title: string;
@@ -69,13 +100,16 @@ export default function StaffAnalyticsPage() {
     shiftId?: string;
   } | null>(null);
 
-  // Load user session from local storage
+  // Load initial operator identity from local storage if available
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('hlg_user');
       if (stored) {
         try {
-          setCurrentUser(JSON.parse(stored));
+          const user = JSON.parse(stored);
+          if (user?.id && user?.role === 'OPERATOR') {
+            setSelectedOperatorId(user.id);
+          }
         } catch (e) {}
       }
     }
@@ -87,14 +121,16 @@ export default function StaffAnalyticsPage() {
 
     try {
       const params = new URLSearchParams();
-      if (currentUser?.id) params.append('staffId', currentUser.id);
-      if (currentUser?.email) params.append('email', currentUser.email);
+      if (selectedOperatorId) params.append('staffId', selectedOperatorId);
       if (days !== 'all') params.append('days', days);
 
       const res = await fetch(`/api/v1/analytics/operator?${params.toString()}`);
       const json = await res.json();
       if (json?.success && json?.data) {
         setData(json.data);
+        if (!selectedOperatorId && json.data.operatorProfile?.id) {
+          setSelectedOperatorId(json.data.operatorProfile.id);
+        }
       }
     } catch (err) {
       console.error('Failed to load operator analytics:', err);
@@ -106,7 +142,47 @@ export default function StaffAnalyticsPage() {
 
   useEffect(() => {
     fetchAnalytics();
-  }, [days, currentUser?.id, currentUser?.email]);
+  }, [days, selectedOperatorId]);
+
+  // Handle asking the AI Operator Coach
+  const handleAskAICoach = async (promptToAsk?: string) => {
+    const query = promptToAsk || aiQuery;
+    if (!query || query.trim().length === 0) return;
+
+    setAiLoading(true);
+    setAiResponse(null);
+
+    try {
+      const res = await fetch('/api/v1/ai/consultant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: query.trim(),
+          role: 'OPERATOR',
+          context: 'OPERATOR_ANALYTICS',
+          projectDetails: {
+            operatorId: currentOperator?.id,
+            operatorName: currentOperator?.full_name,
+            summary: data?.summary,
+            recentLogs: data?.recentLogs?.slice(0, 5),
+            machineBreakdown: data?.machineBreakdown,
+          },
+        }),
+      });
+
+      const json = await res.json();
+      if (json?.success && json?.data?.replyMarkdown) {
+        setAiResponse(json.data.replyMarkdown);
+      } else {
+        setAiResponse('Your AI Field Coach is currently offline. Please verify engine idle times and gauge photos with your jobsite supervisor.');
+      }
+    } catch (err: any) {
+      setAiResponse('Unable to reach AI Coach service. Please check network connection.');
+    } finally {
+      setAiLoading(false);
+      if (!promptToAsk) setAiQuery('');
+    }
+  };
 
   const handleExportCSV = () => {
     if (!data?.recentLogs || data.recentLogs.length === 0) return;
@@ -114,22 +190,24 @@ export default function StaffAnalyticsPage() {
     const headers = [
       'Log ID',
       'Date Submitted',
+      'Operator Name',
       'Equipment Asset',
       'Start Meter (hrs)',
       'End Meter (hrs)',
-      'Operating Hours',
-      'Fuel Logged (L)',
+      'Hours Worked',
+      'Diesel Added (L)',
       'Work Description',
       'Verification Status',
-      'Start Meter Proof',
-      'End Meter Proof',
-      'Fuel Voucher Proof',
+      'Start Meter Proof URL',
+      'End Meter Proof URL',
+      'Fuel Slip URL',
       'Audit Notes'
     ];
 
     const rows = data.recentLogs.map((log) => [
       `"${log.id}"`,
       `"${new Date(log.date_submitted).toLocaleString('en-KE')}"`,
+      `"${currentOperator?.full_name || 'Operator'}"`,
       `"${log.equipment_name || 'Machine'}"`,
       log.start_meter,
       log.end_meter,
@@ -147,7 +225,7 @@ export default function StaffAnalyticsPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `HLG_Operator_Telematics_${currentUser?.full_name?.replace(/\s+/g, '_') || 'MyShift'}_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `HLG_Operator_Ledger_${(currentOperator?.full_name || 'MyShifts').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -188,37 +266,39 @@ export default function StaffAnalyticsPage() {
     machinesOperatedCount: 0,
   };
 
+  const currentOperator = data?.operatorProfile;
+
   return (
-    <div className="space-y-6 pb-12 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-16 max-w-7xl mx-auto">
       {/* ======================================================== */}
-      {/* 1. Header & Operator Status Bar                          */}
+      {/* 1. Header & Operator Identity Control Bar                */}
       {/* ======================================================== */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-primary font-mono tracking-wider uppercase">
-              Field Telematics & Telemetry
+              Operator Field Portal
             </span>
             <span className="text-muted">/</span>
-            <span className="text-xs text-muted font-medium">Personal Ledger</span>
+            <span className="text-xs text-muted font-medium">Personal Telematics Ledger</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-black text-foreground flex items-center gap-2.5 mt-1">
             <TrendingUp className="w-7 h-7 text-primary" />
-            My Operational Analytics
+            My Operational Analytics & Telematics
           </h1>
           <p className="text-xs sm:text-sm text-muted mt-1">
-            Verified engine hours, machinery yields, fuel efficiency index, and shift approval metrics.
+            Track your personal shift engine hours, machine fuel burn rates, meter proofs, and supervisor audit approvals.
           </p>
         </div>
 
-        {/* Quick Action Buttons */}
+        {/* Quick Action Navigation */}
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
             href="/staff"
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-hover shadow-orange transition-all cursor-pointer"
           >
             <ClipboardList className="w-4 h-4" />
-            <span>Submit Shift Log</span>
+            <span>Submit Daily Log</span>
           </Link>
 
           <button
@@ -226,10 +306,10 @@ export default function StaffAnalyticsPage() {
             onClick={handleExportCSV}
             disabled={!data?.recentLogs?.length}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-border bg-white text-foreground hover:bg-surface-hover hover:text-primary transition-all disabled:opacity-50 cursor-pointer shadow-subtle"
-            title="Download CSV report of your shifts"
+            title="Download personal shift log ledger"
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span className="hidden sm:inline">Export My Ledger</span>
           </button>
 
           <button
@@ -237,63 +317,236 @@ export default function StaffAnalyticsPage() {
             onClick={() => fetchAnalytics(true)}
             disabled={loading || refreshing}
             className="p-2 rounded-xl border border-border bg-white text-muted hover:text-primary hover:bg-surface-hover transition-colors cursor-pointer shadow-subtle"
-            title="Refresh telemetry"
+            title="Refresh my telematics"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-primary' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Operator Session Context Card */}
-      <div className="bg-gradient-to-r from-orange-50/60 via-amber-50/30 to-white border border-orange-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-subtle">
+      {/* ======================================================== */}
+      {/* 2. Operator Profile Selection & Time Filter Banner        */}
+      {/* ======================================================== */}
+      <div className="bg-gradient-to-r from-orange-50/70 via-amber-50/40 to-white border border-orange-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-subtle">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center font-heading font-black text-lg shadow-md shrink-0">
-            {currentUser?.full_name ? currentUser.full_name.slice(0, 2).toUpperCase() : 'OP'}
+            {currentOperator?.full_name ? currentOperator.full_name.slice(0, 2).toUpperCase() : 'OP'}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-heading font-black text-ink text-base">
-                {currentUser?.full_name || 'Active Field Operator'}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-heading font-black text-ink text-base sm:text-lg">
+                {currentOperator?.full_name || 'Certified Operator'}
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
-                CERTIFIED OPERATOR
+                ACTIVE OPERATOR
               </span>
             </div>
             <div className="text-xs text-muted font-mono flex items-center gap-2 mt-0.5">
-              <span>{currentUser?.email || 'operator@hilosgeht.co.ke'}</span>
+              <span>{currentOperator?.email || 'operator@hilosgeht.co.ke'}</span>
               <span>•</span>
-              <span className="text-zinc-700 font-semibold">Meru Heavy Fleet Operations</span>
+              <span className="text-primary font-bold">Personal Shift Ledger</span>
             </div>
           </div>
         </div>
 
-        {/* Date Filter Pills */}
-        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-border shadow-inner self-start sm:self-auto">
-          {(['7', '30', '90', 'all'] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setDays(r)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                days === r
-                  ? 'bg-primary text-white shadow-subtle'
-                  : 'text-muted hover:text-foreground hover:bg-surface-hover'
-              }`}
-            >
-              {r === 'all' ? 'All Time' : `${r} Days`}
-            </button>
-          ))}
+        {/* Right Controls: Operator Account Switcher + Date Filter */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Operator Switcher (Allows testing different operator records from DB) */}
+          {data?.availableOperators && data.availableOperators.length > 1 && (
+            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-border shadow-subtle">
+              <User className="w-3.5 h-3.5 text-primary shrink-0" />
+              <label htmlFor="operator-select" className="text-[10px] font-mono text-muted uppercase font-bold shrink-0">
+                Account:
+              </label>
+              <select
+                id="operator-select"
+                value={selectedOperatorId}
+                onChange={(e) => setSelectedOperatorId(e.target.value)}
+                className="text-xs font-mono font-bold text-ink bg-transparent border-0 focus:outline-none cursor-pointer max-w-[200px] truncate"
+              >
+                {data.availableOperators.map((op) => (
+                  <option key={op.id} value={op.id}>
+                    {op.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Date Filter Range */}
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-border shadow-inner">
+            {(['7', '30', '90', 'all'] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setDays(r)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                  days === r
+                    ? 'bg-primary text-white shadow-subtle'
+                    : 'text-muted hover:text-foreground hover:bg-surface-hover'
+                }`}
+              >
+                {r === 'all' ? 'All Shifts' : `${r}D`}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 2. Top 4 High-Impact KPI Metric Cards                    */}
+      {/* 3. Personalized Operator AI Telematics Coach Card        */}
+      {/* ======================================================== */}
+      <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 text-white rounded-2xl p-5 sm:p-6 border border-zinc-800 shadow-xl relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-zinc-800/80 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-orange shrink-0">
+              <Sparkles className="w-5 h-5 text-orange-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading font-black text-base sm:text-lg text-white uppercase tracking-wider flex items-center gap-1.5">
+                  AI Plant Telematics Coach
+                </h2>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                  {data?.aiInsights?.burnRateRating || 'OPTIMAL'} BURN RATING
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Intelligent operational feedback analyzing your real shift logs, fuel economy, and meter photo compliance.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Appraisal Narrative */}
+        <div className="mt-4 text-xs sm:text-sm text-zinc-200 leading-relaxed font-sans bg-zinc-800/40 p-4 rounded-xl border border-zinc-800">
+          {loading ? (
+            <div className="flex items-center gap-2 text-zinc-400 font-mono text-xs">
+              <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+              <span>Analyzing your shift telematics and machine hours...</span>
+            </div>
+          ) : (
+            <div
+              className="prose prose-invert prose-xs max-w-none text-zinc-200"
+              dangerouslySetInnerHTML={{
+                __html: marked.parse(
+                  data?.aiInsights?.assessmentMarkdown ||
+                    `**${currentOperator?.full_name}**, you have logged **${summary.totalHours} engine hours** across **${summary.totalShifts} site shifts**. Your average diesel burn rate of **${summary.avgFuelBurnRate} L/hr** reflects steady throttle management. Continue attaching sharp meter gauge photos to ensure rapid shift voucher sign-off.`
+                ),
+              }}
+            />
+          )}
+        </div>
+
+        {/* Actionable Field Coaching Tips */}
+        {data?.aiInsights?.tips && data.aiInsights.tips.length > 0 && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {data.aiInsights.tips.map((tip, idx) => (
+              <div
+                key={idx}
+                className="bg-zinc-800/60 border border-zinc-700/60 rounded-xl p-3 flex items-start gap-2.5 text-xs text-zinc-300"
+              >
+                <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[10px] font-mono font-bold">{idx + 1}</span>
+                </div>
+                <span>{tip}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Interactive Ask AI Input & Prompt Pills */}
+        <div className="mt-5 pt-4 border-t border-zinc-800/80 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+              Quick Telematics Queries:
+            </span>
+            <button
+              type="button"
+              onClick={() => handleAskAICoach('Analyze my fuel burn efficiency on the Komatsu PC-200 and give me tips')}
+              disabled={aiLoading}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-700"
+            >
+              Fuel Burn Analysis
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAskAICoach('What steps do I need to follow so my shift vouchers get approved faster?')}
+              disabled={aiLoading}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-700"
+            >
+              Voucher Approval Tips
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAskAICoach('Give me operational idling tips for Meru quarry earthmoving')}
+              disabled={aiLoading}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-700"
+            >
+              Idle Reduction Guide
+            </button>
+          </div>
+
+          {/* Chat Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAskAICoach();
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              type="text"
+              placeholder={`Ask your AI Coach about your hours, fuel burn, or machinery technique...`}
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              disabled={aiLoading}
+              className="flex-1 bg-zinc-800/90 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-primary font-sans"
+            />
+            <button
+              type="submit"
+              disabled={aiLoading || !aiQuery.trim()}
+              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer shadow-orange shrink-0"
+            >
+              {aiLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              <span>Ask Coach</span>
+            </button>
+          </form>
+
+          {/* AI Response Display */}
+          {aiResponse && (
+            <div className="mt-3 p-4 bg-zinc-800/90 border border-primary/40 rounded-xl text-xs text-zinc-200 space-y-2 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-[11px] font-mono text-primary font-bold">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-orange-400" />
+                  AI Field Coach Direct Guidance
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAiResponse(null)}
+                  className="text-zinc-400 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div
+                className="prose prose-invert prose-xs max-w-none text-zinc-200 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: marked.parse(aiResponse) }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ======================================================== */}
+      {/* 4. Operator Personal Metric Cards (4 Cards)              */}
       {/* ======================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Operating Hours */}
+        {/* Card 1: My Operating Hours */}
         <div className="bg-white border border-border rounded-2xl p-5 shadow-card relative overflow-hidden group hover:border-primary/40 transition-all">
           <div className="flex items-center justify-between text-muted text-xs font-mono">
-            <span className="uppercase tracking-wider">Engine Hours Yield</span>
+            <span className="uppercase tracking-wider">My Engine Hours</span>
             <div className="w-8 h-8 rounded-lg bg-orange-50 text-primary flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
@@ -302,7 +555,7 @@ export default function StaffAnalyticsPage() {
             <span className="text-3xl font-heading font-black text-ink tracking-tight">
               {loading ? '...' : summary.totalHours}
             </span>
-            <span className="text-xs font-mono text-muted uppercase">Hours</span>
+            <span className="text-xs font-mono text-muted uppercase">Hours Logged</span>
           </div>
           <div className="mt-2 text-[11px] text-muted flex items-center gap-1 font-mono">
             <span className="text-primary font-bold">
@@ -310,13 +563,12 @@ export default function StaffAnalyticsPage() {
             </span>
             <span>average per logged shift</span>
           </div>
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-primary/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform" />
         </div>
 
-        {/* Card 2: Shift Verification Compliance */}
+        {/* Card 2: My Voucher Verification Compliance */}
         <div className="bg-white border border-border rounded-2xl p-5 shadow-card relative overflow-hidden group hover:border-emerald-300 transition-all">
           <div className="flex items-center justify-between text-muted text-xs font-mono">
-            <span className="uppercase tracking-wider">Shift Verification</span>
+            <span className="uppercase tracking-wider">My Voucher Approval</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -325,20 +577,19 @@ export default function StaffAnalyticsPage() {
             <span className="text-3xl font-heading font-black text-ink tracking-tight">
               {loading ? '...' : `${summary.approvalRate}%`}
             </span>
-            <span className="text-xs font-mono text-emerald-600 font-bold uppercase">Compliance</span>
+            <span className="text-xs font-mono text-emerald-600 font-bold uppercase">Approval Rate</span>
           </div>
           <div className="mt-2 text-[11px] text-muted flex items-center gap-1 font-mono">
             <span className="text-emerald-700 font-bold">{summary.approvedShifts} Approved</span>
             <span>•</span>
             <span className="text-amber-600 font-bold">{summary.pendingShifts} In Review</span>
           </div>
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-emerald-500/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform" />
         </div>
 
-        {/* Card 3: Fuel Logged & Efficiency */}
+        {/* Card 3: My Diesel Consumption & Burn */}
         <div className="bg-white border border-border rounded-2xl p-5 shadow-card relative overflow-hidden group hover:border-amber-300 transition-all">
           <div className="flex items-center justify-between text-muted text-xs font-mono">
-            <span className="uppercase tracking-wider">Diesel Consumption</span>
+            <span className="uppercase tracking-wider">Diesel Logged</span>
             <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
               <Fuel className="w-4 h-4" />
             </div>
@@ -351,15 +602,14 @@ export default function StaffAnalyticsPage() {
           </div>
           <div className="mt-2 text-[11px] text-muted flex items-center gap-1 font-mono">
             <span className="text-amber-700 font-bold">{summary.avgFuelBurnRate} L/hr</span>
-            <span>burn rate efficiency index</span>
+            <span>average burn efficiency</span>
           </div>
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-500/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform" />
         </div>
 
-        {/* Card 4: Machinery Commanded */}
+        {/* Card 4: Machinery Assigned to Me */}
         <div className="bg-white border border-border rounded-2xl p-5 shadow-card relative overflow-hidden group hover:border-primary/40 transition-all">
           <div className="flex items-center justify-between text-muted text-xs font-mono">
-            <span className="uppercase tracking-wider">Machinery Commanded</span>
+            <span className="uppercase tracking-wider">Assigned Plants</span>
             <div className="w-8 h-8 rounded-lg bg-orange-50 text-primary flex items-center justify-center">
               <Truck className="w-4 h-4" />
             </div>
@@ -368,36 +618,35 @@ export default function StaffAnalyticsPage() {
             <span className="text-3xl font-heading font-black text-ink tracking-tight">
               {loading ? '...' : summary.machinesOperatedCount}
             </span>
-            <span className="text-xs font-mono text-muted uppercase">Assets</span>
+            <span className="text-xs font-mono text-muted uppercase">Machines Operated</span>
           </div>
           <div className="mt-2 text-[11px] text-muted flex items-center gap-1 font-mono truncate">
             <span className="text-ink font-bold">
-              {data?.machineBreakdown?.[0]?.machine_name?.split(' ')[0] || 'Heavy Fleet'}
+              {data?.machineBreakdown?.[0]?.machine_name?.split(' ')[0] || 'Equipment'}
             </span>
-            <span>primary asset driven</span>
+            <span>primary plant assigned</span>
           </div>
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-primary/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform" />
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 3. Interactive Charts Deck                               */}
+      {/* 5. Interactive Charts Deck                               */}
       {/* ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Daily Yield & Fuel Timeline Area Chart (2 cols) */}
+        {/* Left Column: Shift Yield & Fuel Burn Timeline Area Chart (2 cols) */}
         <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-5 sm:p-6 shadow-card space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/80 pb-3">
             <div>
               <h2 className="font-heading font-black text-base text-ink flex items-center gap-2">
                 <Gauge className="w-4 h-4 text-primary" />
-                Shift Yield & Fuel Consumption Timeline
+                My Shift Yield & Fuel Consumption Timeline
               </h2>
               <p className="text-xs text-muted">
-                Daily telemetry correlation between engine hours clocked and diesel fuel logged.
+                Daily record of engine hours clocked and diesel fuel added on your assigned machines.
               </p>
             </div>
             <div className="text-[11px] font-mono text-primary font-bold px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 self-start sm:self-auto">
-              {data?.timeline?.length || 0} Working Days Recorded
+              {data?.timeline?.length || 0} Shift Days
             </div>
           </div>
 
@@ -410,20 +659,19 @@ export default function StaffAnalyticsPage() {
             <div className="flex items-center justify-between border-b border-border/80 pb-3">
               <h2 className="font-heading font-black text-base text-ink flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-emerald-600" />
-                Audit Compliance
+                My Shift Vouchers
               </h2>
               <span className="text-[10px] font-mono font-bold text-muted uppercase">
-                Status Ratio
+                Supervisor Sign-off
               </span>
             </div>
             <p className="text-xs text-muted mt-2">
-              Breakdown of shift vouchers verified by site supervisors and fleet dispatch.
+              Status of your submitted daily logs and proof photos reviewed by dispatch.
             </p>
           </div>
 
           <StaffVerificationDonutChart data={data?.verificationStats || []} />
 
-          {/* Quick Metrics Breakdown list */}
           <div className="pt-2 border-t border-border/80 space-y-2 font-mono text-xs">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-zinc-600">
@@ -452,7 +700,7 @@ export default function StaffAnalyticsPage() {
         </div>
       </div>
 
-      {/* Equipment Breakdown Bar Chart & Efficiency Index */}
+      {/* Equipment Hours Breakdown & Burn Index */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Machinery Hours Bar Chart (2 cols) */}
         <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-5 sm:p-6 shadow-card space-y-4">
@@ -460,10 +708,10 @@ export default function StaffAnalyticsPage() {
             <div>
               <h2 className="font-heading font-black text-base text-ink flex items-center gap-2">
                 <Truck className="w-4 h-4 text-primary" />
-                Machinery Operating Hours Breakdown
+                Hours Clocked Per Machine Asset
               </h2>
               <p className="text-xs text-muted">
-                Total hours logged across each assigned physical plant equipment and vehicles.
+                Operating time distribution across machines assigned to you.
               </p>
             </div>
           </div>
@@ -476,10 +724,10 @@ export default function StaffAnalyticsPage() {
           <div className="border-b border-border/80 pb-3">
             <h2 className="font-heading font-black text-base text-ink flex items-center gap-2">
               <Fuel className="w-4 h-4 text-amber-600" />
-              Equipment Burn Index
+              Machine Fuel Burn Index
             </h2>
             <p className="text-xs text-muted mt-1">
-              Diesel consumption rate per engine operating hour.
+              Your average diesel consumption rate per engine operating hour.
             </p>
           </div>
 
@@ -520,17 +768,17 @@ export default function StaffAnalyticsPage() {
       </div>
 
       {/* ======================================================== */}
-      {/* 4. Verified Shifts Telematics Ledger Table               */}
+      {/* 6. My Verified Shifts Telematics Ledger Table            */}
       {/* ======================================================== */}
       <div className="bg-white border border-border rounded-2xl p-5 sm:p-6 shadow-card space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4">
           <div>
             <h2 className="font-heading font-black text-lg text-ink flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-primary" />
-              Verified Shifts Telematics Ledger
+              My Shift Telematics & Gauge Proofs
             </h2>
             <p className="text-xs text-muted mt-0.5">
-              Complete shift audit trail with attached hour meter proofs and diesel fuel transaction receipts.
+              Verified record of your daily shift logs, hour meters, and attached camera proof photos.
             </p>
           </div>
 
@@ -543,7 +791,7 @@ export default function StaffAnalyticsPage() {
                   onChange={(e) => setSelectedMachine(e.target.value)}
                   className="px-3 py-1.5 text-xs font-mono bg-surface border border-border rounded-xl text-ink cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
                 >
-                  <option value="ALL">All Machinery ({uniqueMachines.length})</option>
+                  <option value="ALL">All My Machinery ({uniqueMachines.length})</option>
                   {uniqueMachines.map((m) => (
                     <option key={m} value={m}>
                       {m}
@@ -557,7 +805,7 @@ export default function StaffAnalyticsPage() {
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
               <input
                 type="text"
-                placeholder="Search shift work..."
+                placeholder="Search my shift work..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 pr-3 py-1.5 text-xs bg-surface border border-border rounded-xl text-ink focus:outline-none focus:ring-1 focus:ring-primary w-40 sm:w-48 font-mono"
@@ -572,12 +820,12 @@ export default function StaffAnalyticsPage() {
             <thead>
               <tr className="bg-surface border-b border-border font-mono text-muted uppercase text-[10px] tracking-wider">
                 <th className="py-3 px-3.5">Date & Shift</th>
-                <th className="py-3 px-3.5">Equipment Asset</th>
+                <th className="py-3 px-3.5">Machine Plant</th>
                 <th className="py-3 px-3.5">Meter Interval</th>
-                <th className="py-3 px-3.5 text-right">Hours Logged</th>
+                <th className="py-3 px-3.5 text-right">Hours Clocked</th>
                 <th className="py-3 px-3.5 text-right">Fuel Added</th>
                 <th className="py-3 px-3.5 text-center">Gauge Proofs</th>
-                <th className="py-3 px-3.5 text-center">Audit Status</th>
+                <th className="py-3 px-3.5 text-center">Status</th>
                 <th className="py-3 px-3.5">Work Description</th>
               </tr>
             </thead>
@@ -586,13 +834,13 @@ export default function StaffAnalyticsPage() {
                 <tr>
                   <td colSpan={8} className="py-10 text-center text-muted font-mono">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto text-primary mb-2" />
-                    Loading shift telematics ledger...
+                    Loading your personal shift telematics...
                   </td>
                 </tr>
               ) : filteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-10 text-center text-muted font-mono">
-                    No matching shift logs found for the selected filter.
+                    No shift logs found for {currentOperator?.full_name || 'this operator'}.
                   </td>
                 </tr>
               ) : (
@@ -626,7 +874,7 @@ export default function StaffAnalyticsPage() {
                       {/* Equipment */}
                       <td className="py-3 px-3.5">
                         <div className="font-bold text-ink truncate max-w-[180px]">
-                          {log.equipment_name || 'Heavy Equipment'}
+                          {log.equipment_name || 'Machine'}
                         </div>
                         <div className="text-[10px] text-muted font-mono truncate max-w-[180px]">
                           {log.equipment_model || 'Plant Machinery'}
@@ -670,7 +918,7 @@ export default function StaffAnalyticsPage() {
                                 })
                               }
                               className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer"
-                              title="View start meter gauge photo"
+                              title="View start meter photo"
                             >
                               <Gauge className="w-3 h-3 text-amber-600" />
                               <span>Start</span>
@@ -690,7 +938,7 @@ export default function StaffAnalyticsPage() {
                                 })
                               }
                               className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-50 text-primary border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-1 cursor-pointer"
-                              title="View end meter gauge photo"
+                              title="View end meter photo"
                             >
                               <Gauge className="w-3 h-3 text-primary" />
                               <span>End</span>
@@ -703,13 +951,13 @@ export default function StaffAnalyticsPage() {
                               onClick={() =>
                                 setSelectedProofModal({
                                   url: log.fuel_proof_image,
-                                  title: `Diesel Fuel Receipt: ${log.fuel_amount} L`,
+                                  title: `Diesel Fuel Slip: ${log.fuel_amount} L`,
                                   type: 'FUEL_RECEIPT',
                                   shiftId: log.id,
                                 })
                               }
                               className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-100 text-zinc-800 border border-zinc-200 hover:bg-zinc-200 transition-colors flex items-center gap-1 cursor-pointer"
-                              title="View fuel transaction slip"
+                              title="View fuel slip"
                             >
                               <Fuel className="w-3 h-3 text-zinc-600" />
                               <span>Fuel</span>
@@ -742,10 +990,10 @@ export default function StaffAnalyticsPage() {
 
                       {/* Work Description */}
                       <td className="py-3 px-3.5 max-w-xs text-zinc-700 truncate" title={log.work_description}>
-                        {log.work_description || 'Operational machinery work'}
+                        {log.work_description || 'Daily operational earthmoving work'}
                         {log.audit_notes && (
                           <span className="block text-[10px] text-primary italic font-mono truncate">
-                            Audit note: {log.audit_notes}
+                            Supervisor note: {log.audit_notes}
                           </span>
                         )}
                       </td>
@@ -759,7 +1007,7 @@ export default function StaffAnalyticsPage() {
       </div>
 
       {/* ======================================================== */}
-      {/* 5. Photo Proof Inspection Modal                          */}
+      {/* 7. Full-Screen Photo Proof Inspection Modal              */}
       {/* ======================================================== */}
       {selectedProofModal && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">

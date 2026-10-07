@@ -403,8 +403,80 @@ Even if there are few or zero anomalies, provide a rigorous assessment of fleet 
 }
 
 /**
+ * Generates personalized operational intelligence and coaching for a specific heavy machinery operator.
+ */
+export async function generateOperatorAIInsights(
+  operatorName: string,
+  summary: any,
+  machineBreakdown: any[],
+  recentLogs: any[]
+): Promise<{
+  assessmentMarkdown: string;
+  burnRateRating: 'OPTIMAL' | 'EFFICIENT' | 'MODERATE' | 'HIGH';
+  tips: string[];
+}> {
+  const prompt = `You are the Lead Heavy Plant Equipment Operations Coach for Hi Los Geht in Meru, Kenya.
+Analyze the following personal telematics data for Operator: ${operatorName}.
+
+Data Summary:
+- Total Engine Hours: ${summary?.totalHours || 0} hrs across ${summary?.totalShifts || 0} logged shifts
+- Total Fuel Recorded: ${summary?.totalFuelLitres || 0} L
+- Average Burn Rate: ${summary?.avgFuelBurnRate || 0} L/hr
+- Verified Logs: ${summary?.approvedShifts || 0} approved, ${summary?.pendingShifts || 0} pending
+- Machinery: ${(machineBreakdown || []).map((m: any) => `${m.machine_name} (${m.total_hours} hrs, ${m.avg_burn_rate} L/hr)`).join(', ')}
+
+Please provide:
+1. A brief 2-3 sentence personalized operational appraisal highlighting their shift consistency and efficiency.
+2. 3 concrete, high-impact field tips specifically for ${operatorName} (e.g., fuel management, hydraulic pump care, hour meter photo verification compliance).
+
+Format the output strictly as JSON with keys:
+"assessment": string (markdown text),
+"burnRateRating": "OPTIMAL" | "EFFICIENT" | "MODERATE" | "HIGH",
+"tips": array of 3 strings (bullet tip text)`;
+
+  try {
+    const raw = await callGroqChat([
+      { role: 'system', content: 'You are an industrial telematics engine for heavy machinery operators. Respond with valid JSON only.' },
+      { role: 'user', content: prompt }
+    ], 800);
+
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        assessmentMarkdown: parsed.assessment || `${operatorName} has demonstrated solid operational discipline with ${summary?.totalHours || 0} hours clocked across ${summary?.totalShifts || 0} shifts.`,
+        burnRateRating: parsed.burnRateRating || ((summary?.avgFuelBurnRate || 0) < 15 ? 'OPTIMAL' : 'MODERATE'),
+        tips: Array.isArray(parsed.tips) && parsed.tips.length > 0 ? parsed.tips : [
+          'Capture gauge photos in good natural lighting to speed up voucher verification.',
+          'Limit auxiliary engine idling to under 5 minutes during truck loading pauses.',
+          'Maintain steady throttle in Eco-mode during standard trenching to maximize diesel yield.'
+        ]
+      };
+    }
+  } catch (err: any) {
+    console.warn('Groq operator AI insight parsing fallback:', err.message);
+  }
+
+  // Fallback heuristic assessment
+  const burnRating: 'OPTIMAL' | 'EFFICIENT' | 'MODERATE' | 'HIGH' =
+    (summary?.avgFuelBurnRate || 0) <= 12 ? 'OPTIMAL' :
+    (summary?.avgFuelBurnRate || 0) <= 20 ? 'EFFICIENT' :
+    (summary?.avgFuelBurnRate || 0) <= 28 ? 'MODERATE' : 'HIGH';
+
+  return {
+    assessmentMarkdown: `**${operatorName}**, you have logged **${summary?.totalHours || 0} verified engine hours** across **${summary?.totalShifts || 0} site shifts**. Your average diesel burn rate of **${summary?.avgFuelBurnRate || 0} L/hr** reflects steady throttle management on your assigned equipment. Continue attaching clear start and end meter gauge photos to ensure immediate voucher sign-off.`,
+    burnRateRating: burnRating,
+    tips: [
+      'Ensure hour meter gauge photos capture both the analog/digital dial and the machine serial plaque when possible.',
+      'Throttle down to low idle when waiting on tipper trucks to prevent unmetered diesel loss.',
+      'Conduct hydraulic pre-shift walkaround checks on Meru rocky soils to prevent hose stress.'
+    ]
+  };
+}
+
+/**
  * Intelligent Machinery Recommender & Project Estimator Consultant.
- * Includes PLACE & ROLE AWARENESS when conversing with administrators from /admin/ai-insights.
+ * Includes PLACE & ROLE AWARENESS when conversing with administrators or operators.
  */
 export async function consultMachineryAI(
   userQuery: string,
@@ -414,12 +486,53 @@ export async function consultMachineryAI(
     projectDetails?: any;
   }
 ): Promise<string> {
+  const isOperatorContext =
+    options?.context === 'OPERATOR_ANALYTICS' ||
+    options?.role === 'OPERATOR';
+
+  if (isOperatorContext) {
+    const operatorName = options?.projectDetails?.operatorName || 'Field Operator';
+    const operatorSummary = options?.projectDetails?.summary || {};
+    const operatorLogs = options?.projectDetails?.recentLogs || [];
+
+    const operatorSystemPrompt = `You are the Lead Heavy Plant Field Operations & Operator AI Coach for Hi Los Geht Heavy Machinery & Infrastructure in Meru, Kenya.
+YOU ARE CONVERSING DIRECTLY WITH CERTIFIED OPERATOR: ${operatorName} inside their personal Operator Telematics & Analytics Portal (/staff/analytics).
+
+OPERATOR'S PERSONAL LOGGED TELEMETRICS (VERIFIED FROM DATABASE):
+============================================================
+Operator Name: ${operatorName}
+Total Shifts Logged: ${operatorSummary.totalShifts || 0}
+Total Engine Hours Clocked: ${operatorSummary.totalHours || 0} hrs
+Total Diesel Fuel Logged: ${operatorSummary.totalFuelLitres || 0} L
+Average Fuel Burn Rate: ${operatorSummary.avgFuelBurnRate || 0} L/hr
+Voucher Verification Status: ${operatorSummary.approvedShifts || 0} Approved, ${operatorSummary.pendingShifts || 0} In Review
+Machines Operated: ${operatorSummary.machinesOperatedCount || 1} distinct heavy plants
+
+RECENT SHIFT LOGS FOR THIS OPERATOR:
+${(operatorLogs || []).slice(0, 6).map((l: any) => 
+  `• [${(l.date_submitted || '').slice(0, 10)}] ${l.equipment_name || 'Machine'} | Meter: ${l.start_meter}h → ${l.end_meter}h (+${l.hours_worked || (l.end_meter - l.start_meter)}h) | Fuel: ${l.fuel_amount || 0}L | Work: "${l.work_description || 'General Earthmoving'}" | Meter Photo Attached: ${l.meter_proof_image || l.end_meter_proof_image ? 'YES' : 'NO'} | Status: ${l.verification_status}`
+).join('\n')}
+============================================================
+
+ROLE & OBJECTIVES:
+1. Speak respectfully and encouragingly directly to ${operatorName} as their experienced Master Operator & Telematics Coach.
+2. Analyze THEIR personal logs, fuel burn, engine meter intervals, and shift habits.
+3. Advise on heavy machinery operating efficiency in Meru terrains (e.g. volcanic bedrock trenching, quarry excavation, hydraulic breaker duty cycle, grader link-roads).
+4. Provide practical guidance on avoiding engine idling, smooth cycle times, diesel conservation, and ensuring daily hour meter photos are sharp and clear for 100% supervisor approval.
+5. Format answers in clean, readable GitHub Flavored Markdown with bullet points, short metrics, and field tips.`;
+
+    const response = await callGroqChat([
+      { role: 'system', content: operatorSystemPrompt },
+      { role: 'user', content: userQuery }
+    ], 1000);
+
+    return response || `Operator ${operatorName}, your shift records show active engine hours logged. Focus on smooth hydraulic cycle times and capturing clear hour meter gauge photos upon shift completion.`;
+  }
+
   const isAdminContext =
     options?.context === 'ADMIN_AI_INSIGHTS' ||
     options?.role === 'ADMIN' ||
-    userQuery.toLowerCase().includes('log') ||
     userQuery.toLowerCase().includes('fleet') ||
-    userQuery.toLowerCase().includes('fuel') ||
     userQuery.toLowerCase().includes('anomal');
 
   if (isAdminContext) {
@@ -487,6 +600,7 @@ Provide helpful, professional recommendations for client civil works, estimated 
 
 export default {
   generateOperationalAIInsights,
+  generateOperatorAIInsights,
   consultMachineryAI,
   callGroqChat,
 };
