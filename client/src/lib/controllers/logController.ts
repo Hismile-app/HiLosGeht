@@ -3,6 +3,7 @@ import db from '@/lib/server-config/db';
 import {
   getStaffLogsRegistry,
   saveStaffLog,
+  batchUpdateStaffLogs,
   OperationalStaffLog,
   SEED_FLEET_LOGS
 } from '@/lib/services/logsRegistry';
@@ -23,6 +24,7 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
       endMeterProofImage,
       meterProofImage,
       staffName,
+      staffEmail,
       equipmentName,
     } = await req.json();
 
@@ -43,6 +45,25 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
     const hoursWorked = parseFloat(endMeter) - parseFloat(startMeter);
     const resolvedMeterProof = meterProofImage || endMeterProofImage || startMeterProofImage || null;
     let createdLog: any = null;
+
+    // Resolve valid UUID for PostgreSQL foreign key if staffId is a string or email provided
+    let resolvedStaffUuid: string | null = null;
+    const isUuid = staffId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(staffId);
+    if (isUuid) {
+      resolvedStaffUuid = staffId;
+    } else if (staffEmail || staffId) {
+      try {
+        const pRes = await db.query(
+          `SELECT id FROM public.profiles WHERE LOWER(email) = LOWER($1) OR id::text = $2;`,
+          [staffEmail || '', staffId || '']
+        );
+        if (pRes.rows.length > 0) {
+          resolvedStaffUuid = pRes.rows[0].id;
+        }
+      } catch (e: any) {
+        console.warn('Operator UUID lookup warning:', e.message);
+      }
+    }
 
     // 1. Attempt Database Insert
     try {
@@ -65,7 +86,7 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()
         ) RETURNING *;
       `, [
-        staffId || null,
+        resolvedStaffUuid,
         equipmentId,
         startMeter,
         endMeter,
@@ -93,7 +114,8 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
     // 2. Persist to Vercel Blob store
     const logEntry: OperationalStaffLog = {
       id: createdLog?.id || 'log-' + Date.now().toString(36),
-      staff_id: staffId || null,
+      staff_id: staffId || resolvedStaffUuid || null,
+      staff_email: staffEmail || null,
       equipment_id: equipmentId,
       start_meter: parseFloat(startMeter),
       end_meter: parseFloat(endMeter),
@@ -108,7 +130,7 @@ export async function submitStaffLog(req: NextRequest, { params }: { params: any
       meter_proof_image: resolvedMeterProof,
       date_submitted: new Date().toISOString(),
       verification_status: 'PENDING',
-      staff_name: staffName || 'Lead Operator',
+      staff_name: staffName || 'Certified Operator',
       equipment_name: equipmentName || 'Heavy Machine',
       equipment_model: equipmentName || 'Industrial Plant',
       equipment_category: 'Heavy Equipment',
@@ -156,7 +178,10 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
           l.verification_status,
           l.audit_notes,
           COALESCE(p.full_name, 'Operator') as staff_name,
-          p.email as staff_email,
+          COALESCE(p.full_name, 'Operator') as operator_name,
+          COALESCE(p.email, 'operator@hilosgeht.co.ke') as staff_email,
+          COALESCE(p.email, 'operator@hilosgeht.co.ke') as operator_email,
+          l.work_description as yield_description,
           COALESCE(a.name, 'Equipment') as equipment_name,
           COALESCE(a.model, 'Asset') as equipment_model,
           COALESCE(a.category, 'Fleet') as equipment_category
@@ -169,7 +194,7 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
 
       if (staffId) {
         paramsList.push(staffId);
-        query += ` AND l.staff_id = $${paramsList.length}`;
+        query += ` AND l.staff_id::text = $${paramsList.length}`;
       }
 
       if (equipmentId) {
@@ -198,15 +223,30 @@ export async function getAllStaffLogs(req: NextRequest, { params }: { params: an
 
     // Fallback to persistent Blob registry if DB is empty or offline
     if (logs.length === 0) {
-      logs = await getStaffLogsRegistry();
-      if (staffId) logs = logs.filter((l) => l.staff_id === staffId);
-      if (equipmentId) logs = logs.filter((l) => l.equipment_id === equipmentId);
+      const blobLogs = await getStaffLogsRegistry();
+      if (staffId) {
+        logs = blobLogs.filter((l) => l.staff_id === staffId);
+      } else if (equipmentId) {
+        logs = blobLogs.filter((l) => l.equipment_id === equipmentId);
+      } else {
+        logs = blobLogs;
+      }
     }
+
+    const normalizedLogs = logs.map((l: any) => ({
+      ...l,
+      staff_name: l.staff_name || l.operator_name || 'Certified Operator',
+      operator_name: l.operator_name || l.staff_name || 'Certified Operator',
+      staff_email: l.staff_email || l.operator_email || 'operator@hilosgeht.co.ke',
+      operator_email: l.operator_email || l.staff_email || 'operator@hilosgeht.co.ke',
+      yield_description: l.yield_description || l.work_description || '',
+      work_description: l.work_description || l.yield_description || '',
+    }));
 
     return NextResponse.json({
       success: true,
-      count: logs.length,
-      data: logs,
+      count: normalizedLogs.length,
+      data: normalizedLogs,
     }, { status: 200 });
   } catch (error: any) {
     console.error('Error in getAllStaffLogs:', error);
@@ -231,7 +271,7 @@ export async function updateLogVerification(req: NextRequest, { params }: { para
         SET 
           verification_status = $1,
           audit_notes = COALESCE($2, audit_notes)
-        WHERE id = $3
+        WHERE id::text = $3
         RETURNING *;
       `, [verificationStatus, auditNotes || null, id]);
 
@@ -265,6 +305,72 @@ export async function updateLogVerification(req: NextRequest, { params }: { para
     }, { status: 200 });
   } catch (error: any) {
     console.error('Error updating log verification:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function batchUpdateLogVerification(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { ids, verificationStatus, auditNotes, approveAllPending } = body;
+
+    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(verificationStatus)) {
+      return NextResponse.json({ success: false, error: 'Invalid verification status' }, { status: 400 });
+    }
+
+    let targetIds: string[] = Array.isArray(ids) ? [...ids] : [];
+
+    if (approveAllPending) {
+      const allBlobLogs = await getStaffLogsRegistry();
+      const pendingBlobIds = allBlobLogs
+        .filter((l) => l.verification_status === 'PENDING')
+        .map((l) => l.id);
+      targetIds = Array.from(new Set([...targetIds, ...pendingBlobIds]));
+
+      try {
+        const dbPending = await db.query(`SELECT id::text FROM public.staff_logs WHERE verification_status = 'PENDING';`);
+        for (const row of dbPending.rows) {
+          if (!targetIds.includes(row.id)) {
+            targetIds.push(row.id);
+          }
+        }
+      } catch (e: any) {
+        console.warn('DB pending query notice:', e.message);
+      }
+    }
+
+    if (targetIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        count: 0,
+        message: 'No pending logs found to update.',
+      }, { status: 200 });
+    }
+
+    // 1. Update in Database
+    try {
+      await db.query(`
+        UPDATE public.staff_logs
+        SET 
+          verification_status = $1,
+          audit_notes = COALESCE($2, audit_notes)
+        WHERE id::text = ANY($3::text[]);
+      `, [verificationStatus, auditNotes || null, targetIds]);
+    } catch (dbErr: any) {
+      console.warn('⚠️ Database batch update verification fallback:', dbErr.message);
+    }
+
+    // 2. Update in Vercel Blob registry
+    const updatedLogs = await batchUpdateStaffLogs(targetIds, verificationStatus, auditNotes);
+
+    return NextResponse.json({
+      success: true,
+      count: targetIds.length,
+      updatedIds: targetIds,
+      message: `Successfully set ${targetIds.length} logs to ${verificationStatus}`,
+    }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error in batchUpdateLogVerification:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

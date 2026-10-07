@@ -43,9 +43,21 @@ export default function OperatorDailyLogPage() {
   const [startMeterImageFile, setStartMeterImageFile] = useState<string | null>(null);
   const [endMeterImageFile, setEndMeterImageFile] = useState<string | null>(null);
 
+  const [currentUser, setCurrentUser] = useState<{ id?: string; full_name?: string; email?: string; role?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittedLog, setSubmittedLog] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('hlg_user');
+        if (stored) {
+          setCurrentUser(JSON.parse(stored));
+        }
+      } catch (e) {}
+    }
+  }, []);
 
   const loadInquiries = async () => {
     setInquiriesLoading(true);
@@ -164,11 +176,17 @@ export default function OperatorDailyLogPage() {
 
     try {
       const apiUrl = '/api/v1';
+      const selectedEquipment = fleet.find(f => f.id === selectedEquipmentId);
+
       const res = await fetch(`${apiUrl}/logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          staffId: currentUser?.id || null,
+          staffName: currentUser?.full_name || 'Certified Operator',
+          staffEmail: currentUser?.email || null,
           equipmentId: selectedEquipmentId,
+          equipmentName: selectedEquipment?.name || 'Heavy Equipment',
           startMeter: start,
           endMeter: end,
           workDescription,
@@ -375,25 +393,48 @@ export default function OperatorDailyLogPage() {
               )}
             </div>
 
-            <NeonButton
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSubmittedLog(null);
-                setWorkDescription('');
-                setFuelAmount('');
-                setMaterialsReceived('');
-                setFuelImageFile(null);
-                setMaterialsImageFile(null);
-                setStartMeterImageFile(null);
-                setEndMeterImageFile(null);
-              }}
-            >
-              Submit Another Operational Log
-            </NeonButton>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Link
+                href="/staff/analytics"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-hover shadow-orange transition-all cursor-pointer"
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>View in My Analytics</span>
+              </Link>
+              <NeonButton
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSubmittedLog(null);
+                  setWorkDescription('');
+                  setFuelAmount('');
+                  setMaterialsReceived('');
+                  setFuelImageFile(null);
+                  setMaterialsImageFile(null);
+                  setStartMeterImageFile(null);
+                  setEndMeterImageFile(null);
+                }}
+              >
+                Submit Another Operational Log
+              </NeonButton>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5 text-xs">
+            {/* Operator Identity Indicator */}
+            <div className="p-3 bg-orange-50/70 border border-orange-200 rounded-xl flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-muted">Operator:</span>
+                <span className="font-bold text-ink">{currentUser?.full_name || 'Certified Operator'}</span>
+                {currentUser?.email && (
+                  <span className="text-muted text-[11px] hidden sm:inline">({currentUser.email})</span>
+                )}
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                LOGGED IN
+              </span>
+            </div>
             
             {/* Machinery Selector */}
             <div>

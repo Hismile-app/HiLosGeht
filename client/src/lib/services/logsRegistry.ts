@@ -8,6 +8,7 @@ export interface OperationalStaffLog {
   end_meter: number;
   hours_worked: number;
   work_description: string;
+  yield_description?: string;
   fuel_amount: number;
   fuel_proof_image: string | null;
   materials_received: string | null;
@@ -20,6 +21,8 @@ export interface OperationalStaffLog {
   audit_notes?: string | null;
   staff_name: string;
   staff_email?: string;
+  operator_name?: string;
+  operator_email?: string;
   equipment_name: string;
   equipment_model: string;
   equipment_category: string;
@@ -271,4 +274,50 @@ export async function saveStaffLog(log: OperationalStaffLog): Promise<Operationa
   }
 
   return log;
+}
+
+/**
+ * Batch updates verification status for multiple staff logs in the persistent Blob registry.
+ */
+export async function batchUpdateStaffLogs(
+  ids: string[],
+  status: 'PENDING' | 'APPROVED' | 'REJECTED',
+  auditNotes?: string | null
+): Promise<OperationalStaffLog[]> {
+  const current = await getStaffLogsRegistry();
+  const idSet = new Set(ids);
+  const updatedLogs: OperationalStaffLog[] = [];
+
+  for (let i = 0; i < current.length; i++) {
+    if (idSet.has(current[i].id)) {
+      current[i].verification_status = status;
+      if (auditNotes !== undefined && auditNotes !== null) {
+        current[i].audit_notes = auditNotes;
+      }
+      updatedLogs.push(current[i]);
+    }
+  }
+
+  memoryLogsCache = {
+    timestamp: Date.now(),
+    logs: current,
+  };
+
+  const token = getBlobToken();
+  if (token && updatedLogs.length > 0) {
+    try {
+      const res = await put(LOGS_PATHNAME, JSON.stringify(current, null, 2), {
+        access: 'private',
+        token,
+        contentType: 'application/json',
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
+      cachedBlobUrl = res.url;
+    } catch (blobErr: any) {
+      console.warn('⚠️ Failed to persist batch staff logs to Vercel Blob:', blobErr.message);
+    }
+  }
+
+  return updatedLogs;
 }

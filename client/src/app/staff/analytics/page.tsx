@@ -358,29 +358,15 @@ export default function StaffAnalyticsPage() {
           </div>
         </div>
 
-        {/* Right Controls: Operator Account Switcher + Date Filter */}
+        {/* Right Controls: Certified Operator Badge + Date Filter Range */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Operator Switcher (Allows testing different operator records from DB) */}
-          {data?.availableOperators && data.availableOperators.length > 1 && (
-            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-border shadow-subtle">
-              <User className="w-3.5 h-3.5 text-primary shrink-0" />
-              <label htmlFor="operator-select" className="text-[10px] font-mono text-muted uppercase font-bold shrink-0">
-                Account:
-              </label>
-              <select
-                id="operator-select"
-                value={selectedOperatorId || currentOperator?.id || ''}
-                onChange={(e) => setSelectedOperatorId(e.target.value)}
-                className="text-xs font-mono font-bold text-ink bg-transparent border-0 focus:outline-none cursor-pointer max-w-[220px] truncate"
-              >
-                {data.availableOperators.map((op) => (
-                  <option key={op.id} value={op.id}>
-                    {op.full_name} {op.email ? `(${op.email})` : ''}
-                  </option>
-                ))}
-              </select>
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-border shadow-subtle">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="text-xs font-mono">
+              <span className="text-[10px] text-muted block leading-none uppercase font-bold">Verified Operator</span>
+              <span className="font-bold text-ink leading-tight">{currentOperator?.full_name || 'My Operator Account'}</span>
             </div>
-          )}
+          </div>
 
           {/* Date Filter Range */}
           <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-border shadow-inner">
